@@ -44,8 +44,6 @@ async function initStripe() {
   }
 }
 
-await initStripe();
-
 app.post(
   '/api/stripe/webhook',
   express.raw({ type: 'application/json' }),
@@ -145,6 +143,9 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      initStripe().catch((err) => {
+        console.error('Stripe initialization failed (non-fatal):', err);
+      });
     },
   );
 })();
