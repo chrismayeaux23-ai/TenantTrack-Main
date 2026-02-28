@@ -286,10 +286,35 @@ export async function registerRoutes(
         WHERE p.active = true AND p.metadata->>'tier' IS NOT NULL
         ORDER BY pr.unit_amount ASC
       `);
-      res.json(result.rows);
+
+      if (result.rows.length > 0) {
+        return res.json(result.rows);
+      }
+
+      const stripe = await getUncachableStripeClient();
+      const products = await stripe.products.list({ active: true, limit: 100 });
+      const plans: any[] = [];
+      for (const product of products.data) {
+        if (!product.metadata?.tier) continue;
+        const prices = await stripe.prices.list({ product: product.id, active: true, limit: 1 });
+        const price = prices.data[0];
+        if (!price) continue;
+        plans.push({
+          product_id: product.id,
+          product_name: product.name,
+          product_description: product.description,
+          product_metadata: product.metadata,
+          price_id: price.id,
+          unit_amount: price.unit_amount,
+          currency: price.currency,
+          recurring: price.recurring,
+        });
+      }
+      plans.sort((a, b) => (a.unit_amount || 0) - (b.unit_amount || 0));
+      res.json(plans);
     } catch (err) {
       console.error("Failed to fetch plans:", err);
-      res.status(500).json({ message: "Failed to fetch plans" });
+      res.json([]);
     }
   });
 
@@ -329,20 +354,19 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Invalid tier" });
       }
 
-      const priceCheck = await db.execute(
-        sql`SELECT pr.id FROM stripe.prices pr
-            JOIN stripe.products p ON pr.product = p.id
-            WHERE pr.id = ${priceId} AND pr.active = true AND p.active = true
-            AND p.metadata->>'tier' = ${tier}`
-      );
-      if (priceCheck.rows.length === 0) {
+      const stripe = await getUncachableStripeClient();
+      try {
+        const priceObj = await stripe.prices.retrieve(priceId, { expand: ['product'] });
+        const product = priceObj.product as any;
+        if (!priceObj.active || !product?.active || product?.metadata?.tier !== tier) {
+          return res.status(400).json({ message: "Invalid price for the selected plan" });
+        }
+      } catch {
         return res.status(400).json({ message: "Invalid price for the selected plan" });
       }
 
       const [user] = await db.select().from(users).where(eq(users.id, userId));
       if (!user) return res.status(404).json({ message: "User not found" });
-
-      const stripe = await getUncachableStripeClient();
 
       let customerId = user.stripeCustomerId;
       if (!customerId) {
