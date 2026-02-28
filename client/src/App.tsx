@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
-// Pages
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
@@ -19,8 +18,9 @@ import TrackRequest from "@/pages/TrackRequest";
 import Profile from "@/pages/Profile";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
+import Tenants from "@/pages/Tenants";
+import Billing from "@/pages/Billing";
 
-// Protected Route Wrapper
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -33,7 +33,6 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   }
 
   if (!isAuthenticated) {
-    // Replit Auth standard redirects to Landing/Login
     return <Redirect to="/" />;
   }
 
@@ -53,30 +52,32 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public Tenant Route - Open to anyone with the QR code */}
       <Route path="/report/:propertyId" component={TenantReport} />
-      
-      {/* Public Tracking Route */}
       <Route path="/track/:code" component={TrackRequest} />
       <Route path="/track" component={TrackRequest} />
       
-      {/* Printable Flyer Route */}
       <Route path="/flyer/:propertyId">
         <ProtectedRoute component={PrintFlyer} />
       </Route>
       
-      {/* Root handling based on auth state */}
       <Route path="/">
         {isAuthenticated ? <Dashboard /> : <Landing />}
       </Route>
 
-      {/* Protected Landlord Routes */}
       <Route path="/properties">
         <ProtectedRoute component={Properties} />
       </Route>
       
+      <Route path="/tenants">
+        <ProtectedRoute component={Tenants} />
+      </Route>
+
       <Route path="/staff">
         <ProtectedRoute component={Staff} />
+      </Route>
+
+      <Route path="/billing">
+        <ProtectedRoute component={Billing} />
       </Route>
 
       <Route path="/pricing">
@@ -87,11 +88,9 @@ function Router() {
         <ProtectedRoute component={Profile} />
       </Route>
 
-      {/* Public Legal Pages */}
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
 
-      {/* Fallback */}
       <Route component={NotFound} />
     </Switch>
   );

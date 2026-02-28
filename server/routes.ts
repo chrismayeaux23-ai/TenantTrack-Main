@@ -8,7 +8,8 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { db } from "./db";
 import { users } from "@shared/models/auth";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
+import { properties, maintenanceRequests } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -385,13 +386,116 @@ export async function registerRoutes(
       const stripe = await getUncachableStripeClient();
       const session = await stripe.billingPortal.sessions.create({
         customer: user.stripeCustomerId,
-        return_url: `${req.protocol}://${req.get('host')}/`,
+        return_url: `${req.protocol}://${req.get('host')}/billing`,
       });
 
       res.json({ url: session.url });
     } catch (err) {
       console.error("Portal error:", err);
       res.status(500).json({ message: "Failed to create portal session" });
+    }
+  });
+
+  app.get('/api/notes/:requestId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.requestId);
+      const landlordRequests = await storage.getRequestsByLandlord(userId);
+      if (!landlordRequests.find(r => r.id === requestId)) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+      const notes = await storage.getNotesByRequest(requestId);
+      res.json(notes);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch notes" });
+    }
+  });
+
+  app.post('/api/notes/:requestId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.requestId);
+      const landlordRequests = await storage.getRequestsByLandlord(userId);
+      if (!landlordRequests.find(r => r.id === requestId)) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      const schema = z.object({ content: z.string().min(1).max(2000) });
+      const input = schema.parse(req.body);
+      const note = await storage.createNote({
+        requestId,
+        authorId: userId,
+        authorName: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user?.email || 'Landlord',
+        content: input.content,
+      });
+      res.status(201).json(note);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      res.status(500).json({ message: "Failed to create note" });
+    }
+  });
+
+  app.get('/api/tenants', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requests = await storage.getRequestsByLandlord(userId);
+      const props = await storage.getProperties(userId);
+      const propMap = new Map(props.map(p => [p.id, p.name]));
+
+      const tenantMap = new Map<string, any>();
+      for (const r of requests) {
+        const key = `${r.tenantEmail.toLowerCase()}-${r.tenantPhone}`;
+        if (!tenantMap.has(key)) {
+          tenantMap.set(key, {
+            name: r.tenantName,
+            email: r.tenantEmail,
+            phone: r.tenantPhone,
+            requestCount: 0,
+            properties: new Set<string>(),
+            lastRequest: r.createdAt,
+          });
+        }
+        const t = tenantMap.get(key)!;
+        t.requestCount++;
+        t.properties.add(propMap.get(r.propertyId) || 'Unknown');
+        if (r.createdAt && (!t.lastRequest || r.createdAt > t.lastRequest)) {
+          t.lastRequest = r.createdAt;
+        }
+      }
+
+      const tenants = Array.from(tenantMap.values()).map(t => ({
+        ...t,
+        properties: Array.from(t.properties),
+      }));
+      tenants.sort((a: any, b: any) => (b.lastRequest?.getTime?.() || 0) - (a.lastRequest?.getTime?.() || 0));
+      res.json(tenants);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch tenants" });
+    }
+  });
+
+  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requests = await storage.getRequestsByLandlord(userId);
+      const props = await storage.getProperties(userId);
+      const totalRequests = requests.length;
+      const newRequests = requests.filter(r => r.status === 'New').length;
+      const inProgress = requests.filter(r => r.status === 'In-Progress').length;
+      const completed = requests.filter(r => r.status === 'Completed').length;
+      const emergencies = requests.filter(r => r.urgency === 'Emergency').length;
+      res.json({
+        totalRequests,
+        newRequests,
+        inProgress,
+        completed,
+        emergencies,
+        totalProperties: props.length,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch stats" });
     }
   });
 

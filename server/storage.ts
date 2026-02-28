@@ -1,12 +1,13 @@
 import { randomBytes } from "crypto";
 import { db } from "./db";
 import {
-  properties, maintenanceRequests, maintenanceStaff,
+  properties, maintenanceRequests, maintenanceStaff, requestNotes,
   type Property, type InsertProperty,
   type MaintenanceRequest, type InsertMaintenanceRequest,
   type MaintenanceStaff, type InsertMaintenanceStaff,
+  type RequestNote, type InsertRequestNote,
 } from "@shared/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 function generateTrackingCode(): string {
   return randomBytes(4).toString("hex").toUpperCase();
@@ -18,6 +19,7 @@ export interface IStorage {
   createProperty(property: InsertProperty): Promise<Property>;
 
   getRequestsByLandlord(landlordId: string): Promise<MaintenanceRequest[]>;
+  getRequest(id: number): Promise<MaintenanceRequest | undefined>;
   createRequest(request: InsertMaintenanceRequest): Promise<MaintenanceRequest>;
   updateRequestStatus(id: number, status: string): Promise<MaintenanceRequest>;
 
@@ -27,6 +29,9 @@ export interface IStorage {
   assignRequest(requestId: number, staffId: number): Promise<MaintenanceRequest>;
   unassignRequest(requestId: number): Promise<MaintenanceRequest>;
   getRequestByTrackingCode(code: string): Promise<MaintenanceRequest | undefined>;
+
+  getNotesByRequest(requestId: number): Promise<RequestNote[]>;
+  createNote(note: InsertRequestNote): Promise<RequestNote>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -51,6 +56,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(properties.landlordId, landlordId));
 
     return rows.map(r => r.request);
+  }
+
+  async getRequest(id: number): Promise<MaintenanceRequest | undefined> {
+    const [request] = await db.select().from(maintenanceRequests).where(eq(maintenanceRequests.id, id));
+    return request;
   }
 
   async createRequest(insertRequest: InsertMaintenanceRequest): Promise<MaintenanceRequest> {
@@ -113,6 +123,17 @@ export class DatabaseStorage implements IStorage {
   async getRequestByTrackingCode(code: string): Promise<MaintenanceRequest | undefined> {
     const [request] = await db.select().from(maintenanceRequests).where(eq(maintenanceRequests.trackingCode, code));
     return request;
+  }
+
+  async getNotesByRequest(requestId: number): Promise<RequestNote[]> {
+    return await db.select().from(requestNotes)
+      .where(eq(requestNotes.requestId, requestId))
+      .orderBy(desc(requestNotes.createdAt));
+  }
+
+  async createNote(note: InsertRequestNote): Promise<RequestNote> {
+    const [created] = await db.insert(requestNotes).values(note).returning();
+    return created;
   }
 }
 

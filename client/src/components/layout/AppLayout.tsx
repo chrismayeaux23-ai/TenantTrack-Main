@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Building2, ClipboardList, LogOut, Menu, X, CreditCard, Users } from "lucide-react";
+import { Building2, ClipboardList, LogOut, Menu, X, CreditCard, Users, UserCircle, Receipt } from "lucide-react";
 import { Button } from "../ui/Button";
 import logoPng from "@assets/file_000000001adc71f58731a09f21d2988d_1772208715788.png";
 
@@ -13,13 +13,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const navigation = [
     { name: "Requests", href: "/", icon: ClipboardList },
     { name: "Properties", href: "/properties", icon: Building2 },
+    { name: "Tenants", href: "/tenants", icon: UserCircle },
     { name: "Staff", href: "/staff", icon: Users },
+    { name: "Billing", href: "/billing", icon: Receipt },
     { name: "Pricing", href: "/pricing", icon: CreditCard },
   ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Mobile Header */}
       <div className="md:hidden flex items-center justify-between p-4 bg-card border-b border-border sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <img src={logoPng} alt="TenantTrack Logo" className="h-8 w-8 object-contain rounded-lg" />
@@ -30,7 +31,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </button>
       </div>
 
-      {/* Sidebar */}
       <aside className={`
         fixed inset-y-0 left-0 z-30 w-72 bg-card border-r border-border flex flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
@@ -85,12 +85,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 min-w-0 p-4 md:p-8 lg:p-10 max-w-7xl mx-auto w-full">
         {children}
       </main>
 
-      {/* Mobile overlay */}
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-20 md:hidden backdrop-blur-sm"

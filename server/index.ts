@@ -15,6 +15,39 @@ declare module "http" {
   }
 }
 
+async function seedStripeProducts() {
+  try {
+    const { getUncachableStripeClient } = await import('./stripeClient');
+    const stripe = await getUncachableStripeClient();
+    const plans = [
+      { name: 'Starter Package', description: 'Up to 5 properties. Includes QR tenant submission and basic request tracking.', metadata: { tier: 'starter', maxProperties: '5' }, priceAmount: 1900 },
+      { name: 'Growth Package', description: 'Unlimited properties. Includes priority notifications, exportable repair logs, status updates for tenants, and photo uploads.', metadata: { tier: 'growth', maxProperties: 'unlimited' }, priceAmount: 3900 },
+      { name: 'Pro Package', description: 'Unlimited properties. Includes analytics dashboard, maintenance cost tracking, and custom branding.', metadata: { tier: 'pro', maxProperties: 'unlimited' }, priceAmount: 5900 },
+    ];
+    for (const plan of plans) {
+      const existing = await stripe.products.search({ query: `name:'${plan.name}'` });
+      let productId: string;
+      if (existing.data.length > 0) {
+        productId = existing.data[0].id;
+        if (!existing.data[0].metadata?.tier) {
+          await stripe.products.update(productId, { metadata: plan.metadata });
+        }
+      } else {
+        const product = await stripe.products.create({ name: plan.name, description: plan.description, metadata: plan.metadata });
+        productId = product.id;
+        console.log(`Created product ${plan.name}: ${productId}`);
+      }
+      const prices = await stripe.prices.list({ product: productId, active: true, limit: 1 });
+      if (prices.data.length === 0) {
+        await stripe.prices.create({ product: productId, unit_amount: plan.priceAmount, currency: 'usd', recurring: { interval: 'month', trial_period_days: 14 } });
+        console.log(`Created price for ${plan.name}`);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to seed products:', err);
+  }
+}
+
 async function initStripe() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -34,6 +67,8 @@ async function initStripe() {
       `${webhookBaseUrl}/api/stripe/webhook`
     );
     console.log('Webhook configured:', JSON.stringify(webhookResult).substring(0, 200));
+
+    await seedStripeProducts();
 
     stripeSync.syncBackfill()
       .then(() => console.log('Stripe data synced'))

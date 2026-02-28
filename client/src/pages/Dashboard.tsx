@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useRequests } from "@/hooks/use-requests";
 import { useProperties } from "@/hooks/use-properties";
@@ -9,8 +9,92 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { useUpdateRequestStatus } from "@/hooks/use-requests";
-import { Loader2, AlertCircle, Phone, Mail, MapPin, Search, UserCheck } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2, AlertCircle, Phone, Mail, MapPin, Search, UserCheck, MessageSquare, Send, ClipboardList, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { Input } from "@/components/ui/Input";
+
+interface DashboardStats {
+  totalRequests: number;
+  newRequests: number;
+  inProgress: number;
+  completed: number;
+  emergencies: number;
+  totalProperties: number;
+}
+
+function RequestNotes({ requestId }: { requestId: number }) {
+  const [content, setContent] = useState("");
+  const queryClient = useQueryClient();
+  const { data: notes, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/notes", requestId],
+    queryFn: async () => {
+      const res = await fetch(`/api/notes/${requestId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
+  const addNote = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/notes/${requestId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      setContent("");
+      queryClient.invalidateQueries({ queryKey: ["/api/notes", requestId] });
+    },
+  });
+
+  return (
+    <div className="mt-4 pt-4 border-t border-border">
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1">
+        <MessageSquare className="h-3 w-3" /> Notes
+      </p>
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+      ) : (
+        <div className="space-y-2 max-h-32 overflow-y-auto mb-3">
+          {(notes || []).length === 0 && (
+            <p className="text-xs text-muted-foreground">No notes yet</p>
+          )}
+          {(notes || []).map((note: any) => (
+            <div key={note.id} className="bg-muted/50 rounded-lg p-2">
+              <p className="text-xs text-foreground">{note.content}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {note.authorName} &middot; {note.createdAt ? format(new Date(note.createdAt), "MMM d, h:mm a") : ""}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <Input
+          placeholder="Add a note..."
+          className="text-sm h-9 bg-muted/50"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && content.trim()) addNote.mutate(); }}
+          data-testid={`input-note-${requestId}`}
+        />
+        <Button
+          size="sm"
+          className="h-9 px-3"
+          disabled={!content.trim() || addNote.isPending}
+          onClick={() => addNote.mutate()}
+          data-testid={`button-add-note-${requestId}`}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { data: requests, isLoading: reqLoading } = useRequests();
@@ -18,10 +102,12 @@ export default function Dashboard() {
   const { data: staffList } = useStaff();
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateRequestStatus();
   const { mutate: assignRequest } = useAssignRequest();
+  const { data: stats } = useQuery<DashboardStats>({ queryKey: ["/api/dashboard/stats"] });
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set());
 
   if (reqLoading || propLoading) {
     return (
@@ -76,8 +162,66 @@ export default function Dashboard() {
     filteredRequests = filteredRequests.filter(r => r.status === statusFilter);
   }
 
+  const toggleNotes = (id: number) => {
+    setExpandedNotes(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <AppLayout>
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-card rounded-2xl p-4 border border-border shadow-sm" data-testid="stat-total">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <ClipboardList className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.totalRequests}</p>
+                <p className="text-xs text-muted-foreground">Total Requests</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-2xl p-4 border border-border shadow-sm" data-testid="stat-new">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.newRequests}</p>
+                <p className="text-xs text-muted-foreground">New</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-2xl p-4 border border-border shadow-sm" data-testid="stat-progress">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.inProgress}</p>
+                <p className="text-xs text-muted-foreground">In Progress</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-2xl p-4 border border-border shadow-sm" data-testid="stat-completed">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                <CheckCircle2 className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{stats.completed}</p>
+                <p className="text-xs text-muted-foreground">Completed</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Maintenance Requests</h1>
@@ -158,6 +302,13 @@ export default function Dashboard() {
                 </div>
               )}
 
+              {request.trackingCode && (
+                <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                  <span>Tracking:</span>
+                  <code className="font-mono text-primary font-bold">{request.trackingCode}</code>
+                </div>
+              )}
+
               <div className="mt-auto border-t border-border pt-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -167,6 +318,15 @@ export default function Dashboard() {
                       <a href={`mailto:${request.tenantEmail}`} className="flex items-center gap-1 hover:text-primary"><Mail className="h-3 w-3"/> Email</a>
                     </div>
                   </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => toggleNotes(request.id)}
+                    data-testid={`button-toggle-notes-${request.id}`}
+                  >
+                    <MessageSquare className={`h-4 w-4 ${expandedNotes.has(request.id) ? 'text-primary' : 'text-muted-foreground'}`} />
+                  </Button>
                 </div>
 
                 {getStaffName(request.assignedTo) && (
@@ -202,13 +362,14 @@ export default function Dashboard() {
                     />
                   )}
                 </div>
+
+                {expandedNotes.has(request.id) && <RequestNotes requestId={request.id} />}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Image Modal */}
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)} className="max-w-4xl p-2 bg-transparent border-0 shadow-none">
         {selectedImage && (
           <img src={selectedImage} alt="Full size" className="w-full h-auto max-h-[85vh] object-contain rounded-xl shadow-2xl" />

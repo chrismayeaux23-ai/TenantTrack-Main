@@ -27,6 +27,15 @@ export const maintenanceRequests = pgTable("maintenance_requests", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const requestNotes = pgTable("request_notes", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").notNull(),
+  authorId: varchar("author_id").notNull(),
+  authorName: text("author_name").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const maintenanceStaff = pgTable("maintenance_staff", {
   id: serial("id").primaryKey(),
   landlordId: varchar("landlord_id").notNull(),
@@ -38,6 +47,7 @@ export const maintenanceStaff = pgTable("maintenance_staff", {
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true, createdAt: true });
 export const insertMaintenanceRequestSchema = createInsertSchema(maintenanceRequests).omit({ id: true, createdAt: true, assignedTo: true, trackingCode: true });
 export const insertMaintenanceStaffSchema = createInsertSchema(maintenanceStaff).omit({ id: true });
+export const insertRequestNoteSchema = createInsertSchema(requestNotes).omit({ id: true, createdAt: true });
 
 export type Property = typeof properties.$inferSelect;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
@@ -47,6 +57,9 @@ export type InsertMaintenanceRequest = z.infer<typeof insertMaintenanceRequestSc
 
 export type MaintenanceStaff = typeof maintenanceStaff.$inferSelect;
 export type InsertMaintenanceStaff = z.infer<typeof insertMaintenanceStaffSchema>;
+
+export type RequestNote = typeof requestNotes.$inferSelect;
+export type InsertRequestNote = z.infer<typeof insertRequestNoteSchema>;
 
 export type CreatePropertyRequest = Omit<InsertProperty, "landlordId">;
 export type CreateMaintenanceRequest = Omit<InsertMaintenanceRequest, "status">;

@@ -2,69 +2,89 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Loader2, Check, Zap, Building2, Crown } from "lucide-react";
+import { Loader2, Check, Zap, Building2, Crown, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
-const PLAN_FEATURES: Record<string, { features: string[]; icon: any; highlight?: boolean }> = {
-  starter: {
+const HARDCODED_PLANS = [
+  {
+    tier: "starter",
+    name: "Starter Package",
+    description: "Up to 5 properties. Includes QR tenant submission and basic request tracking.",
+    price: 19,
     icon: Building2,
     features: [
-      "Up to 5 properties",
-      "QR code tenant submission",
-      "Basic request tracking",
-      "Email notifications",
+      { label: "Up to 5 properties", included: true },
+      { label: "QR code tenant submission", included: true },
+      { label: "Basic request tracking", included: true },
+      { label: "Email notifications", included: true },
+      { label: "Photo uploads", included: true },
+      { label: "Staff assignment", included: false },
+      { label: "Analytics dashboard", included: false },
+      { label: "Custom branding", included: false },
     ],
   },
-  growth: {
+  {
+    tier: "growth",
+    name: "Growth Package",
+    description: "Unlimited properties with staff management and export tools.",
+    price: 39,
     icon: Zap,
     highlight: true,
     features: [
-      "Unlimited properties",
-      "Priority notifications",
-      "Exportable repair logs",
-      "Status updates for tenants",
-      "Photo uploads",
-      "Everything in Starter",
+      { label: "Unlimited properties", included: true },
+      { label: "QR code tenant submission", included: true },
+      { label: "Advanced request tracking", included: true },
+      { label: "Priority notifications", included: true },
+      { label: "Photo uploads", included: true },
+      { label: "Staff assignment", included: true },
+      { label: "Exportable repair logs", included: true },
+      { label: "Custom branding", included: false },
     ],
   },
-  pro: {
+  {
+    tier: "pro",
+    name: "Pro Package",
+    description: "Everything you need to manage maintenance at scale.",
+    price: 59,
     icon: Crown,
     features: [
-      "Unlimited properties",
-      "Analytics dashboard",
-      "Maintenance cost tracking",
-      "Custom branding",
-      "Everything in Growth",
+      { label: "Unlimited properties", included: true },
+      { label: "QR code tenant submission", included: true },
+      { label: "Advanced request tracking", included: true },
+      { label: "Priority notifications", included: true },
+      { label: "Photo uploads", included: true },
+      { label: "Staff assignment", included: true },
+      { label: "Exportable repair logs", included: true },
+      { label: "Analytics dashboard", included: true },
+      { label: "Custom branding", included: true },
     ],
   },
-};
+];
 
 export default function Pricing() {
   const { toast } = useToast();
 
-  const { data: plans, isLoading: plansLoading, error: plansError } = useQuery<any[]>({
-    queryKey: ['/api/stripe/plans'],
+  const { data: stripePlans } = useQuery<any[]>({
+    queryKey: ["/api/stripe/plans"],
     queryFn: async () => {
-      const res = await fetch('/api/stripe/plans');
+      const res = await fetch("/api/stripe/plans");
       if (!res.ok) throw new Error("Failed to fetch plans");
       return res.json();
     },
   });
 
   const { data: subData, isLoading: subLoading } = useQuery<any>({
-    queryKey: ['/api/stripe/subscription'],
+    queryKey: ["/api/stripe/subscription"],
   });
 
   const checkoutMutation = useMutation({
     mutationFn: async ({ priceId, tier }: { priceId: string; tier: string }) => {
-      const res = await apiRequest('POST', '/api/stripe/checkout', { priceId, tier });
+      const res = await apiRequest("POST", "/api/stripe/checkout", { priceId, tier });
       return await res.json();
     },
     onSuccess: (data) => {
-      if (data.url) {
-        window.location.href = data.url;
-      }
+      if (data.url) window.location.href = data.url;
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to start checkout. Please try again.", variant: "destructive" });
@@ -73,20 +93,18 @@ export default function Pricing() {
 
   const portalMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/stripe/portal', {});
+      const res = await apiRequest("POST", "/api/stripe/portal", {});
       return await res.json();
     },
     onSuccess: (data) => {
-      if (data.url) {
-        window.location.href = data.url;
-      }
+      if (data.url) window.location.href = data.url;
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to open billing portal.", variant: "destructive" });
     },
   });
 
-  if (plansLoading || subLoading) {
+  if (subLoading) {
     return (
       <AppLayout>
         <div className="h-[60vh] flex items-center justify-center">
@@ -96,14 +114,24 @@ export default function Pricing() {
     );
   }
 
-  const currentTier = subData?.tier || 'trial';
+  const currentTier = subData?.tier || "trial";
   const hasSubscription = !!subData?.subscription;
+
+  const stripePriceMap = new Map<string, string>();
+  if (stripePlans?.length) {
+    for (const p of stripePlans) {
+      const t = p.product_metadata?.tier;
+      if (t && p.price_id) stripePriceMap.set(t, p.price_id);
+    }
+  }
 
   return (
     <AppLayout>
       <div className="mb-8 text-center max-w-2xl mx-auto">
         <h1 className="text-3xl font-display font-bold text-foreground mb-2">Choose Your Plan</h1>
-        <p className="text-muted-foreground text-lg">All plans include a 14-day free trial. No credit card required to start.</p>
+        <p className="text-muted-foreground text-lg">
+          All plans include a 14-day free trial. No credit card required to start.
+        </p>
         {hasSubscription && (
           <div className="mt-4">
             <Button variant="outline" onClick={() => portalMutation.mutate()} data-testid="button-manage-billing">
@@ -114,72 +142,71 @@ export default function Pricing() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-        {(plans || []).map((plan: any) => {
-          const tier = plan.product_metadata?.tier || 'starter';
-          const config = PLAN_FEATURES[tier] || PLAN_FEATURES.starter;
-          const Icon = config.icon;
-          const price = plan.unit_amount ? (plan.unit_amount / 100) : 0;
-          const isCurrentPlan = currentTier === tier && hasSubscription;
+        {HARDCODED_PLANS.map((plan) => {
+          const Icon = plan.icon;
+          const isCurrentPlan = currentTier === plan.tier && hasSubscription;
+          const priceId = stripePriceMap.get(plan.tier);
+          const canCheckout = !!priceId;
 
           return (
             <div
-              key={plan.price_id}
+              key={plan.tier}
               className={`
                 relative bg-card rounded-2xl p-6 border flex flex-col
-                ${config.highlight ? 'border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20' : 'border-border shadow-sm'}
+                ${plan.highlight ? "border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20" : "border-border shadow-sm"}
               `}
-              data-testid={`card-plan-${tier}`}
+              data-testid={`card-plan-${plan.tier}`}
             >
-              {config.highlight && (
+              {plan.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-bold">Most Popular</Badge>
+                  <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-bold">
+                    Most Popular
+                  </Badge>
                 </div>
               )}
 
               <div className="mb-6">
-                <div className={`h-12 w-12 rounded-xl flex items-center justify-center mb-4 ${config.highlight ? 'bg-primary/10' : 'bg-muted'}`}>
-                  <Icon className={`h-6 w-6 ${config.highlight ? 'text-primary' : 'text-muted-foreground'}`} />
+                <div className={`h-12 w-12 rounded-xl flex items-center justify-center mb-4 ${plan.highlight ? "bg-primary/10" : "bg-muted"}`}>
+                  <Icon className={`h-6 w-6 ${plan.highlight ? "text-primary" : "text-muted-foreground"}`} />
                 </div>
-                <h3 className="text-xl font-bold">{plan.product_name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{plan.product_description}</p>
+                <h3 className="text-xl font-bold">{plan.name}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
               </div>
 
               <div className="mb-6">
-                <span className="text-4xl font-display font-extrabold">${price}</span>
+                <span className="text-4xl font-display font-extrabold">${plan.price}</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
 
               <ul className="space-y-3 mb-8 flex-1">
-                {config.features.map((feature, i) => (
+                {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <span>{feature}</span>
+                    {feature.included ? (
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                    ) : (
+                      <X className="h-4 w-4 text-muted-foreground/30 mt-0.5 shrink-0" />
+                    )}
+                    <span className={feature.included ? "" : "text-muted-foreground/50"}>{feature.label}</span>
                   </li>
                 ))}
               </ul>
 
               <Button
-                className={`w-full rounded-xl ${config.highlight ? '' : ''}`}
-                variant={config.highlight ? 'default' : 'outline'}
+                className="w-full rounded-xl"
+                variant={plan.highlight ? "default" : "outline"}
                 size="lg"
-                disabled={isCurrentPlan || checkoutMutation.isPending}
-                onClick={() => checkoutMutation.mutate({ priceId: plan.price_id, tier })}
-                data-testid={`button-subscribe-${tier}`}
+                disabled={isCurrentPlan || checkoutMutation.isPending || !canCheckout}
+                onClick={() => {
+                  if (priceId) checkoutMutation.mutate({ priceId, tier: plan.tier });
+                }}
+                data-testid={`button-subscribe-${plan.tier}`}
               >
-                {checkoutMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : null}
-                {isCurrentPlan ? 'Current Plan' : 'Start Free Trial'}
+                {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {isCurrentPlan ? "Current Plan" : !canCheckout ? "Coming Soon" : "Start Free Trial"}
               </Button>
             </div>
           );
         })}
-
-        {(!plans || plans.length === 0) && (
-          <div className="col-span-full text-center py-12">
-            <p className="text-muted-foreground">Subscription plans are being set up. Please check back shortly.</p>
-          </div>
-        )}
       </div>
 
       <div className="mt-12 text-center space-y-2">
