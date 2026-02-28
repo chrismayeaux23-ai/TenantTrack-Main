@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Dialog } from "@/components/ui/Dialog";
-import { Loader2, Plus, Users, Mail, Phone, Trash2 } from "lucide-react";
+import { Loader2, Plus, Users, Mail, Phone, Trash2, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/use-subscription";
+import { Link } from "wouter";
 
 export default function Staff() {
   const { data: staff, isLoading } = useStaff();
   const { mutate: createStaff, isPending: isCreating } = useCreateStaff();
   const { mutate: deleteStaff, isPending: isDeleting } = useDeleteStaff();
   const { toast } = useToast();
+  const { limits, tierLabel } = useSubscription();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -52,6 +55,26 @@ export default function Staff() {
       <AppLayout>
         <div className="h-[60vh] flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!limits.staffAssignment) {
+    return (
+      <AppLayout>
+        <div className="max-w-lg mx-auto text-center py-16">
+          <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <h2 className="text-2xl font-display font-bold mb-3">Staff Management</h2>
+          <p className="text-muted-foreground mb-6">
+            Add and manage maintenance staff members with the Growth plan or higher.
+            Your current plan: <strong>{tierLabel}</strong>
+          </p>
+          <Link href="/pricing">
+            <Button data-testid="button-upgrade-staff">Upgrade Your Plan</Button>
+          </Link>
         </div>
       </AppLayout>
     );

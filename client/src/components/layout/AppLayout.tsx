@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Building2, LayoutDashboard, LogOut, Menu, X, CreditCard, Users } from "lucide-react";
+import { Building2, ClipboardList, LogOut, Menu, X, CreditCard, Users } from "lucide-react";
 import { Button } from "../ui/Button";
 import logoPng from "@assets/file_000000001adc71f58731a09f21d2988d_1772208715788.png";
 
@@ -11,7 +11,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   const navigation = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Requests", href: "/", icon: ClipboardList },
     { name: "Properties", href: "/properties", icon: Building2 },
     { name: "Staff", href: "/staff", icon: Users },
     { name: "Pricing", href: "/pricing", icon: CreditCard },
@@ -64,15 +64,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="p-4 border-t border-border mt-auto">
-          <div className="flex items-center gap-3 px-4 py-3 mb-4">
-            <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-bold">
+          <Link
+            href="/profile"
+            className="flex items-center gap-3 px-4 py-3 mb-4 rounded-xl cursor-pointer hover:bg-accent transition-colors"
+            onClick={() => setIsMobileMenuOpen(false)}
+            data-testid="link-profile"
+          >
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
               {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'L'}
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-medium truncate">{user?.firstName || 'Landlord'}</p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
-          </div>
+          </Link>
           <Button variant="outline" className="w-full justify-start" onClick={() => logout()}>
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out

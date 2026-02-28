@@ -43,8 +43,13 @@ const PLAN_FEATURES: Record<string, { features: string[]; icon: any; highlight?:
 export default function Pricing() {
   const { toast } = useToast();
 
-  const { data: plans, isLoading: plansLoading } = useQuery<any[]>({
+  const { data: plans, isLoading: plansLoading, error: plansError } = useQuery<any[]>({
     queryKey: ['/api/stripe/plans'],
+    queryFn: async () => {
+      const res = await fetch('/api/stripe/plans');
+      if (!res.ok) throw new Error("Failed to fetch plans");
+      return res.json();
+    },
   });
 
   const { data: subData, isLoading: subLoading } = useQuery<any>({
@@ -177,9 +182,15 @@ export default function Pricing() {
         )}
       </div>
 
-      <div className="mt-12 text-center">
+      <div className="mt-12 text-center space-y-2">
         <p className="text-sm text-muted-foreground">
           14-day free trial on all plans. No credit card required. Cancel anytime.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          By subscribing, you agree to our{" "}
+          <a href="/terms" className="text-primary hover:underline">Terms & Conditions</a>{" "}
+          and{" "}
+          <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>.
         </p>
       </div>
     </AppLayout>

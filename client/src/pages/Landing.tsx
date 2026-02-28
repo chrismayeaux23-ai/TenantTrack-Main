@@ -109,8 +109,12 @@ export default function Landing() {
               </a>
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-border text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} TenantTrack. All rights reserved.
+          <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+            <p>&copy; {new Date().getFullYear()} TenantTrack. All rights reserved.</p>
+            <div className="flex gap-4">
+              <Link href="/terms" className="hover:text-primary transition-colors" data-testid="link-terms">Terms & Conditions</Link>
+              <Link href="/privacy" className="hover:text-primary transition-colors" data-testid="link-privacy">Privacy Policy</Link>
+            </div>
           </div>
         </div>
       </footer>

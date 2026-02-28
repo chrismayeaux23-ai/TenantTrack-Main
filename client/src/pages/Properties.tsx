@@ -5,16 +5,19 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Dialog } from "@/components/ui/Dialog";
+import { Badge } from "@/components/ui/Badge";
 import { QRCodeSVG } from "qrcode.react";
 import { Loader2, Plus, Building, MapPin, Download, QrCode, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useSubscription } from "@/hooks/use-subscription";
 
 export default function Properties() {
   const { data: properties, isLoading } = useProperties();
   const { mutate: createProperty, isPending: isCreating } = useCreateProperty();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { limits, tierLabel } = useSubscription();
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeQR, setActiveQR] = useState<{id: number, name: string} | null>(null);
@@ -64,9 +67,27 @@ export default function Properties() {
           <h1 className="text-3xl font-display font-bold text-foreground">Properties</h1>
           <p className="text-muted-foreground mt-2">Manage your buildings and generate report QR codes.</p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)} className="shadow-lg shadow-primary/20">
-          <Plus className="mr-2 h-5 w-5" /> Add Property
-        </Button>
+        <div className="flex items-center gap-3">
+          {limits.maxProperties < 999 && (
+            <Badge variant="outline" className="text-xs" data-testid="text-property-limit">
+              {properties?.length || 0}/{limits.maxProperties} on {tierLabel}
+            </Badge>
+          )}
+          <Button 
+            onClick={() => {
+              if ((properties?.length || 0) >= limits.maxProperties) {
+                toast({ title: "Plan Limit Reached", description: `Your ${tierLabel} plan allows up to ${limits.maxProperties} properties. Upgrade to add more.`, variant: "destructive" });
+                setLocation("/pricing");
+                return;
+              }
+              setIsAddModalOpen(true);
+            }} 
+            className="shadow-lg shadow-primary/20"
+            data-testid="button-add-property"
+          >
+            <Plus className="mr-2 h-5 w-5" /> Add Property
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

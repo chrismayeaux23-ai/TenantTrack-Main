@@ -16,6 +16,9 @@ import PrintFlyer from "@/pages/PrintFlyer";
 import Pricing from "@/pages/Pricing";
 import Staff from "@/pages/Staff";
 import TrackRequest from "@/pages/TrackRequest";
+import Profile from "@/pages/Profile";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
 
 // Protected Route Wrapper
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -79,6 +82,14 @@ function Router() {
       <Route path="/pricing">
         <ProtectedRoute component={Pricing} />
       </Route>
+
+      <Route path="/profile">
+        <ProtectedRoute component={Profile} />
+      </Route>
+
+      {/* Public Legal Pages */}
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
 
       {/* Fallback */}
       <Route component={NotFound} />

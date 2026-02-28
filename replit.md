@@ -19,12 +19,15 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - Stripe subscription billing with 3 tiers: Starter ($19), Growth ($39), Pro ($59)
 - Maintenance staff management: landlords add/remove team members, assign requests to staff
 - Tenant tracking: each request gets a unique 8-char tracking code; tenants check status at `/track/:code`
+- Plan-based feature gating: property limits (trial=2, starter=5, growth/pro=unlimited), staff assignment (growth+)
+- Landlord profile page: edit name, phone, company name
+- Terms & Conditions and Privacy Policy pages
 
 ## File Structure
 - `shared/schema.ts` - Drizzle schema (properties, maintenanceRequests, maintenanceStaff tables)
-- `shared/models/auth.ts` - Replit Auth schema (users, sessions tables) + Stripe fields
+- `shared/models/auth.ts` - Replit Auth schema (users, sessions tables) + Stripe fields + phone, companyName
 - `shared/routes.ts` - Shared route types
-- `server/routes.ts` - API routes (app + Stripe checkout/portal/plans)
+- `server/routes.ts` - API routes (app + Stripe checkout/portal/plans + profile)
 - `server/storage.ts` - Storage interface (CRUD)
 - `server/stripeClient.ts` - Stripe client using Replit connector credentials
 - `server/webhookHandlers.ts` - Stripe webhook processing via stripe-replit-sync
@@ -32,21 +35,33 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - `server/db.ts` - Database connection
 - `server/replit_integrations/` - Auth + Object Storage integrations
 - `client/src/App.tsx` - Routes and app wrapper
-- `client/src/pages/` - Landing, Dashboard, Properties, TenantReport, PrintFlyer, Pricing, Staff, TrackRequest
+- `client/src/pages/` - Landing, Dashboard, Properties, TenantReport, PrintFlyer, Pricing, Staff, TrackRequest, Profile, Terms, Privacy
 - `client/src/components/layout/AppLayout.tsx` - Sidebar layout for landlord pages
-- `client/src/hooks/` - Auth, properties, requests, staff, upload hooks
+- `client/src/hooks/` - Auth, properties, requests, staff, upload, subscription hooks
 
 ## Routes
-- `/` - Landing (unauthenticated) or Dashboard (authenticated)
+- `/` - Landing (unauthenticated) or Dashboard/Requests (authenticated)
 - `/properties` - Property management (protected)
 - `/pricing` - Subscription plans and billing (protected)
+- `/profile` - Landlord profile editing (protected)
 - `/flyer/:propertyId` - Printable flyer with QR code (protected)
 - `/report/:propertyId` - Public tenant maintenance form
-- `/staff` - Maintenance staff management (protected)
+- `/staff` - Maintenance staff management (protected, Growth+ plan)
 - `/track/:code` - Public request tracking page (no auth)
+- `/terms` - Terms and Conditions (public)
+- `/privacy` - Privacy Policy (public)
+
+## API Routes
+- `GET /api/profile` - Get landlord profile
+- `PATCH /api/profile` - Update landlord profile (firstName, lastName, phone, companyName)
+- `GET /api/stripe/plans` - Get subscription plans (filtered by tier metadata)
+- `GET /api/stripe/subscription` - Get current subscription status
+- `POST /api/stripe/checkout` - Create Stripe checkout session
+- `POST /api/stripe/portal` - Create Stripe billing portal session
 
 ## Stripe Setup
-- Products seeded via `server/seed-products.ts`
+- Products seeded via `server/seed-products.ts` (3 products with tier metadata)
+- Plans query filters by `metadata->>'tier' IS NOT NULL` to exclude duplicates
 - stripe-replit-sync manages `stripe` schema tables automatically (DO NOT modify)
 - Webhook route registered BEFORE express.json() middleware in server/index.ts
 - Users table has stripe_customer_id, stripe_subscription_id, subscription_tier columns
@@ -57,9 +72,12 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - Logo: square logo with house/trees/tools; banner image for hero
 - Contact: support@tenant-track.com, (503) 380-6482, www.tenant-track.com
 - Custom domain: www.tenant-track.com (configured via Replit deployment settings)
+- Sidebar nav: Requests, Properties, Staff, Pricing + clickable profile at bottom
 
 ## Notes
 - Object storage wildcard route uses regex syntax for Express 5 compatibility
 - Logo assets in `attached_assets/` imported via `@assets/` alias
 - Stripe connector handles API keys automatically (no manual .env needed)
 - Deployment configured as autoscale with `npm run build` + `npm run start`
+- Build outputs ESM format (dist/index.mjs) with __dirname shim in banner
+- Stripe initialization deferred to after server listen (non-blocking)

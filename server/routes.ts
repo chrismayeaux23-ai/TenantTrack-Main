@@ -207,6 +207,58 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      if (!user) return res.status(404).json({ message: "User not found" });
+      res.json({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        companyName: user.companyName,
+        profileImageUrl: user.profileImageUrl,
+        subscriptionTier: user.subscriptionTier || 'trial',
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch profile" });
+    }
+  });
+
+  app.patch('/api/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const schema = z.object({
+        firstName: z.string().min(1).optional(),
+        lastName: z.string().min(1).optional(),
+        phone: z.string().optional(),
+        companyName: z.string().optional(),
+      });
+      const input = schema.parse(req.body);
+      const [updated] = await db.update(users)
+        .set({ ...input, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+      res.json({
+        id: updated.id,
+        email: updated.email,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        phone: updated.phone,
+        companyName: updated.companyName,
+        profileImageUrl: updated.profileImageUrl,
+        subscriptionTier: updated.subscriptionTier || 'trial',
+      });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
   app.get('/api/stripe/publishable-key', async (_req, res) => {
     try {
       const key = await getStripePublishableKey();
@@ -230,7 +282,7 @@ export async function registerRoutes(
           pr.recurring
         FROM stripe.products p
         LEFT JOIN stripe.prices pr ON pr.product = p.id AND pr.active = true
-        WHERE p.active = true
+        WHERE p.active = true AND p.metadata->>'tier' IS NOT NULL
         ORDER BY pr.unit_amount ASC
       `);
       res.json(result.rows);
