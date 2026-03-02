@@ -143,7 +143,7 @@ export default function Landing() {
             <span className="font-display font-bold text-xl text-foreground">TenantTrack</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-            <button onClick={() => scrollTo("features")} className="hover:text-foreground transition-colors" data-testid="nav-features">Features</button>
+            <Link href="/features" className="hover:text-foreground transition-colors" data-testid="nav-features">Features</Link>
             <button onClick={() => scrollTo("how-it-works")} className="hover:text-foreground transition-colors" data-testid="nav-how-it-works">How It Works</button>
             <button onClick={() => scrollTo("pricing")} className="hover:text-foreground transition-colors" data-testid="nav-pricing">Pricing</button>
           </div>
@@ -463,7 +463,7 @@ export default function Landing() {
             <div>
               <h4 className="font-bold text-sm mb-4">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button onClick={() => scrollTo("features")} className="hover:text-primary transition-colors">Features</button></li>
+                <li><Link href="/features" className="hover:text-primary transition-colors">All Features</Link></li>
                 <li><button onClick={() => scrollTo("pricing")} className="hover:text-primary transition-colors">Pricing</button></li>
                 <li><button onClick={() => scrollTo("how-it-works")} className="hover:text-primary transition-colors">How It Works</button></li>
               </ul>

@@ -43,7 +43,7 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - `server/db.ts` - Database connection
 - `server/replit_integrations/` - Auth + Object Storage integrations
 - `client/src/App.tsx` - Routes and app wrapper
-- `client/src/pages/` - Landing, Dashboard, Properties, TenantReport, PrintFlyer, Pricing, Staff, TrackRequest, Profile, Terms, Privacy, Tenants, Billing, CostTracking, RecurringMaintenance
+- `client/src/pages/` - Landing, Features, Dashboard, Properties, TenantReport, PrintFlyer, Pricing, Staff, TrackRequest, Profile, Terms, Privacy, Tenants, Billing, CostTracking, RecurringMaintenance
 - `client/src/components/layout/AppLayout.tsx` - Sidebar layout with Requests, Properties, Tenants, Staff, Costs, Scheduled, Billing, Pricing nav
 - `client/src/hooks/` - Auth, properties, requests, staff, upload, subscription hooks
 
@@ -52,6 +52,7 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - `/properties` - Property management (protected)
 - `/tenants` - Tenant directory (protected)
 - `/staff` - Maintenance staff management (protected, Growth+ plan)
+- `/features` - Detailed features breakdown (public)
 - `/costs` - Repair cost tracking & reports (protected)
 - `/scheduled` - Recurring maintenance scheduling (protected)
 - `/billing` - Billing & subscription management (protected)

@@ -22,6 +22,7 @@ import Tenants from "@/pages/Tenants";
 import Billing from "@/pages/Billing";
 import CostTracking from "@/pages/CostTracking";
 import RecurringMaintenance from "@/pages/RecurringMaintenance";
+import Features from "@/pages/Features";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -98,6 +99,7 @@ function Router() {
         <ProtectedRoute component={Profile} />
       </Route>
 
+      <Route path="/features" component={Features} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
 
