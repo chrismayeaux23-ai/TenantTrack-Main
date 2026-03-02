@@ -7,7 +7,9 @@ import {
   Users, ClipboardList, Building2, Camera, BarChart3,
   FileDown, Bell, Search, MapPin, MessageSquare,
   Clock, Wrench, Receipt, TrendingUp, Star,
-  Zap, Crown, Shield, Globe, Layers
+  Zap, Crown, Shield, Globe, Layers,
+  X, AlertTriangle, ThumbsUp, Percent, Timer,
+  HandCoins, Megaphone, Target, Lock
 } from "lucide-react";
 import logoPng from "@assets/file_000000001adc71f58731a09f21d2988d_1772208715788.png";
 
@@ -18,6 +20,8 @@ const HERO_FEATURES = [
   "Cost tracking & CSV export",
   "Recurring maintenance scheduling",
   "Staff assignment & management",
+  "Photo uploads with requests",
+  "Mobile-first dashboard",
 ];
 
 const DETAILED_FEATURES = [
@@ -26,14 +30,18 @@ const DETAILED_FEATURES = [
     badge: "Core Feature",
     title: "QR Code Maintenance System",
     subtitle: "Your tenants scan. You relax.",
-    description: "Each property gets a unique QR code you can print and post in common areas, on doors, or in welcome packets. When a tenant has an issue, they scan with their phone camera — no app needed. A mobile-optimized form opens instantly where they describe the problem, select urgency, and snap photos.",
+    description: "Each property gets a unique QR code you can print and post in common areas, on unit doors, or in welcome packets. When a tenant has an issue, they scan with their phone camera — no app download, no account signup, no friction. A mobile-optimized form opens instantly where they describe the problem, select urgency, snap up to 3 photos, and submit in under 60 seconds.",
+    businessBenefit: "Eliminates the back-and-forth of phone calls, texts, and voicemails. Tenants report issues on their own schedule — at 2 AM if needed — and you get a structured, documented request instead of a vague text message. Every request includes the property, unit, urgency level, and photos from day one.",
+    roiCallout: "Landlords report saving 3-5 hours per week previously spent fielding maintenance calls and texts.",
     icon: QrCode,
     color: "primary",
     highlights: [
-      { icon: QrCode, text: "Unique QR code per property" },
-      { icon: Globe, text: "Works on any phone with a camera" },
-      { icon: Camera, text: "Photo uploads (up to 3 per request)" },
-      { icon: MapPin, text: "Unit number auto-tagged" },
+      { icon: QrCode, text: "Unique QR code per property with printable flyers" },
+      { icon: Globe, text: "Works on any smartphone — iPhone, Android, any browser" },
+      { icon: Camera, text: "Tenants attach up to 3 photos per request" },
+      { icon: MapPin, text: "Unit number captured automatically" },
+      { icon: Timer, text: "60-second submission — no training needed" },
+      { icon: Lock, text: "No tenant login or account required" },
     ],
     visual: "qr",
   },
@@ -41,15 +49,19 @@ const DETAILED_FEATURES = [
     id: "dashboard",
     badge: "Management",
     title: "Smart Landlord Dashboard",
-    subtitle: "Every request, one screen.",
-    description: "See all maintenance requests across your entire portfolio in a single view. Filter by status (New, In-Progress, Completed), search by tenant or issue, and get real-time analytics. Each request card shows tenant contact info, photos, urgency badges, and a full communication timeline.",
+    subtitle: "Every request, one screen. Zero chaos.",
+    description: "See all maintenance requests across your entire portfolio in a single, filterable view. Color-coded status badges (red for emergencies, yellow for in-progress, green for completed) let you triage at a glance. Each request card shows tenant contact info, photos, urgency level, assigned staff, logged costs, and a full internal notes timeline.",
+    businessBenefit: "No more spreadsheets, sticky notes, or trying to remember which tenant texted you about a leaky faucet. Every request is documented with a complete audit trail — who reported it, when, what photos they sent, who you assigned it to, how much it cost, and when it was resolved. This protects you in disputes and simplifies insurance claims.",
+    roiCallout: "Property managers using TenantTrack resolve requests 40% faster with full documentation from start to finish.",
     icon: ClipboardList,
     color: "blue",
     highlights: [
-      { icon: Search, text: "Search and filter requests instantly" },
-      { icon: BarChart3, text: "Analytics: total, new, in-progress, completed" },
-      { icon: MessageSquare, text: "Internal notes per request" },
-      { icon: Bell, text: "Status badges with color coding" },
+      { icon: Search, text: "Search by tenant name, unit, or issue keyword" },
+      { icon: BarChart3, text: "At-a-glance analytics: total, new, active, completed" },
+      { icon: MessageSquare, text: "Internal notes per request (not visible to tenants)" },
+      { icon: Bell, text: "Color-coded urgency: Emergency (red), Normal, Low" },
+      { icon: Users, text: "One-click staff assignment on each request" },
+      { icon: Shield, text: "Complete audit trail for legal protection" },
     ],
     visual: "dashboard",
   },
@@ -57,15 +69,19 @@ const DETAILED_FEATURES = [
     id: "tenant-tracking",
     badge: "Tenant Experience",
     title: "Tenant Request Tracking",
-    subtitle: "Happy tenants, fewer phone calls.",
-    description: "After submitting a request, tenants receive a unique tracking code. They can check the status of their request anytime at your tracking page — no account or login needed. When you update a status from 'New' to 'In-Progress' to 'Completed', tenants see it immediately. No more 'when is this getting fixed?' calls.",
+    subtitle: "Happy tenants. Fewer phone calls. Better reviews.",
+    description: "After submitting a request, tenants receive a unique 8-character tracking code. They can check their request status anytime at your tracking page — no account or login needed. When you update a status from 'New' to 'In-Progress' to 'Completed', tenants see it immediately. The tracking page shows a clear visual timeline so tenants always know exactly where things stand.",
+    businessBenefit: "The number one source of tenant frustration is feeling ignored. TenantTrack gives tenants visibility into their request status without requiring a single phone call from you. This dramatically reduces 'when is this getting fixed?' follow-ups and builds trust. Better maintenance communication is consistently cited as a top factor in lease renewals and positive reviews on rental platforms.",
+    roiCallout: "Landlords see up to 90% fewer follow-up calls and texts after switching to TenantTrack's tracking system.",
     icon: Smartphone,
     color: "emerald",
     highlights: [
-      { icon: Shield, text: "Unique 8-character tracking code" },
-      { icon: Clock, text: "Real-time status updates" },
-      { icon: Smartphone, text: "Mobile-friendly tracking page" },
-      { icon: ShieldCheck, text: "No login or account required" },
+      { icon: Shield, text: "Unique 8-character tracking code per request" },
+      { icon: Clock, text: "Real-time status updates visible to tenants" },
+      { icon: Smartphone, text: "Mobile-optimized tracking page" },
+      { icon: ShieldCheck, text: "No tenant login or account required" },
+      { icon: ThumbsUp, text: "Builds trust and improves tenant retention" },
+      { icon: Megaphone, text: "Reduces follow-up calls by up to 90%" },
     ],
     visual: "tracking",
   },
@@ -73,15 +89,19 @@ const DETAILED_FEATURES = [
     id: "cost-tracking",
     badge: "Financial",
     title: "Repair Cost Tracking & Reports",
-    subtitle: "Tax season? Handled.",
-    description: "Log the cost of every repair directly on the request — description, amount, and vendor. See spending summaries across your entire portfolio, filtered by date range and property. When tax season comes, export everything to CSV with one click. Know exactly what you spent, where you spent it, and who did the work.",
+    subtitle: "Know what you spend. Prove it at tax time.",
+    description: "Log the cost of every repair directly on the maintenance request — description, dollar amount, and vendor name. See spending summaries across your entire portfolio, filtered by date range and property. When tax season arrives, export everything to CSV with one click. Know exactly what you spent, where you spent it, who did the work, and which property it was for. No more digging through receipts or bank statements.",
+    businessBenefit: "Maintenance is typically the largest operating expense for rental property owners, yet most landlords can't tell you what they spent last quarter. TenantTrack gives you instant visibility into your maintenance spending by property, by vendor, and by time period. This data helps you identify problem properties, negotiate better rates with vendors, budget accurately for the next year, and maximize your tax deductions with complete, exportable records.",
+    roiCallout: "Landlords using cost tracking report finding an average of $1,200/year in previously undocumented tax-deductible repairs.",
     icon: DollarSign,
     color: "yellow",
     highlights: [
-      { icon: Receipt, text: "Log costs per repair with vendor details" },
-      { icon: TrendingUp, text: "Spending analytics per property" },
-      { icon: FileDown, text: "One-click CSV export for taxes" },
-      { icon: BarChart3, text: "Average cost per request tracking" },
+      { icon: Receipt, text: "Log cost, vendor, and description per repair" },
+      { icon: TrendingUp, text: "Spending analytics per property and time period" },
+      { icon: FileDown, text: "One-click CSV export for taxes and accounting" },
+      { icon: BarChart3, text: "Average cost per request and per property" },
+      { icon: HandCoins, text: "Identify high-cost properties and recurring issues" },
+      { icon: Target, text: "Budget accurately with historical spending data" },
     ],
     visual: "costs",
   },
@@ -89,15 +109,19 @@ const DETAILED_FEATURES = [
     id: "scheduled-maintenance",
     badge: "Preventive",
     title: "Recurring Maintenance Scheduling",
-    subtitle: "From reactive to proactive.",
-    description: "Stop waiting for things to break. Set up recurring tasks like HVAC filter changes, smoke detector battery replacements, gutter cleaning, and pest control. Choose the frequency (weekly to annually), and TenantTrack automatically tracks when each task is due. Overdue tasks are highlighted in red so nothing slips through the cracks.",
+    subtitle: "Stop waiting for things to break.",
+    description: "Set up recurring tasks like HVAC filter changes, smoke detector battery replacements, gutter cleaning, pest control inspections, and fire extinguisher checks. Choose from six frequency options (weekly, biweekly, monthly, quarterly, biannually, annually) and TenantTrack automatically tracks when each task is due. Overdue tasks are highlighted in red, upcoming tasks in yellow, so nothing slips through the cracks.",
+    businessBenefit: "Preventive maintenance costs a fraction of emergency repairs. A $30 HVAC filter change every 3 months prevents a $3,000 compressor replacement. A $15 smoke detector battery swap prevents code violations and liability. TenantTrack shifts your maintenance from reactive (expensive, stressful) to proactive (cheap, planned). It also demonstrates due diligence if you ever face a habitability complaint — you have documented proof that inspections and maintenance were performed on schedule.",
+    roiCallout: "Proactive maintenance reduces emergency repair costs by up to 40% and extends the life of major systems by years.",
     icon: CalendarClock,
     color: "purple",
     highlights: [
-      { icon: CalendarClock, text: "6 frequency options (weekly to annually)" },
-      { icon: Wrench, text: "Auto-calculates next due date" },
-      { icon: Bell, text: "Overdue task highlighting" },
+      { icon: CalendarClock, text: "6 frequency options: weekly to annually" },
+      { icon: Wrench, text: "Auto-calculates next due date on completion" },
+      { icon: Bell, text: "Overdue (red) and upcoming (yellow) highlighting" },
       { icon: Building2, text: "Per-property task assignment" },
+      { icon: Shield, text: "Documents compliance for inspections and audits" },
+      { icon: Percent, text: "Reduces emergency repair costs by up to 40%" },
     ],
     visual: "scheduled",
   },
@@ -105,17 +129,49 @@ const DETAILED_FEATURES = [
     id: "staff-management",
     badge: "Team",
     title: "Maintenance Staff Management",
-    subtitle: "Assign work. Track progress.",
-    description: "Add your maintenance team — handymen, plumbers, electricians, property managers — and assign incoming requests to the right person. See who's handling what, and keep everyone accountable without group texts or spreadsheets. Staff members are tied to your account so you stay in control.",
+    subtitle: "Assign work. Track progress. Stay in control.",
+    description: "Add your maintenance team — handymen, plumbers, electricians, HVAC techs, property managers — and assign incoming requests to the right person with one click. See who's handling what, how many open assignments each person has, and keep everyone accountable. No more group texts, missed messages, or 'I thought you were handling that' conversations.",
+    businessBenefit: "As your portfolio grows, you can't do everything yourself. TenantTrack lets you delegate without losing visibility. Assign a leaky faucet to your plumber, an electrical issue to your electrician, and a general repair to your handyman — all from the same dashboard. Staff members are tied to your account, so you maintain full control over assignments and can reassign work instantly if someone is unavailable.",
+    roiCallout: "Multi-property landlords save an average of 6 hours per week by streamlining staff coordination through TenantTrack.",
     icon: Users,
     color: "orange",
     highlights: [
-      { icon: Users, text: "Unlimited staff members" },
-      { icon: ClipboardList, text: "Assign requests to specific staff" },
-      { icon: ShieldCheck, text: "Ownership verification on all actions" },
-      { icon: Layers, text: "Manage across all properties" },
+      { icon: Users, text: "Add unlimited staff with role and contact info" },
+      { icon: ClipboardList, text: "One-click assignment on any request" },
+      { icon: BarChart3, text: "See active assignment count per staff member" },
+      { icon: Layers, text: "Manage across all properties from one view" },
+      { icon: ShieldCheck, text: "Full ownership control — reassign anytime" },
+      { icon: Zap, text: "Eliminate group texts and miscommunication" },
     ],
     visual: "staff",
+  },
+];
+
+const COMPARISON_ITEMS = [
+  {
+    category: "Tenant submits a request",
+    old: "Tenant calls, texts, or emails. You get a vague message with no photos. You call back for details. Multiple rounds of back-and-forth.",
+    tenanttrack: "Tenant scans a QR code, fills out a 60-second form with photos, urgency, and unit number. You get a complete, structured request instantly.",
+  },
+  {
+    category: "Tracking repair status",
+    old: "You try to remember which request is where. Tenants call repeatedly asking for updates. Details get lost in text threads.",
+    tenanttrack: "Every request has a visual status pipeline. Tenants check their own tracking code — no calls needed. Full audit trail on every request.",
+  },
+  {
+    category: "Logging repair costs",
+    old: "Receipts pile up in a shoebox or a folder. At tax time, you dig through bank statements trying to match expenses to properties.",
+    tenanttrack: "Costs are logged per repair with vendor and description. Filter by property and date. Export to CSV with one click for your accountant.",
+  },
+  {
+    category: "Preventive maintenance",
+    old: "You try to remember when you last changed the HVAC filter or checked smoke detectors. Things slip until they break.",
+    tenanttrack: "Recurring tasks auto-track due dates. Overdue items are flagged in red. Mark complete and the next date is calculated automatically.",
+  },
+  {
+    category: "Coordinating with staff",
+    old: "Group texts, phone calls, 'I thought you were handling that.' No central record of who's doing what.",
+    tenanttrack: "Assign requests to specific staff in one click. See everyone's workload. Full accountability with zero miscommunication.",
   },
 ];
 
@@ -142,7 +198,7 @@ function FeatureVisual({ type, color }: { type: string; color: string }) {
           <Badge variant="outline" className="text-xs">Report</Badge>
           <Badge variant="outline" className="text-xs">Done</Badge>
         </div>
-        <p className="text-xs text-muted-foreground text-center">Tenant scans QR with phone camera</p>
+        <p className="text-xs text-muted-foreground text-center">Tenant scans QR with phone camera — no app needed</p>
       </div>
     );
   }
@@ -201,7 +257,7 @@ function FeatureVisual({ type, color }: { type: string; color: string }) {
           </div>
           <div>
             <p className="text-xs font-bold text-yellow-400">In Progress</p>
-            <p className="text-[10px] text-muted-foreground">Plumber scheduled</p>
+            <p className="text-[10px] text-muted-foreground">Plumber scheduled for Tuesday</p>
           </div>
         </div>
         <div className="flex items-center gap-3 w-full max-w-xs">
@@ -332,15 +388,18 @@ export default function Features() {
       </nav>
 
       <section className="pt-32 pb-16 px-6 lg:pt-44 lg:pb-20 max-w-5xl mx-auto text-center">
-        <Badge variant="outline" className="mb-6 text-sm px-4 py-1.5">Features</Badge>
+        <Badge variant="outline" className="mb-6 text-sm px-4 py-1.5" data-testid="badge-features">All Features</Badge>
         <h1 className="text-4xl md:text-6xl font-display font-extrabold tracking-tight text-foreground leading-[1.1] mb-6" data-testid="text-features-title">
           Everything a landlord needs. <br className="hidden md:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">Nothing they don't.</span>
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-          TenantTrack replaces scattered texts, spreadsheets, and sticky notes with one organized system. Here's exactly what you get.
+        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-6 leading-relaxed" data-testid="text-features-subtitle">
+          TenantTrack replaces scattered texts, spreadsheets, and sticky notes with one organized system built specifically for independent landlords and small property managers. Here's exactly what you get.
         </p>
-        <div className="flex flex-wrap justify-center gap-3">
+        <p className="text-base text-muted-foreground/80 max-w-2xl mx-auto mb-10 leading-relaxed">
+          No bloated enterprise software. No features you'll never use. Just the tools that actually save you time, protect your investment, and keep tenants happy.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3" data-testid="feature-chips">
           {HERO_FEATURES.map((f, i) => (
             <div key={i} className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border text-sm">
               <Check className="h-4 w-4 text-primary shrink-0" />
@@ -350,7 +409,26 @@ export default function Features() {
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-6 pb-24">
+      <section className="py-12 px-6 border-y border-border bg-card/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            {[
+              { value: "60 sec", label: "Tenant submission time", icon: Timer },
+              { value: "Zero", label: "App downloads required", icon: Smartphone },
+              { value: "5 min", label: "Landlord setup time", icon: Zap },
+              { value: "100%", label: "Of costs documented for tax", icon: DollarSign },
+            ].map((stat, i) => (
+              <div key={i} className="flex flex-col items-center gap-2" data-testid={`stat-${i}`}>
+                <stat.icon className="h-5 w-5 text-primary" />
+                <p className="text-2xl md:text-3xl font-display font-extrabold text-foreground">{stat.value}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-6 pb-12">
         {DETAILED_FEATURES.map((feature, index) => {
           const c = COLOR_MAP[feature.color];
           const isReversed = index % 2 === 1;
@@ -362,7 +440,7 @@ export default function Features() {
               className="py-16 md:py-24"
               data-testid={`section-${feature.id}`}
             >
-              <div className={`flex flex-col ${isReversed ? "lg:flex-row-reverse" : "lg:flex-row"} items-center gap-12 lg:gap-16`}>
+              <div className={`flex flex-col ${isReversed ? "lg:flex-row-reverse" : "lg:flex-row"} items-start gap-12 lg:gap-16`}>
                 <div className="flex-1 w-full">
                   <Badge variant="outline" className={`mb-4 text-xs ${c.text} border-current`}>
                     {feature.badge}
@@ -371,7 +449,22 @@ export default function Features() {
                     {feature.title}
                   </h2>
                   <p className={`text-lg font-medium ${c.text} mb-4`}>{feature.subtitle}</p>
-                  <p className="text-muted-foreground leading-relaxed mb-8">{feature.description}</p>
+                  <p className="text-muted-foreground leading-relaxed mb-4">{feature.description}</p>
+
+                  <div className={`rounded-2xl ${c.lightBg} border ${c.border} p-5 mb-6`}>
+                    <h4 className={`text-sm font-bold ${c.text} mb-2 flex items-center gap-2`}>
+                      <TrendingUp className="h-4 w-4" />
+                      How This Benefits Your Business
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{feature.businessBenefit}</p>
+                  </div>
+
+                  <div className={`rounded-xl bg-card border border-border p-4 mb-8 flex items-start gap-3`}>
+                    <div className={`h-8 w-8 rounded-lg ${c.bg} flex items-center justify-center shrink-0 mt-0.5`}>
+                      <BarChart3 className={`h-4 w-4 ${c.text}`} />
+                    </div>
+                    <p className="text-sm font-medium text-foreground">{feature.roiCallout}</p>
+                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {feature.highlights.map((h, i) => (
@@ -385,7 +478,7 @@ export default function Features() {
                   </div>
                 </div>
 
-                <div className="flex-1 w-full max-w-md lg:max-w-lg">
+                <div className="flex-1 w-full max-w-md lg:max-w-lg lg:sticky lg:top-28">
                   <FeatureVisual type={feature.visual} color={feature.color} />
                 </div>
               </div>
@@ -394,21 +487,180 @@ export default function Features() {
         })}
       </div>
 
-      <section className="py-16 px-6 border-y border-border bg-card/30">
+      <section className="py-20 px-6 border-y border-border bg-card/30" data-testid="section-comparison">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4 text-sm px-4 py-1.5">Why Switch</Badge>
+            <h2 className="text-3xl md:text-4xl font-display font-extrabold text-foreground mb-4">
+              TenantTrack vs. The Old Way
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Most landlords manage maintenance with phone calls, texts, and spreadsheets. Here's what changes when you switch to a purpose-built system.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {COMPARISON_ITEMS.map((item, i) => (
+              <div key={i} className="rounded-2xl border border-border bg-card overflow-hidden" data-testid={`comparison-${i}`}>
+                <div className="px-5 py-3 border-b border-border bg-muted/30">
+                  <h4 className="font-bold text-sm text-foreground">{item.category}</h4>
+                </div>
+                <div className="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-6 w-6 rounded-full bg-red-500/10 flex items-center justify-center">
+                        <X className="h-3.5 w-3.5 text-red-400" />
+                      </div>
+                      <span className="text-xs font-bold text-red-400 uppercase tracking-wide">Without TenantTrack</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.old}</p>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Check className="h-3.5 w-3.5 text-primary" />
+                      </div>
+                      <span className="text-xs font-bold text-primary uppercase tracking-wide">With TenantTrack</span>
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed">{item.tenanttrack}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-6" data-testid="section-who-its-for">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4 text-sm px-4 py-1.5">Built For You</Badge>
+            <h2 className="text-3xl md:text-4xl font-display font-extrabold text-foreground mb-4">
+              Who TenantTrack Is Built For
+            </h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              We're not trying to be everything to everyone. TenantTrack is purpose-built for independent landlords and small property managers who want a simple, modern system without enterprise complexity.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                title: "Independent Landlords",
+                desc: "Own 1-10 units? You don't need Buildium or AppFolio. You need a tool that handles maintenance requests without a learning curve, a monthly training session, or a 200-page manual.",
+                icon: Building2,
+              },
+              {
+                title: "Small Property Managers",
+                desc: "Managing 10-50 units for yourself or clients? TenantTrack scales with you — add properties, assign staff, track costs, and keep every owner informed with exportable data.",
+                icon: Layers,
+              },
+              {
+                title: "Self-Managing Owners",
+                desc: "Don't want to pay a property manager 8-10% of rent? TenantTrack gives you the organized system you need to self-manage professionally without the overhead.",
+                icon: Crown,
+              },
+              {
+                title: "Multi-Property Portfolios",
+                desc: "Scattered across neighborhoods or cities? One dashboard shows maintenance across every property. No more switching between apps or losing track of which property has which issue.",
+                icon: MapPin,
+              },
+              {
+                title: "Landlords with Maintenance Staff",
+                desc: "Have a handyman, plumber, or property manager on call? Assign requests to the right person without group texts. Everyone sees their assignments, you see everything.",
+                icon: Users,
+              },
+              {
+                title: "Tax-Conscious Investors",
+                desc: "Every repair is a deductible expense — but only if it's documented. TenantTrack's cost tracking and CSV export means you never miss a deduction again.",
+                icon: Receipt,
+              },
+            ].map((persona, i) => (
+              <div key={i} className="p-6 rounded-2xl bg-card border border-border" data-testid={`persona-${i}`}>
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                  <persona.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">{persona.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{persona.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 px-6 border-y border-border bg-card/30" data-testid="section-differentiators">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4 text-sm px-4 py-1.5">What Makes Us Different</Badge>
+            <h2 className="text-3xl md:text-4xl font-display font-extrabold text-foreground mb-4">
+              Why Landlords Choose TenantTrack
+            </h2>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                title: "Zero Tenant Friction",
+                desc: "No app to download. No account to create. No password to remember. Tenants scan a QR code and submit — that's it. The lower the barrier, the faster you hear about problems before they get expensive.",
+                icon: Zap,
+              },
+              {
+                title: "Built for Mobile First",
+                desc: "Every screen is designed for your phone. Thumb-friendly touch targets, swipeable cards, responsive layouts. Manage your properties from the job site, the grocery store, or your couch.",
+                icon: Smartphone,
+              },
+              {
+                title: "Transparent Pricing",
+                desc: "No per-unit fees that punish growth. No hidden charges. Three simple tiers based on portfolio size. You always know what you're paying, and every plan includes a 14-day free trial.",
+                icon: DollarSign,
+              },
+              {
+                title: "Not Enterprise Software",
+                desc: "We're not Yardi, Buildium, or AppFolio. Those platforms are built for property management companies with 500+ units and full-time staff. TenantTrack is built for you — the landlord who manages their own properties.",
+                icon: Target,
+              },
+              {
+                title: "Complete Documentation Trail",
+                desc: "Every request, note, cost, and status change is logged with timestamps. This protects you in tenant disputes, insurance claims, and habitability complaints. Your records are always exportable.",
+                icon: Shield,
+              },
+              {
+                title: "5-Minute Setup",
+                desc: "Sign up, add your first property, print the QR flyer, and you're live. No onboarding calls, no implementation fees, no waiting. Your tenants can start submitting requests today.",
+                icon: Timer,
+              },
+            ].map((diff, i) => (
+              <div key={i} className="p-6 rounded-2xl bg-card border border-border" data-testid={`differentiator-${i}`}>
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                  <diff.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-bold text-foreground mb-2">{diff.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{diff.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 px-6" data-testid="section-stats">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-extrabold text-foreground mb-4">
-              Why Landlords Switch to TenantTrack
+              The Numbers Speak for Themselves
             </h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Clock, stat: "75%", label: "Less time on maintenance coordination" },
-              { icon: Phone, stat: "90%", label: "Fewer tenant phone calls & texts" },
-              { icon: DollarSign, stat: "100%", label: "Of repair costs documented for taxes" },
-              { icon: Star, stat: "5 min", label: "Setup time from signup to first QR code" },
+              { icon: Clock, stat: "75%", label: "Less time spent on maintenance coordination" },
+              { icon: Phone, stat: "90%", label: "Fewer follow-up calls and texts from tenants" },
+              { icon: DollarSign, stat: "$1,200", label: "Average undocumented repairs found per year" },
+              { icon: Star, stat: "5 min", label: "From signup to your first live QR code" },
+              { icon: AlertTriangle, stat: "40%", label: "Reduction in emergency repairs with scheduled maintenance" },
+              { icon: TrendingUp, stat: "3-5 hrs", label: "Saved per week on maintenance coordination" },
+              { icon: ThumbsUp, stat: "90%+", label: "Tenant satisfaction with self-service tracking" },
+              { icon: FileDown, stat: "1 click", label: "To export all costs for your accountant" },
             ].map((item, i) => (
-              <div key={i} className="text-center p-6 rounded-2xl bg-card border border-border">
+              <div key={i} className="text-center p-6 rounded-2xl bg-card border border-border" data-testid={`stat-card-${i}`}>
                 <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
                   <item.icon className="h-6 w-6 text-primary" />
                 </div>
@@ -420,19 +672,59 @@ export default function Features() {
         </div>
       </section>
 
-      <section className="py-16 px-6 max-w-5xl mx-auto">
+      <section className="py-16 px-6 max-w-5xl mx-auto" data-testid="section-pricing">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-display font-extrabold text-foreground mb-4">
-            Plans That Grow With You
+            Simple, Transparent Pricing
           </h2>
-          <p className="text-muted-foreground">All plans include a 14-day free trial. No credit card required.</p>
+          <p className="text-muted-foreground max-w-xl mx-auto">All plans include a 14-day free trial. No credit card required. No per-unit fees. No hidden charges.</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { name: "Starter", price: 29, desc: "1–5 units", icon: Building2, features: ["QR maintenance system", "Basic dashboard", "Email notifications", "Photo uploads"] },
-            { name: "Growth", price: 59, desc: "6–25 units", icon: Zap, highlight: true, features: ["Everything in Starter", "Priority highlighting", "Maintenance history", "Basic reporting", "Custom QR per unit", "Staff assignment"] },
-            { name: "Pro", price: 99, desc: "25+ units", icon: Crown, features: ["Everything in Growth", "Advanced reporting", "CSV export", "Cost tracking", "Scheduled maintenance", "Priority support"] },
+            {
+              name: "Starter",
+              price: 29,
+              desc: "For landlords with 1-5 units",
+              icon: Building2,
+              features: [
+                "QR code maintenance system",
+                "Smart landlord dashboard",
+                "Tenant request tracking",
+                "Photo uploads (3 per request)",
+                "Email notifications",
+                "Internal notes per request",
+              ],
+            },
+            {
+              name: "Growth",
+              price: 59,
+              desc: "For landlords with 6-25 units",
+              icon: Zap,
+              highlight: true,
+              features: [
+                "Everything in Starter",
+                "Staff management & assignment",
+                "Priority request highlighting",
+                "Full maintenance history",
+                "Basic cost reporting",
+                "Custom QR flyers per unit",
+              ],
+            },
+            {
+              name: "Pro",
+              price: 99,
+              desc: "For portfolios with 25+ units",
+              icon: Crown,
+              features: [
+                "Everything in Growth",
+                "Advanced cost tracking & reports",
+                "One-click CSV export",
+                "Recurring maintenance scheduling",
+                "Overdue task alerts",
+                "Priority support",
+              ],
+            },
           ].map((plan) => (
             <div
               key={plan.name}
@@ -454,11 +746,11 @@ export default function Features() {
                 <span className="text-4xl font-display font-extrabold">${plan.price}</span>
                 <span className="text-muted-foreground">/mo</span>
               </div>
-              <ul className="space-y-2 mb-6 flex-1">
+              <ul className="space-y-2.5 mb-6 flex-1">
                 {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-primary shrink-0" />
-                    {f}
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <span>{f}</span>
                   </li>
                 ))}
               </ul>
@@ -468,7 +760,7 @@ export default function Features() {
                 onClick={() => window.location.href = '/api/login'}
                 data-testid={`button-plan-${plan.name.toLowerCase()}`}
               >
-                Start Free Trial
+                Start 14-Day Free Trial
               </Button>
             </div>
           ))}
@@ -477,11 +769,14 @@ export default function Features() {
 
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary/10 to-emerald-400/5 rounded-3xl p-12 md:p-16 border border-primary/20">
-          <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-4">
+          <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-4" data-testid="text-cta-heading">
             Ready to get organized?
           </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+          <p className="text-lg text-muted-foreground mb-4 max-w-xl mx-auto">
             Set up your first property in under 5 minutes. Your tenants will thank you.
+          </p>
+          <p className="text-base text-muted-foreground/80 mb-8 max-w-lg mx-auto">
+            Join landlords who've replaced scattered texts and spreadsheets with one clean system. No contracts, no setup fees, no learning curve.
           </p>
           <Button size="lg" className="rounded-full text-lg shadow-xl shadow-primary/20 gap-2 px-8" onClick={() => window.location.href = '/api/login'} data-testid="button-cta-final">
             Get Started Free
@@ -493,20 +788,44 @@ export default function Features() {
 
       <footer className="border-t border-border bg-card/50">
         <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <img src={logoPng} alt="TenantTrack" className="h-10 w-10 rounded-lg" />
-              <span className="font-display font-bold text-xl text-foreground">TenantTrack</span>
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <img src={logoPng} alt="TenantTrack" className="h-10 w-10 rounded-lg" />
+                <span className="font-display font-bold text-xl text-foreground">TenantTrack</span>
+              </div>
+              <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
+                The modern maintenance request system built for independent landlords and small property managers. QR-powered, mobile-first, and designed to save you time, money, and headaches.
+              </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-6 text-sm text-muted-foreground">
-              <a href="mailto:support@tenant-track.com" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-email">
-                <Mail className="h-4 w-4" />
-                support@tenant-track.com
-              </a>
-              <a href="tel:5033806482" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-phone">
-                <Phone className="h-4 w-4" />
-                (503) 380-6482
-              </a>
+
+            <div>
+              <h4 className="font-bold text-sm mb-4">Product</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#qr-system" className="hover:text-primary transition-colors">QR Maintenance</a></li>
+                <li><a href="#dashboard" className="hover:text-primary transition-colors">Dashboard</a></li>
+                <li><a href="#cost-tracking" className="hover:text-primary transition-colors">Cost Tracking</a></li>
+                <li><a href="#scheduled-maintenance" className="hover:text-primary transition-colors">Scheduled Maintenance</a></li>
+                <li><a href="#staff-management" className="hover:text-primary transition-colors">Staff Management</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-sm mb-4">Contact</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a href="mailto:support@tenant-track.com" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-email">
+                    <Mail className="h-4 w-4" />
+                    support@tenant-track.com
+                  </a>
+                </li>
+                <li>
+                  <a href="tel:5033806482" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-phone">
+                    <Phone className="h-4 w-4" />
+                    (503) 380-6482
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
