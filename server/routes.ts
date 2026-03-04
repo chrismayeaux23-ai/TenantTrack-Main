@@ -59,6 +59,20 @@ export async function registerRoutes(
     }
   });
 
+  app.delete('/api/properties/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const property = await storage.getProperty(Number(req.params.id));
+      if (!property || property.landlordId !== userId) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      await storage.deleteProperty(Number(req.params.id));
+      res.json({ message: "Property deleted" });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to delete property" });
+    }
+  });
+
   app.get(api.requests.list.path, isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -588,6 +602,24 @@ export async function registerRoutes(
       res.json(tenants);
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch tenants" });
+    }
+  });
+
+  app.delete('/api/tenants', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const schema = z.object({
+        email: z.string().email(),
+        phone: z.string().min(1),
+      });
+      const { email, phone } = schema.parse(req.body);
+      await storage.deleteTenantRequests(userId, email, phone);
+      res.json({ message: "Tenant and all associated requests deleted" });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      res.status(500).json({ message: "Failed to delete tenant" });
     }
   });
 

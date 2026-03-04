@@ -70,6 +70,8 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - `PATCH /api/profile` - Update landlord profile (firstName, lastName, phone, companyName)
 - `GET /api/dashboard/stats` - Get dashboard analytics (total, new, in-progress, completed, emergencies)
 - `GET /api/tenants` - Get tenant directory (aggregated from requests)
+- `DELETE /api/tenants` - Delete tenant and all their requests (body: {email, phone})
+- `DELETE /api/properties/:id` - Delete property (cascades: all requests with costs/notes/messages, recurring tasks, then property)
 - `DELETE /api/requests/:id` - Delete a request (cascades: costs, notes, messages, then request)
 - `GET /api/messages/:requestId` - Get messages for a request (landlord, protected)
 - `POST /api/messages/:requestId` - Send message to tenant (landlord, protected)

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useProperties } from "@/hooks/use-properties";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
-import { Loader2, DollarSign, TrendingUp, Wrench, Download, Building2 } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Wrench, Download, Building2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface CostReportData {
   totalSpent: number;
@@ -35,7 +37,9 @@ export default function CostTracking() {
   const [startDate, setStartDate] = useState(format(new Date(now.getFullYear(), now.getMonth(), 1), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(now, "yyyy-MM-dd"));
   const [propertyFilter, setPropertyFilter] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   const { data: properties } = useProperties();
+  const { toast } = useToast();
 
   const queryParams = new URLSearchParams();
   if (startDate) queryParams.set("startDate", startDate);
@@ -48,6 +52,21 @@ export default function CostTracking() {
       const res = await fetch(`/api/costs/report?${queryParams.toString()}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed");
       return res.json();
+    },
+  });
+
+  const deleteCost = useMutation({
+    mutationFn: async (costId: number) => {
+      const res = await apiRequest("DELETE", `/api/costs/${costId}`);
+      if (!res.ok) throw new Error("Failed to delete cost");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ predicate: (query) => {
+        const key = query.queryKey[0];
+        return typeof key === "string" && (key.startsWith("/api/costs") || key === "/api/requests");
+      }});
+      setDeleteConfirm(null);
+      toast({ title: "Deleted", description: "Cost entry removed." });
     },
   });
 
@@ -193,6 +212,37 @@ export default function CostTracking() {
                             {cost.createdAt ? format(new Date(cost.createdAt), "MMM d, yyyy") : ""}
                           </span>
                           <span className="font-bold text-primary">{formatCents(cost.amount)}</span>
+                          {deleteConfirm === cost.id ? (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => deleteCost.mutate(cost.id)}
+                                disabled={deleteCost.isPending}
+                                data-testid={`button-confirm-delete-cost-${cost.id}`}
+                              >
+                                {deleteCost.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setDeleteConfirm(null)}
+                                data-testid={`button-cancel-delete-cost-${cost.id}`}
+                              >
+                                No
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteConfirm(cost.id)}
+                              className="text-muted-foreground hover:text-red-400"
+                              data-testid={`button-delete-cost-${cost.id}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}

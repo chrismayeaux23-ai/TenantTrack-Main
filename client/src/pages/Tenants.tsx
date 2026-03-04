@@ -1,10 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/Badge";
-import { Loader2, Users, Phone, Mail, Building2, Search } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Loader2, Users, Phone, Mail, Building2, Search, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { useState } from "react";
 import { format } from "date-fns";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface Tenant {
   name: string;
@@ -17,8 +20,24 @@ interface Tenant {
 
 export default function Tenants() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const { toast } = useToast();
   const { data: tenants, isLoading } = useQuery<Tenant[]>({
     queryKey: ["/api/tenants"],
+  });
+
+  const deleteTenant = useMutation({
+    mutationFn: async (tenant: { email: string; phone: string }) => {
+      const res = await apiRequest("DELETE", "/api/tenants", tenant);
+      if (!res.ok) throw new Error("Failed to delete tenant");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tenants"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/costs/report"] });
+      setDeleteConfirm(null);
+      toast({ title: "Deleted", description: "Tenant and all their requests removed." });
+    },
   });
 
   if (isLoading) {
@@ -74,60 +93,94 @@ export default function Tenants() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((tenant, idx) => (
-            <div
-              key={`${tenant.email}-${idx}`}
-              className="bg-card rounded-2xl p-6 shadow-sm border border-border hover-elevate transition-all"
-              data-testid={`card-tenant-${idx}`}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-bold text-lg">
-                      {tenant.name.charAt(0).toUpperCase()}
-                    </span>
+          {filtered.map((tenant, idx) => {
+            const tenantKey = `${tenant.email.toLowerCase()}-${tenant.phone}`;
+            return (
+              <div
+                key={`${tenant.email}-${idx}`}
+                className="bg-card rounded-2xl p-6 shadow-sm border border-border hover-elevate transition-all"
+                data-testid={`card-tenant-${idx}`}
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <span className="text-primary font-bold text-lg">
+                        {tenant.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg" data-testid={`text-tenant-name-${idx}`}>
+                        {tenant.name}
+                      </h3>
+                      <Badge variant="outline" className="text-xs">
+                        {tenant.requestCount} request{tenant.requestCount !== 1 ? "s" : ""}
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-bold text-lg" data-testid={`text-tenant-name-${idx}`}>
-                      {tenant.name}
-                    </h3>
-                    <Badge variant="outline" className="text-xs">
-                      {tenant.requestCount} request{tenant.requestCount !== 1 ? "s" : ""}
-                    </Badge>
+                  {deleteConfirm === tenantKey ? (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteTenant.mutate({ email: tenant.email, phone: tenant.phone })}
+                        disabled={deleteTenant.isPending}
+                        data-testid={`button-confirm-delete-tenant-${idx}`}
+                      >
+                        {deleteTenant.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDeleteConfirm(null)}
+                        data-testid={`button-cancel-delete-tenant-${idx}`}
+                      >
+                        No
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDeleteConfirm(tenantKey)}
+                      className="text-muted-foreground hover:text-red-400"
+                      data-testid={`button-delete-tenant-${idx}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <a
+                    href={`mailto:${tenant.email}`}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    data-testid={`link-tenant-email-${idx}`}
+                  >
+                    <Mail className="h-4 w-4" />
+                    <span className="truncate">{tenant.email}</span>
+                  </a>
+                  <a
+                    href={`tel:${tenant.phone}`}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    data-testid={`link-tenant-phone-${idx}`}
+                  >
+                    <Phone className="h-4 w-4" />
+                    {tenant.phone}
+                  </a>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Building2 className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{tenant.properties.join(", ")}</span>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <a
-                  href={`mailto:${tenant.email}`}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                  data-testid={`link-tenant-email-${idx}`}
-                >
-                  <Mail className="h-4 w-4" />
-                  <span className="truncate">{tenant.email}</span>
-                </a>
-                <a
-                  href={`tel:${tenant.phone}`}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                  data-testid={`link-tenant-phone-${idx}`}
-                >
-                  <Phone className="h-4 w-4" />
-                  {tenant.phone}
-                </a>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Building2 className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{tenant.properties.join(", ")}</span>
-                </div>
+                {tenant.lastRequest && (
+                  <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
+                    Last request: {format(new Date(tenant.lastRequest), "MMM d, yyyy")}
+                  </p>
+                )}
               </div>
-
-              {tenant.lastRequest && (
-                <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border">
-                  Last request: {format(new Date(tenant.lastRequest), "MMM d, yyyy")}
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </AppLayout>

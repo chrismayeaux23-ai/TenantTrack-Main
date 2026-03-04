@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/Label";
 import { Dialog } from "@/components/ui/Dialog";
 import { Badge } from "@/components/ui/Badge";
 import { QRCodeSVG } from "qrcode.react";
-import { Loader2, Plus, Building, MapPin, Download, QrCode, Printer } from "lucide-react";
+import { Loader2, Plus, Building, MapPin, Download, QrCode, Printer, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export default function Properties() {
   const { data: properties, isLoading } = useProperties();
@@ -21,9 +23,25 @@ export default function Properties() {
   
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeQR, setActiveQR] = useState<{id: number, name: string} | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
   
   const [formData, setFormData] = useState({ name: "", address: "" });
   const qrRef = useRef<HTMLDivElement>(null);
+
+  const deleteProperty = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/properties/${id}`);
+      if (!res.ok) throw new Error("Failed to delete property");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/recurring"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tenants"] });
+      setDeleteConfirm(null);
+      toast({ title: "Deleted", description: "Property and all associated data removed." });
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,8 +111,42 @@ export default function Properties() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {properties?.map((property) => (
           <div key={property.id} className="bg-card rounded-2xl p-6 border border-border shadow-sm hover-elevate flex flex-col">
-            <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-              <Building className="h-6 w-6 text-primary" />
+            <div className="flex items-start justify-between mb-4">
+              <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                <Building className="h-6 w-6 text-primary" />
+              </div>
+              {deleteConfirm === property.id ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-red-400">Delete?</span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => deleteProperty.mutate(property.id)}
+                    disabled={deleteProperty.isPending}
+                    data-testid={`button-confirm-delete-property-${property.id}`}
+                  >
+                    {deleteProperty.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : "Yes"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeleteConfirm(null)}
+                    data-testid={`button-cancel-delete-property-${property.id}`}
+                  >
+                    No
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDeleteConfirm(property.id)}
+                  className="text-muted-foreground hover:text-red-400"
+                  data-testid={`button-delete-property-${property.id}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <h3 className="text-xl font-bold mb-2">{property.name}</h3>
             <p className="text-muted-foreground flex items-start gap-2 text-sm mb-6 flex-1">
@@ -133,7 +185,6 @@ export default function Properties() {
         )}
       </div>
 
-      {/* Add Property Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <div>
           <h2 className="text-2xl font-display font-bold mb-6">Add New Property</h2>
@@ -165,7 +216,6 @@ export default function Properties() {
         </div>
       </Dialog>
 
-      {/* QR Code Modal */}
       <Dialog open={!!activeQR} onOpenChange={() => setActiveQR(null)} className="sm:max-w-sm text-center p-8">
         {activeQR && (
           <div className="flex flex-col items-center">

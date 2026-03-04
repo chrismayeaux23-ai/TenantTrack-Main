@@ -10,7 +10,7 @@ import {
   type RecurringTask, type InsertRecurringTask,
   type RequestMessage, type InsertRequestMessage,
 } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 function generateTrackingCode(): string {
   return randomBytes(4).toString("hex").toUpperCase();
@@ -20,6 +20,7 @@ export interface IStorage {
   getProperties(landlordId: string): Promise<Property[]>;
   getProperty(id: number): Promise<Property | undefined>;
   createProperty(property: InsertProperty): Promise<Property>;
+  deleteProperty(id: number): Promise<void>;
 
   getRequestsByLandlord(landlordId: string): Promise<MaintenanceRequest[]>;
   getRequest(id: number): Promise<MaintenanceRequest | undefined>;
@@ -27,6 +28,7 @@ export interface IStorage {
   updateRequestStatus(id: number, status: string): Promise<MaintenanceRequest>;
 
   deleteRequest(id: number): Promise<void>;
+  deleteTenantRequests(landlordId: string, tenantEmail: string, tenantPhone: string): Promise<void>;
 
   getStaff(landlordId: string): Promise<MaintenanceStaff[]>;
   createStaff(staff: InsertMaintenanceStaff): Promise<MaintenanceStaff>;
@@ -67,6 +69,18 @@ export class DatabaseStorage implements IStorage {
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
     const [property] = await db.insert(properties).values(insertProperty).returning();
     return property;
+  }
+
+  async deleteProperty(id: number): Promise<void> {
+    const requests = await db.select().from(maintenanceRequests).where(eq(maintenanceRequests.propertyId, id));
+    for (const req of requests) {
+      await db.delete(repairCosts).where(eq(repairCosts.requestId, req.id));
+      await db.delete(requestNotes).where(eq(requestNotes.requestId, req.id));
+      await db.delete(requestMessages).where(eq(requestMessages.requestId, req.id));
+      await db.delete(maintenanceRequests).where(eq(maintenanceRequests.id, req.id));
+    }
+    await db.delete(recurringTasks).where(eq(recurringTasks.propertyId, id));
+    await db.delete(properties).where(eq(properties.id, id));
   }
 
   async getRequestsByLandlord(landlordId: string): Promise<MaintenanceRequest[]> {
@@ -110,6 +124,16 @@ export class DatabaseStorage implements IStorage {
     await db.delete(requestNotes).where(eq(requestNotes.requestId, id));
     await db.delete(requestMessages).where(eq(requestMessages.requestId, id));
     await db.delete(maintenanceRequests).where(eq(maintenanceRequests.id, id));
+  }
+
+  async deleteTenantRequests(landlordId: string, tenantEmail: string, tenantPhone: string): Promise<void> {
+    const allRequests = await this.getRequestsByLandlord(landlordId);
+    const tenantRequests = allRequests.filter(
+      r => r.tenantEmail.toLowerCase() === tenantEmail.toLowerCase() && r.tenantPhone === tenantPhone
+    );
+    for (const req of tenantRequests) {
+      await this.deleteRequest(req.id);
+    }
   }
 
   async getStaff(landlordId: string): Promise<MaintenanceStaff[]> {
