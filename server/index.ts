@@ -5,6 +5,9 @@ import { createServer } from "http";
 import { runMigrations } from 'stripe-replit-sync';
 import { getStripeSync } from './stripeClient';
 import { WebhookHandlers } from './webhookHandlers';
+import { db } from "./db";
+import { users } from "@shared/models/auth";
+import { eq } from "drizzle-orm";
 
 const app = express();
 const httpServer = createServer(app);
@@ -12,6 +15,19 @@ const httpServer = createServer(app);
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;
+  }
+}
+
+async function ensureOwnerProTier() {
+  try {
+    const OWNER_ID = "55210273";
+    const [user] = await db.select().from(users).where(eq(users.id, OWNER_ID));
+    if (user && user.subscriptionTier !== "pro") {
+      await db.update(users).set({ subscriptionTier: "pro" }).where(eq(users.id, OWNER_ID));
+      console.log("Owner account set to pro tier");
+    }
+  } catch (err) {
+    console.error("Failed to set owner tier:", err);
   }
 }
 
@@ -194,6 +210,7 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      ensureOwnerProTier();
       initStripe().catch((err) => {
         console.error('Stripe initialization failed (non-fatal):', err);
       });
