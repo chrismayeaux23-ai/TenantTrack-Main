@@ -632,22 +632,30 @@ export async function registerRoutes(
       const costs = await storage.getCostsByLandlord(userId);
       const landlordRequests = await storage.getRequestsByLandlord(userId);
       const props = await storage.getProperties(userId);
-      const requestMap = new Map(landlordRequests.map(r => [r.id, r]));
-      const propMap = new Map(props.map(p => [p.id, p]));
+      const requestMap = new Map(landlordRequests.map(r => [Number(r.id), r]));
+      const propMap = new Map(props.map(p => [Number(p.id), p]));
 
       let filtered = costs.filter(c => {
-        const request = requestMap.get(c.requestId);
+        const request = requestMap.get(Number(c.requestId));
         if (!request) return false;
-        if (propertyId && request.propertyId !== Number(propertyId)) return false;
-        if (startDate && c.createdAt && c.createdAt < new Date(startDate as string)) return false;
-        if (endDate && c.createdAt && c.createdAt > new Date(endDate as string + 'T23:59:59')) return false;
+        if (propertyId && Number(request.propertyId) !== Number(propertyId)) return false;
+        if (startDate && c.createdAt) {
+          const costDate = new Date(c.createdAt).getTime();
+          const filterStart = new Date(startDate as string).getTime();
+          if (costDate < filterStart) return false;
+        }
+        if (endDate && c.createdAt) {
+          const costDate = new Date(c.createdAt).getTime();
+          const filterEnd = new Date(endDate as string + 'T23:59:59').getTime();
+          if (costDate > filterEnd) return false;
+        }
         return true;
       });
 
       const grouped: Record<string, { propertyName: string; costs: any[]; total: number }> = {};
       for (const cost of filtered) {
-        const request = requestMap.get(cost.requestId)!;
-        const prop = propMap.get(request.propertyId);
+        const request = requestMap.get(Number(cost.requestId))!;
+        const prop = propMap.get(Number(request.propertyId));
         const propName = prop?.name || 'Unknown';
         if (!grouped[propName]) grouped[propName] = { propertyName: propName, costs: [], total: 0 };
         grouped[propName].costs.push({
@@ -680,22 +688,30 @@ export async function registerRoutes(
       const costs = await storage.getCostsByLandlord(userId);
       const landlordRequests = await storage.getRequestsByLandlord(userId);
       const props = await storage.getProperties(userId);
-      const requestMap = new Map(landlordRequests.map(r => [r.id, r]));
-      const propMap = new Map(props.map(p => [p.id, p]));
+      const requestMap = new Map(landlordRequests.map(r => [Number(r.id), r]));
+      const propMap = new Map(props.map(p => [Number(p.id), p]));
 
       let filtered = costs.filter(c => {
-        const request = requestMap.get(c.requestId);
+        const request = requestMap.get(Number(c.requestId));
         if (!request) return false;
-        if (propertyId && request.propertyId !== Number(propertyId)) return false;
-        if (startDate && c.createdAt && c.createdAt < new Date(startDate as string)) return false;
-        if (endDate && c.createdAt && c.createdAt > new Date(endDate as string + 'T23:59:59')) return false;
+        if (propertyId && Number(request.propertyId) !== Number(propertyId)) return false;
+        if (startDate && c.createdAt) {
+          const costDate = new Date(c.createdAt).getTime();
+          const filterStart = new Date(startDate as string).getTime();
+          if (costDate < filterStart) return false;
+        }
+        if (endDate && c.createdAt) {
+          const costDate = new Date(c.createdAt).getTime();
+          const filterEnd = new Date(endDate as string + 'T23:59:59').getTime();
+          if (costDate > filterEnd) return false;
+        }
         return true;
       });
 
       const rows = [['Date', 'Property', 'Unit', 'Issue', 'Description', 'Vendor', 'Amount'].join(',')];
       for (const cost of filtered) {
-        const request = requestMap.get(cost.requestId)!;
-        const prop = propMap.get(request.propertyId);
+        const request = requestMap.get(Number(cost.requestId))!;
+        const prop = propMap.get(Number(request.propertyId));
         const escapeCsv = (v: string) => `"${(v || '').replace(/"/g, '""')}"`;
         rows.push([
           cost.createdAt ? new Date(cost.createdAt).toISOString().split('T')[0] : '',
