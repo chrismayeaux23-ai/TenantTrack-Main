@@ -56,6 +56,7 @@ function RequestCosts({ requestId }: { requestId: number }) {
       setAmount("");
       setVendor("");
       queryClient.invalidateQueries({ queryKey: ["/api/costs", requestId] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "/api/costs/report" });
     },
   });
 
@@ -69,6 +70,7 @@ function RequestCosts({ requestId }: { requestId: number }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/costs", requestId] });
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "/api/costs/report" });
     },
   });
 
