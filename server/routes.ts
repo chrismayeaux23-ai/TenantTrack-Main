@@ -9,7 +9,8 @@ import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClie
 import { db } from "./db";
 import { users } from "@shared/models/auth";
 import { eq, sql, desc, and, gte, lte } from "drizzle-orm";
-import { properties, maintenanceRequests, repairCosts, recurringTasks } from "@shared/schema";
+import { properties, maintenanceRequests, repairCosts, recurringTasks, requestNotes, maintenanceStaff } from "@shared/schema";
+import { authStorage } from "./replit_integrations/auth/storage";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -19,6 +20,81 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
   registerObjectStorageRoutes(app);
+
+  const DEMO_USER_ID = "demo-landlord";
+  const DEMO_EMAIL = "landlord@test.com";
+  const DEMO_PASSWORD = "demo123";
+
+  async function seedDemoData() {
+    const existing = await storage.getProperties(DEMO_USER_ID);
+    if (existing.length > 0) return;
+
+    const prop1 = await storage.createProperty({ landlordId: DEMO_USER_ID, name: "Sunset Apartments", address: "450 Sunset Blvd, Portland, OR 97201" });
+    const prop2 = await storage.createProperty({ landlordId: DEMO_USER_ID, name: "Riverside Condos", address: "1200 River Dr, Portland, OR 97232" });
+
+    const req1 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "3A", issueType: "Plumbing", description: "Kitchen faucet leaking constantly, water pooling under sink.", urgency: "High", tenantName: "Maria Garcia", tenantPhone: "503-555-0101", tenantEmail: "maria.g@email.com", status: "In-Progress", photoUrls: [] });
+    const req2 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "7B", issueType: "Electrical", description: "Bathroom outlet sparking when plugging in hairdryer.", urgency: "Emergency", tenantName: "James Wilson", tenantPhone: "503-555-0202", tenantEmail: "jwilson@email.com", status: "New", photoUrls: [] });
+    const req3 = await storage.createRequest({ propertyId: prop2.id, unitNumber: "12C", issueType: "HVAC", description: "AC unit not cooling, temperature reading 85F inside.", urgency: "Medium", tenantName: "Sarah Chen", tenantPhone: "503-555-0303", tenantEmail: "schen@email.com", status: "Completed", photoUrls: [] });
+    const req4 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "5A", issueType: "Appliance", description: "Dishwasher making loud grinding noise and not draining.", urgency: "Low", tenantName: "David Kim", tenantPhone: "503-555-0404", tenantEmail: "dkim@email.com", status: "New", photoUrls: [] });
+    const req5 = await storage.createRequest({ propertyId: prop2.id, unitNumber: "8D", issueType: "Plumbing", description: "Toilet running continuously, wasting water.", urgency: "Medium", tenantName: "Lisa Johnson", tenantPhone: "503-555-0505", tenantEmail: "ljohnson@email.com", status: "In-Progress", photoUrls: [] });
+
+    await storage.createCost({ requestId: req1.id, landlordId: DEMO_USER_ID, description: "Plumber service call", amount: 15000, vendor: "Portland Plumbing Co." });
+    await storage.createCost({ requestId: req1.id, landlordId: DEMO_USER_ID, description: "Replacement faucet", amount: 8500, vendor: "Home Depot" });
+    await storage.createCost({ requestId: req3.id, landlordId: DEMO_USER_ID, description: "HVAC technician repair", amount: 32000, vendor: "Cool Air Services" });
+    await storage.createCost({ requestId: req5.id, landlordId: DEMO_USER_ID, description: "Toilet flapper valve replacement", amount: 4500, vendor: "HandyFix LLC" });
+
+    await storage.createNote({ requestId: req1.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "Plumber scheduled for tomorrow morning at 9 AM." });
+    await storage.createNote({ requestId: req2.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "URGENT: Contacted electrician. Tenant advised not to use outlet until fixed." });
+    await storage.createNote({ requestId: req3.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "AC repaired - compressor replaced under warranty." });
+
+    await storage.createStaff({ landlordId: DEMO_USER_ID, name: "Mike Thompson", email: "mike@maintenance.com", phone: "503-555-1001" });
+    await storage.createStaff({ landlordId: DEMO_USER_ID, name: "Ana Rodriguez", email: "ana@maintenance.com", phone: "503-555-1002" });
+
+    const now = new Date();
+    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop1.id, title: "HVAC Filter Change", description: "Replace all HVAC filters in common areas", frequency: "quarterly", nextDueDate: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), isActive: true });
+    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop2.id, title: "Smoke Detector Check", description: "Test all smoke detectors and replace batteries", frequency: "biannually", nextDueDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), isActive: true });
+    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop1.id, title: "Fire Extinguisher Inspection", description: "Annual inspection of all fire extinguishers", frequency: "annually", nextDueDate: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000), isActive: true });
+
+    console.log("Demo data seeded successfully");
+  }
+
+  app.post("/api/demo-login", async (req: any, res) => {
+    try {
+      const { email, password } = req.body;
+      if (email !== DEMO_EMAIL || password !== DEMO_PASSWORD) {
+        return res.status(401).json({ message: "Invalid demo credentials" });
+      }
+
+      await authStorage.upsertUser({
+        id: DEMO_USER_ID,
+        email: DEMO_EMAIL,
+        firstName: "Demo",
+        lastName: "Landlord",
+        profileImageUrl: null,
+      });
+
+      await db.update(users).set({ subscriptionTier: "pro", companyName: "Demo Property Management" }).where(eq(users.id, DEMO_USER_ID));
+
+      await seedDemoData();
+
+      const demoUser = {
+        claims: { sub: DEMO_USER_ID, email: DEMO_EMAIL, first_name: "Demo", last_name: "Landlord" },
+        expires_at: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60,
+        access_token: "demo-token",
+      };
+
+      req.login(demoUser, (err: any) => {
+        if (err) {
+          console.error("Demo login error:", err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+        res.json({ success: true });
+      });
+    } catch (err) {
+      console.error("Demo login error:", err);
+      res.status(500).json({ message: "Demo login failed" });
+    }
+  });
 
   app.get(api.properties.list.path, isAuthenticated, async (req: any, res) => {
     try {

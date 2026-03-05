@@ -111,6 +111,13 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - Contact: support@tenant-track.com, (503) 380-6482, www.tenant-track.com
 - Sidebar nav: Requests, Properties, Tenants, Staff, Billing, Pricing + clickable profile at bottom
 
+## Demo Login
+- Public demo account: landlord@test.com / demo123
+- Demo user ID: "demo-landlord", set to Pro tier
+- POST /api/demo-login endpoint validates credentials and creates session via passport
+- Demo data auto-seeded on first login: 2 properties, 5 requests (various statuses/urgencies), 4 costs, 3 notes, 2 staff, 3 recurring tasks
+- "Try Demo" button on Landing page opens login modal with pre-filled credentials
+
 ## Notes
 - Object storage wildcard route uses regex syntax for Express 5 compatibility
 - Logo assets in `attached_assets/` imported via `@assets/` alias
