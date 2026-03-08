@@ -1,126 +1,17 @@
-# TenantTrack
+# Tenant Management Hub
 
-TenantTrack is a SaaS application that helps landlords manage tenant maintenance requests across multiple rental properties.
+Tenant Management Hub is a SaaS platform designed to help landlords and property owners manage properties, tenants, maintenance requests, and repair costs in one centralized dashboard.
 
-Tenants can submit repair requests with descriptions and photos while landlords track repairs, assign maintenance staff, and record costs through a centralized dashboard.  
-
----
-
-## Demo Access
-
-A demo account may be configured for demonstration purposes.
-
-Example:
-
-email: landlord@test.com  
-password: demo123
+The system allows tenants to submit maintenance issues while landlords track requests, assign staff, monitor expenses, and manage multiple properties.
 
 ---
 
-## Features
+## Live Demo
 
-- Tenant repair request submissions
-- Property and unit management
-- Maintenance request tracking
-- Photo upload support
-- Maintenance staff assignment
-- Repair cost tracking
-- Real-time updates
-- Authentication system
-- Stripe subscription integration (ready to configure)
+You can explore the platform using the demo credentials below:
 
----
-
-## Tech Stack
-
-Frontend
-- React
-- Vite
-- TailwindCSS
-- Radix UI
-
-Backend
-- Node.js
-- Express
-- TypeScript
-
-Database
-- PostgreSQL
-- Drizzle ORM
-
-Other Integrations
-- Stripe (payments)
-- Uppy (file uploads)
-- WebSockets (real-time updates)
-
----
-
-## Project Structure
-
-client/ # React frontend
-server/ # Express backend
-db/ # Database schema and migrations
-public/ # Static assets
-package.json
-vite.config.ts
-
-
----
-
-## Getting Started
-
-### 1. Clone the Repository
-
-git clone https://github.com/YOUR_USERNAME/tenanttrack.git
-cd tenanttrack
-
-
----
-
-### 2. Install Dependencies
-
-npm install
-
-
----
-
-### 3. Configure Environment Variables
-
-Create a `.env` file based on `.env.example`.
-
----
-
-### 4. Start Development Server
-
-npm run dev
-
-
----
-
-### 5. Build for Production
-
-npm run build
-npm start
-
-
----
-
-## Environment Variables
-
-See `.env.example` for required configuration variables.
-
----
-
-## Deployment Requirements
-
-The application requires:
-
-- Node.js
-- PostgreSQL database
-- Object storage (for file uploads)
-- Environment variable configuration
-
-It can be deployed on any standard Node hosting provider.
+Email: landlord@test.com  
+Password: demo123
 
 ---
 
@@ -155,6 +46,114 @@ It can be deployed on any standard Node hosting provider.
 
 ---
 
+## Features
+
+- Property management dashboard
+- Tenant database and management
+- Maintenance request submission and tracking
+- Maintenance staff management
+- Cost tracking for repairs
+- Task reminders and notifications
+- QR code tenant request system
+- Photo uploads for maintenance issues
+- Centralized request dashboard
+
+---
+
+## Tech Stack
+
+Frontend
+- React
+- Vite
+- TailwindCSS
+- Radix UI
+
+Backend
+- Node.js
+- Express
+- TypeScript
+
+Database
+- PostgreSQL
+- Drizzle ORM
+
+Integrations
+- Stripe (subscription payments)
+- WebSockets (real-time updates)
+- Uppy (file uploads)
+
+---
+
+## Installation
+
+Clone the repository
+
+git clone https://github.com/chrismayeaux23-ai/Tenant-Management-Hub.git
+
+
+Navigate to the project directory
+
+cd Tenant-Management-Hub
+
+
+Install dependencies
+
+npm install
+
+
+Create environment variables
+
+cp .env.example .env
+
+
+Start the development server
+
+npm run dev
+
+
+---
+
+## Environment Variables
+
+Create a `.env` file based on `.env.example`.
+
+Example variables:
+
+DATABASE_URL=
+SESSION_SECRET=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+S3_ACCESS_KEY=
+S3_SECRET_KEY=
+S3_BUCKET=
+
+
+---
+
+## Project Structure
+
+client/ # React frontend
+server/ # Express backend
+db/ # Database schema and migrations
+screenshots/ # README images
+docs/ # Project documentation
+
+
+---
+
+## Roadmap
+
+Planned future improvements:
+
+- Mobile tenant portal
+- Maintenance scheduling
+- Vendor marketplace
+- Push notifications
+- Property financial reports
+- AI repair request categorization
+
+---
+
 ## License
 
 MIT License
@@ -163,6 +162,6 @@ MIT License
 
 ## Author
 
-Built by Christopher Mayeaux.
+Christopher Mayeaux
 
-This project is a vertical SaaS platform designed for landlords and property owners.
+Tenant Management Hub was created as a vertical SaaS solution designed to simplify property maintenance management for independent landlords and property investors.
