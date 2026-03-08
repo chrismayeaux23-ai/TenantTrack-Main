@@ -6,6 +6,17 @@ Tenants can submit repair requests with descriptions and photos while landlords 
 
 ---
 
+## Demo Access
+
+A demo account may be configured for demonstration purposes.
+
+Example:
+
+email: landlord@test.com  
+password: demo123
+
+---
+
 ## Features
 
 - Tenant repair request submissions
@@ -141,17 +152,6 @@ It can be deployed on any standard Node hosting provider.
 
 ### Tenant QR Code Access
 ![Tenant QR Code](screenshots/Screenshot_QRcodeTenantSide.png)
-
----
-
-## Demo Access
-
-A demo account may be configured for demonstration purposes.
-
-Example:
-
-email: landlord@test.com  
-password: demo123
 
 ---
 
