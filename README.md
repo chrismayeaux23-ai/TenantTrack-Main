@@ -1,6 +1,6 @@
 # Tenant Management Hub
 
-Tenant Management Hub is a SaaS platform designed to help landlords and property owners manage properties, tenants, maintenance requests, and repair costs in one centralized dashboard.
+Tenant-Track is a SaaS platform designed to help landlords and property owners manage properties, tenants, maintenance requests, and repair costs in one centralized dashboard.
 
 The system allows tenants to submit maintenance issues while landlords track requests, assign staff, monitor expenses, and manage multiple properties.
 
@@ -93,7 +93,7 @@ git clone https://github.com/chrismayeaux23-ai/Tenant-Management-Hub.git
 
 Navigate to the project directory
 
-cd Tenant-Management-Hub
+cd Tenant-Track
 
 
 Install dependencies
@@ -164,4 +164,4 @@ MIT License
 
 Christopher Mayeaux
 
-Tenant Management Hub was created as a vertical SaaS solution designed to simplify property maintenance management for independent landlords and property investors.
+Tenant-Track was created as a vertical SaaS solution designed to simplify property maintenance management for independent landlords and property investors.
