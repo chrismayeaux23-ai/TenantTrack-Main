@@ -23,7 +23,117 @@ Password: demo123
 
 ---
 
-## Screenshots
+# Feature Overview
+
+The following sections explain how TenantTrack works and how it helps landlords manage maintenance efficiently.
+
+---
+
+## Who TenantTrack Is Built For
+
+![Built For](screenshots/feature-built-for.png)
+
+---
+
+## Everything a Landlord Needs
+
+TenantTrack replaces scattered texts, spreadsheets, and sticky notes with one organized maintenance management system.
+
+![Overview](screenshots/feature-overview.png)
+
+---
+
+## Smart Landlord Dashboard
+
+Track all maintenance requests across every property from one dashboard.
+
+![Dashboard](screenshots/feature-smart-dash.png)
+
+---
+
+## QR Code Maintenance Request System
+
+Tenants scan a QR code and submit maintenance issues instantly with photos and urgency level.
+
+![QR System](screenshots/feature-qr-system.png)
+
+---
+
+## Tenant Request Tracking
+
+Tenants receive a tracking code and can monitor request progress without calling or texting.
+
+![Request Tracking](screenshots/feature-request-tracking.png)
+
+---
+
+## Tenant–Landlord Messaging
+
+Built-in messaging keeps conversations tied directly to each maintenance request.
+
+![Messaging](screenshots/feature-messaging.png)
+
+---
+
+## Maintenance Staff Management
+
+Assign maintenance requests to staff members and track workload across properties.
+
+![Staff Management](screenshots/feature-staff-management.png)
+
+---
+
+## Recurring Maintenance Scheduling
+
+Prevent expensive repairs by scheduling recurring maintenance tasks.
+
+![Recurring Maintenance](screenshots/feature-recurring-maintenance.png)
+
+---
+
+## Repair Cost Tracking & Reports
+
+Track repair costs across properties and export reports for taxes and accounting.
+
+![Cost Tracking](screenshots/feature-cost-tracking.png)
+
+---
+
+## Platform Metrics
+
+TenantTrack helps landlords reduce maintenance coordination time and improve tenant communication.
+
+![Metrics](screenshots/feature-metrics.png)
+
+---
+
+## Why Landlords Choose TenantTrack
+
+TenantTrack focuses on simplicity and workflows designed specifically for independent landlords.
+
+![Why Choose](screenshots/feature-why-choose.png)
+
+---
+
+## TenantTrack vs The Old Way
+
+See how TenantTrack compares to traditional maintenance tracking using calls, texts, and spreadsheets.
+
+![Why Switch](screenshots/feature-why-switch.png)
+
+---
+
+## Transparent Pricing
+
+Simple pricing plans designed for independent landlords and small portfolios.
+
+![Pricing](screenshots/feature-pricing.png)
+
+---
+
+## Screenshots - App UI
+
+---
 
 ### Landing Page
 ![Landing Page](screenshots/ScreenshotLanding.png)
