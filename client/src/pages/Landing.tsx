@@ -62,8 +62,11 @@ const PLANS = [
 ];
 
 const SLIDES = [
+  // ── HOW IT WORKS ──────────────────────────────────────
   {
-    step: "01",
+    section: "How It Works",
+    stepLabel: "Step 1 of 6",
+    tabLabel: "Add Properties",
     title: "Sign Up & Add Your Properties",
     description: "Create your account in seconds. Add your rental properties with name and address — each one instantly gets its own unique QR code.",
     bullets: ["Takes under 5 minutes to set up", "Add unlimited units per property", "No technical knowledge needed"],
@@ -71,44 +74,115 @@ const SLIDES = [
     visual: "add-property",
   },
   {
-    step: "02",
-    title: "Print & Post Your QR Code",
-    description: "Download and print a QR flyer for each property or unit. Stick it near the front door, mailbox, or anywhere tenants will see it.",
-    bullets: ["Print-ready PDF flyer included", "Works with any phone camera", "No tenant account or app required"],
+    section: "How It Works",
+    stepLabel: "Step 2 of 6",
+    tabLabel: "Get QR Code",
+    title: "Get a Unique QR Code for Every Property",
+    description: "Each property and unit gets its own scannable QR code. Print it, laminate it, and stick it near the door. Your tenants will always know where to report issues.",
+    bullets: ["Print-ready flyer included, one click", "Works with iPhone and Android camera", "Each unit can have its own separate code"],
     accent: "from-blue-500/20 to-primary/10",
     visual: "qr-code",
   },
   {
-    step: "03",
-    title: "Tenant Scans & Reports in 60 Seconds",
-    description: "Tenants point their phone camera at the QR code — a simple form opens in their browser instantly. No app download, no account creation.",
-    bullets: ["Works on iOS and Android", "Upload photos of the issue", "Choose urgency level"],
+    section: "How It Works",
+    stepLabel: "Step 3 of 6",
+    tabLabel: "Tenant Reports",
+    title: "Tenants Report Issues in Under 60 Seconds",
+    description: "No app to download. No account to create. Tenants open their phone camera, point it at the QR code, and a simple form opens instantly in their browser.",
+    bullets: ["Select issue type & describe the problem", "Upload photos right from their phone", "Pick urgency: Low, Medium, High, or Emergency"],
     accent: "from-violet-500/20 to-primary/10",
     visual: "tenant-form",
   },
   {
-    step: "04",
-    title: "You Get Notified Instantly",
-    description: "The moment a tenant submits a request, you get an email with every detail — issue type, urgency, unit number, and photos attached.",
-    bullets: ["Instant email notification", "Tenant gets a tracking code", "Full details in one place"],
+    section: "How It Works",
+    stepLabel: "Step 4 of 6",
+    tabLabel: "Instant Alert",
+    title: "You're Notified the Moment It's Submitted",
+    description: "The instant a tenant submits a request, you receive an email with every detail — property, unit, issue type, urgency level, description, tenant contact, and photos.",
+    bullets: ["Instant email with full details", "Tenant receives a unique tracking code", "No more missed texts or voicemails"],
     accent: "from-yellow-500/20 to-primary/10",
     visual: "notification",
   },
   {
-    step: "05",
-    title: "Manage Everything from Your Dashboard",
-    description: "See all requests organized by status and urgency. Update status, add notes, assign to your maintenance staff, and keep tenants informed.",
-    bullets: ["Filter by property, status, urgency", "Assign to staff in one click", "Two-way tenant messaging"],
+    section: "How It Works",
+    stepLabel: "Step 5 of 6",
+    tabLabel: "Dashboard",
+    title: "Manage Every Request from One Dashboard",
+    description: "Your dashboard shows every open, in-progress, and completed request — sorted by urgency, filtered by property, and always up to date. Update status, add internal notes, assign to staff, and message tenants directly.",
+    bullets: ["Filter by property, status, or urgency", "Assign to your maintenance staff instantly", "Two-way messaging with tenants on every request"],
     accent: "from-orange-500/20 to-primary/10",
     visual: "dashboard",
   },
   {
-    step: "06",
-    title: "Track Costs & Schedule Preventive Maintenance",
-    description: "Log repair costs per request with vendor info. Set up recurring tasks like HVAC filter changes. Export cost reports for tax time.",
-    bullets: ["Cost reports exportable to CSV", "Recurring maintenance reminders", "Full spending history per property"],
+    section: "How It Works",
+    stepLabel: "Step 6 of 6",
+    tabLabel: "Costs & Schedule",
+    title: "Track Repair Costs & Stay Ahead of Maintenance",
+    description: "Log the cost of every repair with vendor details. Set up recurring tasks — HVAC filters, smoke detector checks, fire extinguisher inspections — so nothing falls through the cracks. Export everything to CSV at tax time.",
+    bullets: ["Log costs per repair with vendor info", "Recurring reminders for preventive tasks", "Export full cost history as CSV for taxes"],
     accent: "from-rose-500/20 to-primary/10",
     visual: "costs",
+  },
+  // ── WHY TENANTTRACK ───────────────────────────────────
+  {
+    section: "Why TenantTrack?",
+    stepLabel: "The Problem",
+    tabLabel: "The Problem",
+    title: "The Old Way Is Silently Costing You",
+    description: "Most landlords manage maintenance through a patchwork of texts, calls, sticky notes, and voicemails. It feels manageable — until it isn't. Requests get missed. Tenants get frustrated. Costs go untracked. Preventive work gets forgotten.",
+    bullets: [
+      "Random 2 AM texts you miss or forget",
+      "No paper trail when disputes arise",
+      "Tax season becomes a receipt-box nightmare",
+      "One missed smoke detector check = liability",
+    ],
+    accent: "from-red-500/15 to-red-900/5",
+    visual: "why-pains",
+  },
+  {
+    section: "Why TenantTrack?",
+    stepLabel: "The Solution",
+    tabLabel: "The Solution",
+    title: "Everything Organized, Nothing Slips Through",
+    description: "TenantTrack gives you a single place for every request, every cost, every schedule, and every conversation. No spreadsheets. No sticky notes. No missed texts. Just a clean system that works.",
+    bullets: [
+      "Every request logged with photos & timestamps",
+      "Full cost history per property — tax-ready CSV",
+      "Staff accountability on every assigned job",
+      "Preventive schedule reminders so you stay ahead",
+    ],
+    accent: "from-primary/15 to-emerald-900/10",
+    visual: "why-comparison",
+  },
+  {
+    section: "Why TenantTrack?",
+    stepLabel: "Real Results",
+    tabLabel: "Real Results",
+    title: "Landlords Who Switch Don't Go Back",
+    description: "Once your maintenance system runs itself, you spend less time firefighting and more time growing your portfolio. TenantTrack pays for itself in the first month — usually at tax time alone.",
+    bullets: [
+      "Set up in under 5 minutes, no IT help needed",
+      "Tenants love it — no app, no friction",
+      "Cost reports save hours at tax time",
+      "14-day free trial, cancel anytime",
+    ],
+    accent: "from-violet-500/15 to-primary/10",
+    visual: "why-results",
+  },
+  // ── PRICING ───────────────────────────────────────────
+  {
+    section: "Start Today",
+    stepLabel: "Choose a Plan",
+    tabLabel: "Pricing",
+    title: "Simple Pricing, No Surprises",
+    description: "All plans include a 14-day free trial — no credit card required to start. Pick the plan that fits your portfolio size, and upgrade anytime as you grow.",
+    bullets: [
+      "No setup fees, no contracts, cancel anytime",
+      "Upgrade or downgrade at any time",
+      "All plans include QR codes, dashboard & email alerts",
+    ],
+    accent: "from-emerald-500/20 to-blue-500/10",
+    visual: "pricing",
   },
 ];
 
@@ -425,6 +499,183 @@ function SlideVisual({ type }: { type: string }) {
     </div>
   );
 
+  if (type === "why-pains") return (
+    <div className="space-y-2.5 w-full max-w-sm mx-auto">
+      <div className="bg-red-950/40 rounded-2xl border border-red-500/20 p-4">
+        <p className="text-xs font-bold text-red-400 mb-3 flex items-center gap-1.5">
+          <span className="h-4 w-4 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 text-[9px]">!</span>
+          The Old Way — What Most Landlords Deal With
+        </p>
+        <div className="space-y-2">
+          {[
+            { time: "2:14 AM", msg: "Hey the toilet is overflowing AGAIN call me", urgent: true },
+            { time: "Yesterday", msg: "Did you get my message about the heater?", urgent: false },
+            { time: "Mon", msg: "AC broken unit 7B urgent please respond", urgent: true },
+          ].map((t, i) => (
+            <div key={i} className={`flex items-start gap-2 p-2.5 rounded-xl text-xs ${t.urgent ? "bg-red-500/10 border border-red-500/20" : "bg-muted/40 border border-border"}`}>
+              <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">?</div>
+              <div className="flex-1 min-w-0">
+                <p className={`truncate ${t.urgent ? "text-red-300" : "text-muted-foreground"}`}>{t.msg}</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t.time}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { icon: "📋", label: "Sticky Notes", sub: "Requests get lost" },
+          { icon: "💸", label: "Shoebox Receipts", sub: "Tax time chaos" },
+          { icon: "📅", label: "Missed Inspections", sub: "Liability risk" },
+          { icon: "😤", label: "Angry Tenants", sub: "No status updates" },
+        ].map(p => (
+          <div key={p.label} className="bg-red-950/30 border border-red-500/15 rounded-xl p-3 text-center">
+            <p className="text-lg mb-1">{p.icon}</p>
+            <p className="text-[10px] font-bold text-red-300">{p.label}</p>
+            <p className="text-[9px] text-muted-foreground">{p.sub}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (type === "why-comparison") return (
+    <div className="w-full max-w-sm mx-auto space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-red-950/30 border border-red-500/20 rounded-2xl p-3">
+          <p className="text-[10px] font-bold text-red-400 mb-2.5 flex items-center gap-1">
+            <X className="h-3 w-3" /> Without
+          </p>
+          <ul className="space-y-1.5">
+            {[
+              "Random texts & calls",
+              "No record of requests",
+              "Excel for costs (maybe)",
+              "Staff via group chat",
+              "Missed maintenance",
+              "Tenant frustration",
+            ].map(t => (
+              <li key={t} className="flex items-center gap-1.5 text-[10px] text-red-300/80">
+                <X className="h-2.5 w-2.5 text-red-500 shrink-0" /> {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="bg-primary/10 border border-primary/30 rounded-2xl p-3">
+          <p className="text-[10px] font-bold text-primary mb-2.5 flex items-center gap-1">
+            <Check className="h-3 w-3" /> With TenantTrack
+          </p>
+          <ul className="space-y-1.5">
+            {[
+              "QR scan, instant form",
+              "Every request logged",
+              "CSV cost reports",
+              "Staff assigned in app",
+              "Recurring reminders",
+              "Tenant tracking codes",
+            ].map(t => (
+              <li key={t} className="flex items-center gap-1.5 text-[10px] text-primary/90">
+                <Check className="h-2.5 w-2.5 text-primary shrink-0" /> {t}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+          <DollarSign className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <p className="text-xs font-bold">Pays for itself at tax time</p>
+          <p className="text-[10px] text-muted-foreground">Cost reports save landlords 4+ hours per year</p>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (type === "why-results") return (
+    <div className="w-full max-w-sm mx-auto space-y-2.5">
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { val: "< 5 min", label: "Setup time", color: "text-primary" },
+          { val: "60 sec", label: "Tenant report time", color: "text-blue-400" },
+          { val: "0", label: "Apps for tenants", color: "text-green-400" },
+          { val: "100%", label: "Mobile friendly", color: "text-violet-400" },
+        ].map(s => (
+          <div key={s.label} className="bg-card border border-border rounded-2xl p-3 text-center">
+            <p className={`text-xl font-display font-extrabold ${s.color}`}>{s.val}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
+          </div>
+        ))}
+      </div>
+      <div className="bg-card border border-border rounded-2xl p-4">
+        <div className="flex gap-1 mb-2">
+          {[1,2,3,4,5].map(i => <Star key={i} className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />)}
+        </div>
+        <p className="text-xs text-foreground leading-relaxed mb-2">"I used to get random texts at 2 AM about leaky faucets. Now tenants scan the QR code and I see everything organized in my dashboard."</p>
+        <div>
+          <p className="text-[10px] font-bold">Property Manager</p>
+          <p className="text-[10px] text-muted-foreground">12 units in Portland, OR</p>
+        </div>
+      </div>
+      <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-2">
+        <div className="h-7 w-7 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
+          <Check className="h-3.5 w-3.5 text-green-400" />
+        </div>
+        <p className="text-[10px] text-muted-foreground"><span className="font-bold text-foreground">14-day free trial</span> · No credit card required · Cancel anytime</p>
+      </div>
+    </div>
+  );
+
+  if (type === "pricing") return (
+    <div className="w-full max-w-sm mx-auto space-y-2">
+      {[
+        {
+          name: "Starter", price: "$29", desc: "1–5 units", highlight: false,
+          icon: Building2, iconColor: "text-muted-foreground",
+          features: ["QR maintenance system", "Email notifications", "Photo uploads", "Basic dashboard"],
+        },
+        {
+          name: "Growth", price: "$59", desc: "6–25 units", highlight: true,
+          icon: Zap, iconColor: "text-primary",
+          features: ["Everything in Starter", "Staff assignment", "Priority highlighting", "Custom QR per unit"],
+        },
+        {
+          name: "Pro", price: "$99", desc: "25+ units", highlight: false,
+          icon: Crown, iconColor: "text-yellow-400",
+          features: ["Everything in Growth", "Cost tracking & CSV", "Scheduled maintenance", "Priority support"],
+        },
+      ].map(plan => (
+        <div key={plan.name} className={`rounded-2xl border p-3.5 flex items-center gap-3 ${plan.highlight ? "bg-primary/10 border-primary/40 ring-1 ring-primary/20" : "bg-card border-border"}`}>
+          <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${plan.highlight ? "bg-primary/20" : "bg-muted"}`}>
+            <plan.icon className={`h-4 w-4 ${plan.iconColor}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <p className="text-sm font-bold">{plan.name}</p>
+              {plan.highlight && <span className="text-[9px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full font-bold">Popular</span>}
+              <p className="text-xs text-muted-foreground">{plan.desc}</p>
+            </div>
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+              {plan.features.map(f => (
+                <span key={f} className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                  <Check className="h-2.5 w-2.5 text-primary shrink-0" />{f}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className={`text-lg font-display font-extrabold ${plan.highlight ? "text-primary" : "text-foreground"}`}>{plan.price}</p>
+            <p className="text-[9px] text-muted-foreground">/mo</p>
+          </div>
+        </div>
+      ))}
+      <div className="bg-card border border-border rounded-xl p-3 text-center">
+        <p className="text-xs text-muted-foreground">14-day free trial · No credit card · <span className="text-primary font-medium">Get started in 5 minutes</span></p>
+      </div>
+    </div>
+  );
+
   return null;
 }
 
@@ -653,10 +904,10 @@ export default function Landing() {
         <div className="text-center mb-12">
           <Badge variant="outline" className="mb-4 text-sm px-4 py-1">How It Works</Badge>
           <h2 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4">
-            See It in Action
+            The Full Picture
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            From QR code to completed repair — here's exactly how TenantTrack works, step by step.
+            How it works, why landlords switch, and what it costs — everything you need to decide in one place.
           </p>
         </div>
 
@@ -668,13 +919,13 @@ export default function Landing() {
         >
           <div className={`bg-gradient-to-br ${SLIDES[slide].accent} absolute inset-0 transition-all duration-700 pointer-events-none`} />
 
-          <div className="relative z-10 flex flex-col lg:flex-row min-h-[520px]">
+          <div className="relative z-10 flex flex-col lg:flex-row min-h-[560px]">
             <div className="flex-1 flex flex-col justify-center p-8 lg:p-12">
-              <div className="inline-flex items-center gap-2 mb-6">
-                <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center">
-                  <span className="text-xs font-bold text-primary-foreground">{SLIDES[slide].step}</span>
-                </div>
-                <span className="text-sm font-semibold text-primary">Step {parseInt(SLIDES[slide].step)} of {SLIDES.length}</span>
+              <div className="flex items-center gap-2 mb-5">
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+                  {SLIDES[slide].section}
+                </span>
+                <span className="text-xs text-muted-foreground">{SLIDES[slide].stepLabel}</span>
               </div>
 
               <h3
@@ -683,15 +934,15 @@ export default function Landing() {
                 {SLIDES[slide].title}
               </h3>
               <p
-                className={`text-muted-foreground text-lg leading-relaxed mb-6 transition-all duration-200 delay-75 ${animating ? "opacity-0" : "opacity-100"}`}
+                className={`text-muted-foreground text-base leading-relaxed mb-6 transition-all duration-200 delay-75 ${animating ? "opacity-0" : "opacity-100"}`}
               >
                 {SLIDES[slide].description}
               </p>
 
               <ul className={`space-y-2.5 mb-8 transition-all duration-200 delay-100 ${animating ? "opacity-0" : "opacity-100"}`}>
                 {SLIDES[slide].bullets.map((b, i) => (
-                  <li key={i} className="flex items-center gap-2.5 text-sm">
-                    <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <li key={i} className="flex items-start gap-2.5 text-sm">
+                    <div className="h-5 w-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="h-3 w-3 text-primary" />
                     </div>
                     <span className="text-foreground">{b}</span>
@@ -699,7 +950,19 @@ export default function Landing() {
                 ))}
               </ul>
 
-              <div className="flex items-center gap-4">
+              {SLIDES[slide].visual === "pricing" && (
+                <div className={`transition-all duration-200 delay-150 ${animating ? "opacity-0" : "opacity-100"}`}>
+                  <button
+                    onClick={() => window.location.href = '/login'}
+                    className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity"
+                    data-testid="button-slideshow-cta"
+                  >
+                    Start Free Trial <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 mt-auto pt-4">
                 <button
                   onClick={() => goTo(slide - 1, "prev")}
                   className="h-10 w-10 rounded-full border border-border bg-card/80 hover:bg-card flex items-center justify-center transition-colors"
@@ -708,12 +971,12 @@ export default function Landing() {
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                   {SLIDES.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => goTo(i, i > slide ? "next" : "prev")}
-                      className={`rounded-full transition-all duration-300 ${i === slide ? "w-8 h-2.5 bg-primary" : "w-2.5 h-2.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"}`}
+                      className={`rounded-full transition-all duration-300 ${i === slide ? "w-6 h-2 bg-primary" : "w-2 h-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"}`}
                       data-testid={`button-slide-dot-${i}`}
                     />
                   ))}
@@ -728,7 +991,7 @@ export default function Landing() {
                 </button>
 
                 <span className="ml-auto text-xs text-muted-foreground hidden sm:block">
-                  {paused ? "Paused" : "Auto-advancing"}
+                  {paused ? "⏸ Paused" : "▶ Auto-playing"}
                 </span>
               </div>
             </div>
@@ -738,17 +1001,24 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="relative z-10 border-t border-border bg-card/30 px-8 py-4 flex items-center gap-2 overflow-x-auto scrollbar-none">
-            {SLIDES.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i, i > slide ? "next" : "prev")}
-                className={`shrink-0 px-4 py-2 rounded-xl text-xs font-medium transition-all duration-200 whitespace-nowrap ${i === slide ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
-                data-testid={`button-slide-tab-${i}`}
-              >
-                {s.step}. {s.title.split(" ").slice(0, 3).join(" ")}…
-              </button>
-            ))}
+          {/* Tab bar — grouped by section */}
+          <div className="relative z-10 border-t border-border bg-card/40 px-4 py-3 flex items-center gap-1 overflow-x-auto scrollbar-none">
+            {SLIDES.map((s, i) => {
+              const prevSection = i > 0 ? SLIDES[i - 1].section : null;
+              const showDivider = prevSection && prevSection !== s.section;
+              return (
+                <div key={i} className="flex items-center gap-1 shrink-0">
+                  {showDivider && <div className="h-5 w-px bg-border mx-1" />}
+                  <button
+                    onClick={() => goTo(i, i > slide ? "next" : "prev")}
+                    className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap ${i === slide ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted"}`}
+                    data-testid={`button-slide-tab-${i}`}
+                  >
+                    {s.tabLabel}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
