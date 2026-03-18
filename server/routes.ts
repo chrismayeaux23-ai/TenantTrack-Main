@@ -9,7 +9,7 @@ import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClie
 import { db } from "./db";
 import { users } from "@shared/models/auth";
 import { eq, sql, desc, and, gte, lte } from "drizzle-orm";
-import { properties, maintenanceRequests, repairCosts, recurringTasks, requestNotes, maintenanceStaff } from "@shared/schema";
+import { properties, maintenanceRequests, repairCosts, recurringTasks, requestNotes, maintenanceStaff, vendors, vendorAssignments, vendorReviews } from "@shared/schema";
 import { authStorage } from "./replit_integrations/auth/storage";
 import bcrypt from "bcryptjs";
 import { sendNewRequestEmail, sendStatusUpdateEmail, sendStaffAssignmentEmail } from "./emailService";
@@ -58,6 +58,24 @@ export async function registerRoutes(
     await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop1.id, title: "HVAC Filter Change", description: "Replace all HVAC filters in common areas", frequency: "quarterly", nextDueDate: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), isActive: true });
     await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop2.id, title: "Smoke Detector Check", description: "Test all smoke detectors and replace batteries", frequency: "biannually", nextDueDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), isActive: true });
     await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop1.id, title: "Fire Extinguisher Inspection", description: "Annual inspection of all fire extinguishers", frequency: "annually", nextDueDate: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000), isActive: true });
+
+    // ── Demo Vendors ──────────────────────────────────────────────────────────
+    const v1 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Carlos Ruiz", companyName: "Ruiz Plumbing LLC", tradeCategory: "Plumbing", phone: "503-555-2001", email: "carlos@ruizplumbing.com", city: "Portland", serviceArea: "Metro Portland", preferredVendor: true, status: "active", notes: "Reliable, always on time. Has 24/7 emergency line.", licenseInfo: "OR Plumber #PL-44821", insuranceInfo: "Fully insured, $2M liability" });
+    const v2 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Janet Park", companyName: "Bright Electric Co.", tradeCategory: "Electrical", phone: "503-555-2002", email: "janet@brightelectric.com", city: "Portland", serviceArea: "Portland & Beaverton", preferredVendor: true, status: "active", notes: "Excellent for panel upgrades and emergency calls.", licenseInfo: "OR Electrician #EL-77203" });
+    const v3 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Tom Wallace", companyName: "Cool Air Services", tradeCategory: "HVAC", phone: "503-555-2003", email: "tom@coolair.com", city: "Portland", serviceArea: "All Portland suburbs", preferredVendor: false, status: "active", notes: "Good pricing on seasonal maintenance contracts." });
+    const v4 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Marcus Lee", companyName: null, tradeCategory: "General Handyman", phone: "503-555-2004", email: "marcus.fix@email.com", city: "Portland", serviceArea: "Inner SE/NE Portland", preferredVendor: false, status: "active", notes: "Great for small jobs — drywall, doors, fencing." });
+    const v5 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Sandra Vega", companyName: "Fresh Coat Painting", tradeCategory: "Painting", phone: "503-555-2005", email: "sandra@freshcoat.com", city: "Beaverton", serviceArea: "Portland & Beaverton", preferredVendor: false, status: "active" });
+
+    await storage.assignVendorToRequest({ requestId: req1.id, vendorId: v1.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, priority: "High", assignmentNotes: "Called Carlos, will arrive tomorrow at 9 AM." });
+    await storage.assignVendorToRequest({ requestId: req2.id, vendorId: v2.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, priority: "Emergency", assignmentNotes: "Janet is responding today. Tenant told not to use outlet." });
+    await storage.assignVendorToRequest({ requestId: req3.id, vendorId: v3.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), finalCost: 32000 });
+
+    await storage.createVendorReview({ requestId: req1.id, vendorId: v1.id, landlordId: DEMO_USER_ID, qualityRating: 5, speedRating: 4, communicationRating: 5, priceRating: 4, overallRating: 5, reviewNotes: "Carlos fixed the leak quickly and cleaned up after himself. Will use again." });
+    await storage.createVendorReview({ requestId: req3.id, vendorId: v3.id, landlordId: DEMO_USER_ID, qualityRating: 4, speedRating: 3, communicationRating: 4, priceRating: 3, overallRating: 4, reviewNotes: "Took a bit longer than expected but quality work. Pricing is fair." });
+
+    await storage.createActivityLog({ requestId: req1.id, landlordId: DEMO_USER_ID, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: "Carlos Ruiz (Ruiz Plumbing LLC) assigned to request" });
+    await storage.createActivityLog({ requestId: req1.id, landlordId: DEMO_USER_ID, eventType: "vendor_contacted", eventLabel: "Vendor Contacted", details: "Landlord confirmed contact with vendor" });
+    await storage.createActivityLog({ requestId: req2.id, landlordId: DEMO_USER_ID, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: "Janet Park (Bright Electric Co.) assigned — Emergency priority" });
 
     console.log("Demo data seeded successfully");
   }
@@ -1120,6 +1138,274 @@ export async function registerRoutes(
       res.json({ message: "Task deleted" });
     } catch (err) {
       res.status(500).json({ message: "Failed to delete recurring task" });
+    }
+  });
+
+  // ── Vendor Routes ──────────────────────────────────────────────────────────
+
+  app.get('/api/vendors', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const list = await storage.getVendorsByLandlord(userId);
+      res.json(list);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch vendors" });
+    }
+  });
+
+  app.get('/api/vendors/top', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const top = await storage.getTopVendors(userId);
+      res.json(top.slice(0, 5));
+    } catch {
+      res.status(500).json({ message: "Failed to fetch top vendors" });
+    }
+  });
+
+  app.get('/api/vendors/:id/stats', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const vendorId = Number(req.params.id);
+      const vendor = await storage.getVendor(vendorId);
+      if (!vendor || vendor.landlordId !== userId) return res.status(404).json({ message: "Vendor not found" });
+      const stats = await storage.getVendorStats(vendorId, userId);
+      res.json(stats);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch vendor stats" });
+    }
+  });
+
+  app.get('/api/vendors/:id/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const vendorId = Number(req.params.id);
+      const vendor = await storage.getVendor(vendorId);
+      if (!vendor || vendor.landlordId !== userId) return res.status(404).json({ message: "Vendor not found" });
+      const reviews = await storage.getVendorReviews(vendorId, userId);
+      res.json(reviews);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  app.post('/api/vendors', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const input = z.object({
+        name: z.string().min(1).max(200),
+        companyName: z.string().max(200).optional(),
+        tradeCategory: z.string().min(1),
+        phone: z.string().max(50).optional(),
+        email: z.string().email().optional().or(z.literal('')),
+        city: z.string().max(100).optional(),
+        serviceArea: z.string().max(200).optional(),
+        notes: z.string().max(2000).optional(),
+        preferredVendor: z.boolean().optional(),
+        licenseInfo: z.string().max(500).optional(),
+        insuranceInfo: z.string().max(500).optional(),
+      }).parse(req.body);
+      const vendor = await storage.createVendor({ ...input, landlordId: userId, status: "active" });
+      res.status(201).json(vendor);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Failed to create vendor" });
+    }
+  });
+
+  app.patch('/api/vendors/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const vendorId = Number(req.params.id);
+      const vendor = await storage.getVendor(vendorId);
+      if (!vendor || vendor.landlordId !== userId) return res.status(404).json({ message: "Vendor not found" });
+      const input = z.object({
+        name: z.string().min(1).max(200).optional(),
+        companyName: z.string().max(200).optional().nullable(),
+        tradeCategory: z.string().min(1).optional(),
+        phone: z.string().max(50).optional().nullable(),
+        email: z.string().max(200).optional().nullable(),
+        city: z.string().max(100).optional().nullable(),
+        serviceArea: z.string().max(200).optional().nullable(),
+        notes: z.string().max(2000).optional().nullable(),
+        preferredVendor: z.boolean().optional(),
+        licenseInfo: z.string().max(500).optional().nullable(),
+        insuranceInfo: z.string().max(500).optional().nullable(),
+        status: z.enum(["active", "archived"]).optional(),
+      }).parse(req.body);
+      const updated = await storage.updateVendor(vendorId, input);
+      res.json(updated);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Failed to update vendor" });
+    }
+  });
+
+  app.delete('/api/vendors/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const vendorId = Number(req.params.id);
+      const vendor = await storage.getVendor(vendorId);
+      if (!vendor || vendor.landlordId !== userId) return res.status(404).json({ message: "Vendor not found" });
+      await storage.deleteVendor(vendorId);
+      res.json({ message: "Vendor deleted" });
+    } catch {
+      res.status(500).json({ message: "Failed to delete vendor" });
+    }
+  });
+
+  // ── Vendor Assignments ─────────────────────────────────────────────────────
+
+  app.get('/api/requests/:id/vendor-assignment', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.id);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const prop = await storage.getProperty(request.propertyId);
+      if (!prop || prop.landlordId !== userId) return res.status(403).json({ message: "Forbidden" });
+      const assignment = await storage.getVendorAssignmentByRequest(requestId);
+      if (!assignment) return res.json(null);
+      const vendor = await storage.getVendor(assignment.vendorId);
+      res.json({ assignment, vendor });
+    } catch {
+      res.status(500).json({ message: "Failed to fetch vendor assignment" });
+    }
+  });
+
+  app.patch('/api/requests/:id/vendor-assignment', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.id);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const prop = await storage.getProperty(request.propertyId);
+      if (!prop || prop.landlordId !== userId) return res.status(403).json({ message: "Forbidden" });
+
+      const input = z.object({
+        vendorId: z.number(),
+        priority: z.string().optional(),
+        assignmentNotes: z.string().optional(),
+        targetCompletionDate: z.coerce.date().optional().nullable(),
+        scheduledDate: z.coerce.date().optional().nullable(),
+      }).parse(req.body);
+
+      const existing = await storage.getVendorAssignmentByRequest(requestId);
+      let assignment: any;
+
+      if (existing) {
+        assignment = await storage.updateVendorAssignment(requestId, input);
+        const vendor = await storage.getVendor(input.vendorId);
+        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_reassigned", eventLabel: "Vendor Reassigned", details: vendor ? `Reassigned to ${vendor.name}` : undefined });
+      } else {
+        assignment = await storage.assignVendorToRequest({ requestId, landlordId: userId, assignedBy: userId, ...input });
+        const vendor = await storage.getVendor(input.vendorId);
+        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: vendor ? `${vendor.name}${vendor.companyName ? ` (${vendor.companyName})` : ''} assigned` : undefined });
+      }
+      const vendor = await storage.getVendor(assignment.vendorId);
+      res.json({ assignment, vendor });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Failed to assign vendor" });
+    }
+  });
+
+  app.delete('/api/requests/:id/vendor-assignment', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.id);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const prop = await storage.getProperty(request.propertyId);
+      if (!prop || prop.landlordId !== userId) return res.status(403).json({ message: "Forbidden" });
+      await storage.clearVendorAssignment(requestId);
+      await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_removed", eventLabel: "Vendor Removed", details: "Vendor assignment cleared" });
+      res.json({ message: "Assignment cleared" });
+    } catch {
+      res.status(500).json({ message: "Failed to clear assignment" });
+    }
+  });
+
+  app.patch('/api/requests/:id/vendor-contacted', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.id);
+      const { contacted } = z.object({ contacted: z.boolean() }).parse(req.body);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const prop = await storage.getProperty(request.propertyId);
+      if (!prop || prop.landlordId !== userId) return res.status(403).json({ message: "Forbidden" });
+      const assignment = await storage.updateVendorAssignment(requestId, { contactedVendor: contacted });
+      if (contacted) {
+        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_contacted", eventLabel: "Vendor Contacted", details: "Landlord confirmed contact with vendor" });
+      }
+      res.json(assignment);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Failed to update" });
+    }
+  });
+
+  // ── Vendor Reviews ─────────────────────────────────────────────────────────
+
+  app.get('/api/requests/:id/vendor-review', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.id);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const prop = await storage.getProperty(request.propertyId);
+      if (!prop || prop.landlordId !== userId) return res.status(403).json({ message: "Forbidden" });
+      const review = await storage.getVendorReviewForRequest(requestId);
+      res.json(review ?? null);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch review" });
+    }
+  });
+
+  app.post('/api/requests/:id/vendor-review', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.id);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const prop = await storage.getProperty(request.propertyId);
+      if (!prop || prop.landlordId !== userId) return res.status(403).json({ message: "Forbidden" });
+      const assignment = await storage.getVendorAssignmentByRequest(requestId);
+      if (!assignment) return res.status(400).json({ message: "No vendor assigned to this request" });
+
+      const input = z.object({
+        qualityRating: z.number().min(1).max(5).optional(),
+        speedRating: z.number().min(1).max(5).optional(),
+        communicationRating: z.number().min(1).max(5).optional(),
+        priceRating: z.number().min(1).max(5).optional(),
+        overallRating: z.number().min(1).max(5),
+        reviewNotes: z.string().max(2000).optional(),
+      }).parse(req.body);
+
+      const review = await storage.createVendorReview({ requestId, vendorId: assignment.vendorId, landlordId: userId, ...input });
+      await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_reviewed", eventLabel: "Vendor Reviewed", details: `${input.overallRating}/5 overall rating` });
+      res.status(201).json(review);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Failed to submit review" });
+    }
+  });
+
+  // ── Activity Log ───────────────────────────────────────────────────────────
+
+  app.get('/api/requests/:id/activity', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.id);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const prop = await storage.getProperty(request.propertyId);
+      if (!prop || prop.landlordId !== userId) return res.status(403).json({ message: "Forbidden" });
+      const activity = await storage.getActivityByRequest(requestId);
+      res.json(activity);
+    } catch {
+      res.status(500).json({ message: "Failed to fetch activity" });
     }
   });
 

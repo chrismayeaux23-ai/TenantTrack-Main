@@ -29,16 +29,19 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - Tenant-landlord messaging: two-way messages per request; landlord sends from dashboard, tenant from tracking page via tracking code; no tenant auth needed; auto-refreshes every 10-15s
 - Repair cost tracking: log costs per request (description, amount, vendor), view/export reports by date/property as CSV
 - Recurring maintenance scheduling: create tasks (HVAC, smoke detectors, etc.) with frequency, auto-calculates next due date on completion, overdue highlighting
+- Vendor Management: landlords maintain a private network of contractors (vendors) per trade category (Plumbing, Electrical, HVAC, etc.), with preferred vendor flagging, contact info, license/insurance tracking, private notes, and ratings
+- Vendor Assignment: assign a vendor to any maintenance request from the dashboard expanded card, set priority (Normal/High/Emergency), mark as contacted, reassign or clear
+- Vendor Reviews: internal star ratings per job (quality, speed, communication, price, overall) with notes — visible in vendor detail panel and aggregated into stats
 - Plan-based feature gating: property limits (trial=2, starter=5, growth/pro=unlimited), staff assignment (growth+)
 - Landlord profile page: edit name, phone, company name
 - Terms & Conditions and Privacy Policy pages
 
 ## File Structure
-- `shared/schema.ts` - Drizzle schema (properties, maintenanceRequests, requestNotes, requestMessages, maintenanceStaff, repairCosts, recurringTasks tables)
+- `shared/schema.ts` - Drizzle schema (properties, maintenanceRequests, requestNotes, requestMessages, maintenanceStaff, repairCosts, recurringTasks, vendors, vendorAssignments, vendorReviews, maintenanceActivityLog tables; TRADE_CATEGORIES constant)
 - `shared/models/auth.ts` - Replit Auth schema (users, sessions tables) + Stripe fields + phone, companyName
 - `shared/routes.ts` - Shared route types
 - `server/routes.ts` - API routes (app + Stripe checkout/portal/plans + profile + notes + tenants + stats)
-- `server/storage.ts` - Storage interface (CRUD for properties, requests, staff, notes, messages, costs, recurring tasks)
+- `server/storage.ts` - Storage interface (CRUD for properties, requests, staff, notes, messages, costs, recurring tasks, vendors, assignments, reviews, activity log)
 - `server/stripeClient.ts` - Stripe client using Replit connector credentials
 - `server/webhookHandlers.ts` - Stripe webhook processing via stripe-replit-sync
 - `server/seed-products.ts` - Script to create Stripe products/prices
@@ -46,9 +49,9 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - `server/db.ts` - Database connection
 - `server/replit_integrations/` - Auth + Object Storage integrations
 - `client/src/App.tsx` - Routes and app wrapper
-- `client/src/pages/` - Landing, Features, Dashboard, Properties, TenantReport, PrintFlyer, Pricing, Staff, TrackRequest, Profile, Terms, Privacy, Tenants, Billing, CostTracking, RecurringMaintenance
-- `client/src/components/layout/AppLayout.tsx` - Sidebar layout with Requests, Properties, Tenants, Staff, Costs, Scheduled, Billing, Pricing nav
-- `client/src/hooks/` - Auth, properties, requests, staff, upload, subscription hooks
+- `client/src/pages/` - Landing, Features, Dashboard, Properties, TenantReport, PrintFlyer, Pricing, Staff, TrackRequest, Profile, Terms, Privacy, Tenants, Billing, CostTracking, RecurringMaintenance, Vendors
+- `client/src/components/layout/AppLayout.tsx` - Sidebar layout with Requests, Properties, Tenants, Staff, Vendors, Costs, Scheduled, Billing, Pricing nav; mobile bottom nav shows Requests, Properties, Scheduled, More
+- `client/src/hooks/` - Auth, properties, requests, staff, upload, subscription, use-vendors hooks
 
 ## Auth System
 - Login page: `/login` — email/password form with "Sign In" / "Create Account" tabs
@@ -78,6 +81,7 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - `/tenants` - Tenant directory (protected)
 - `/staff` - Maintenance staff management (protected, Growth+ plan)
 - `/features` - Detailed features breakdown (public)
+- `/vendors` - Vendor management (protected): add/edit/archive/delete contractors, search/filter, preferred vendor toggle, detail view with stats and reviews
 - `/costs` - Repair cost tracking & reports (protected)
 - `/scheduled` - Recurring maintenance scheduling (protected)
 - `/billing` - Billing & subscription management (protected)
@@ -113,6 +117,20 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - `PATCH /api/recurring/:id` - Update a recurring task
 - `POST /api/recurring/:id/complete` - Mark task complete + auto-schedule next
 - `DELETE /api/recurring/:id` - Delete a recurring task
+- `GET /api/vendors` - Get all vendors for landlord
+- `POST /api/vendors` - Create vendor
+- `PATCH /api/vendors/:id` - Update vendor (name, trade, contact, status: active/archived)
+- `DELETE /api/vendors/:id` - Delete vendor (cascades assignments/reviews)
+- `GET /api/vendors/top` - Top 5 vendors by job count with avg rating
+- `GET /api/vendors/:id/stats` - Vendor stats (totalJobs, avgRating, lastAssignedAt)
+- `GET /api/vendors/:id/reviews` - All internal reviews for a vendor
+- `GET /api/requests/:id/vendor-assignment` - Get vendor assignment for a request
+- `PATCH /api/requests/:id/vendor-assignment` - Assign/reassign vendor to request
+- `DELETE /api/requests/:id/vendor-assignment` - Clear vendor assignment
+- `PATCH /api/requests/:id/vendor-contacted` - Mark vendor as contacted/not-contacted
+- `GET /api/requests/:id/vendor-review` - Get internal review for a completed vendor job
+- `POST /api/requests/:id/vendor-review` - Submit internal vendor review (ratings + notes)
+- `GET /api/requests/:id/activity` - Get activity log for a request (vendor events)
 - `GET /api/stripe/plans` - Get subscription plans (filtered by tier metadata)
 - `GET /api/stripe/subscription` - Get current subscription status
 - `POST /api/stripe/checkout` - Create Stripe checkout session
@@ -138,7 +156,7 @@ A mobile-first SaaS web app where landlords manage maintenance requests via QR c
 - Public demo account: landlord@test.com / demo123
 - Demo user ID: "demo-landlord", set to Pro tier
 - POST /api/demo-login endpoint validates credentials and creates session via passport
-- Demo data auto-seeded on first login: 2 properties, 5 requests (various statuses/urgencies), 4 costs, 3 notes, 2 staff, 3 recurring tasks
+- Demo data auto-seeded on first login: 2 properties, 5 requests, 4 costs, 3 notes, 2 staff, 3 recurring tasks, 5 vendors (Carlos Ruiz/Plumbing, Janet Park/Electrical, Tom Wallace/HVAC, Marcus Lee/Handyman, Sandra Vega/Painting)
 - "Try Demo" button on Landing page opens login modal with pre-filled credentials
 
 ## Notes

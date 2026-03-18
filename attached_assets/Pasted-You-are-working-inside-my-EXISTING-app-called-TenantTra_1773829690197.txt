@@ -1,0 +1,378 @@
+You are working inside my EXISTING app called TenantTrack. Do not build a separate app. Extend the current codebase cleanly and preserve the current architecture, visual style, and naming patterns.
+
+FIRST: inspect the existing project before making changes.
+
+CURRENT STACK / ARCHITECTURE:
+- Frontend: React + TypeScript + Vite
+- Routing: wouter
+- Backend: Express
+- ORM: Drizzle
+- Database: PostgreSQL
+- Shared types/routes: shared/schema.ts and shared/routes.ts
+- Existing backend storage pattern: server/storage.ts
+- Existing API route registration: server/routes.ts
+- Existing app layout/navigation: client/src/components/layout/AppLayout.tsx
+- Existing pages live in: client/src/pages
+- Existing hooks live in: client/src/hooks
+
+CURRENT PRODUCT:
+TenantTrack is a landlord/property management app focused on maintenance requests. Tenants submit repair issues through a QR-code flow and landlords manage requests inside the dashboard.
+
+CURRENT RELEVANT DATA MODELS THAT ALREADY EXIST:
+- properties
+- maintenance_requests
+- maintenance_staff
+- request_notes
+- repair_costs
+- recurring_tasks
+- request_messages
+
+IMPORTANT PRODUCT DECISION:
+This new feature is NOT a public marketplace.
+Do NOT build Thumbtack, Angi, Yelp, or a contractor marketplace.
+This is a landlord-first internal vendor management system that plugs directly into maintenance requests.
+
+GOAL:
+Add a native feature called Vendors / Smart Vendor Dispatch.
+
+This should allow landlords/property managers to:
+1. Save their own trusted vendors
+2. Assign vendors to maintenance requests
+3. Track vendor performance over time
+4. Reuse the best vendors quickly
+5. Rate vendors internally after jobs are completed
+6. View a simple activity trail of request-to-vendor actions
+
+IMPORTANT IMPLEMENTATION RULES:
+- Preserve the existing code style and UI feel
+- Reuse current auth and landlord ownership patterns
+- Keep multi-tenant separation intact using landlordId/account ownership
+- Do not break existing staff assignment flows
+- Vendors are separate from maintenance staff
+- Build the MVP first, not an overengineered system
+- Use Drizzle schema patterns similar to the existing code
+- Update shared routes/types where appropriate
+- Add clean reusable hooks for frontend data access
+- Keep empty states polished
+- Make it responsive
+
+======================================================================
+PHASE 1 — DATA MODEL CHANGES
+======================================================================
+
+Add the following new tables to shared/schema.ts using the same style as the existing schema:
+
+1. vendors
+Fields:
+- id
+- landlordId (varchar, required)
+- name (text, required)
+- companyName (text, optional)
+- tradeCategory (text, required)
+- phone (text, optional)
+- email (text, optional)
+- city (text, optional)
+- serviceArea (text, optional)
+- notes (text, optional)
+- preferredVendor (boolean, default false)
+- licenseInfo (text, optional)
+- insuranceInfo (text, optional)
+- status (text, default "active")
+- createdAt
+- updatedAt
+
+2. vendor_assignments
+Fields:
+- id
+- requestId (integer, required)
+- vendorId (integer, required)
+- landlordId (varchar, required)
+- assignedBy (varchar, optional)
+- assignedAt
+- contactedVendor (boolean, default false)
+- priority (text, default "Normal")
+- targetCompletionDate (timestamp, optional)
+- scheduledDate (timestamp, optional)
+- completedAt (timestamp, optional)
+- assignmentNotes (text, optional)
+- finalCost (integer, optional)
+
+3. vendor_reviews
+Fields:
+- id
+- requestId (integer, required)
+- vendorId (integer, required)
+- landlordId (varchar, required)
+- qualityRating (integer, optional)
+- speedRating (integer, optional)
+- communicationRating (integer, optional)
+- priceRating (integer, optional)
+- overallRating (integer, optional)
+- reviewNotes (text, optional)
+- createdAt
+
+4. maintenance_activity_log
+Fields:
+- id
+- requestId (integer, required)
+- landlordId (varchar, required)
+- eventType (text, required)
+- eventLabel (text, required)
+- details (text, optional)
+- createdAt
+
+Also create matching insert schemas and exported types.
+
+IMPORTANT:
+Do not remove or break the existing assignedTo field on maintenance_requests.
+That field currently represents internal staff assignment.
+Vendor assignment should live in the new vendor_assignments table.
+
+======================================================================
+PHASE 2 — STORAGE LAYER
+======================================================================
+
+Extend server/storage.ts with methods for:
+
+VENDORS
+- getVendorsByLandlord(landlordId)
+- getVendor(id)
+- createVendor(data)
+- updateVendor(id, data)
+- archiveVendor(id) or setVendorStatus(id, status)
+- deleteVendor(id) only if safe, otherwise archive
+
+ASSIGNMENTS
+- getVendorAssignmentByRequest(requestId)
+- assignVendorToRequest(data)
+- updateVendorAssignment(requestId, data)
+- clearVendorAssignment(requestId)
+- markVendorContacted(requestId, contacted)
+- updateVendorJobStatus(requestId, status-like fields if needed)
+
+REVIEWS
+- getVendorReviews(vendorId, landlordId)
+- createVendorReview(data)
+- getVendorReviewForRequest(requestId)
+
+ACTIVITY LOG
+- getActivityByRequest(requestId)
+- createActivityLog(data)
+
+ANALYTICS / METRICS
+- getVendorStats(vendorId, landlordId)
+- getTopVendors(landlordId)
+- getRequestsNeedingVendorAssignment(landlordId)
+- getVendorDashboardStats(landlordId)
+
+Use patterns consistent with the current DatabaseStorage class.
+
+Whenever a vendor is assigned, reassigned, contacted, completed, or reviewed, write an activity log entry.
+
+======================================================================
+PHASE 3 — API ROUTES
+======================================================================
+
+Update shared/routes.ts and server/routes.ts to add vendor-related APIs.
+
+Add endpoints such as:
+
+VENDORS
+- GET /api/vendors
+- POST /api/vendors
+- PATCH /api/vendors/:id
+- DELETE or PATCH archive /api/vendors/:id
+
+ASSIGNMENT
+- GET /api/requests/:id/vendor-assignment
+- PATCH /api/requests/:id/vendor-assignment
+- DELETE /api/requests/:id/vendor-assignment
+- PATCH /api/requests/:id/vendor-contacted
+
+REVIEWS
+- GET /api/vendors/:id/reviews
+- POST /api/requests/:id/vendor-review
+
+ACTIVITY
+- GET /api/requests/:id/activity
+
+ANALYTICS
+- GET /api/vendors/dashboard-summary
+- GET /api/vendors/top
+
+Protect landlord-only endpoints with the same auth middleware pattern already used in server/routes.ts.
+
+All endpoints must enforce landlord ownership.
+
+======================================================================
+PHASE 4 — FRONTEND PAGES / HOOKS
+======================================================================
+
+Create a new page:
+- client/src/pages/Vendors.tsx
+
+Add a new sidebar nav item in:
+- client/src/components/layout/AppLayout.tsx
+
+Label:
+- Vendors
+
+Add hooks similar to the existing patterns:
+- client/src/hooks/use-vendors.ts
+
+Include hooks for:
+- useVendors
+- useCreateVendor
+- useUpdateVendor
+- useArchiveVendor
+- useVendorAssignment
+- useAssignVendor
+- useVendorActivity
+- useVendorDashboardSummary
+
+======================================================================
+PHASE 5 — VENDORS PAGE UI
+======================================================================
+
+Build a polished Vendors page consistent with the current app style.
+
+Required features:
+- Search vendors
+- Filter by trade category
+- Filter preferred vendors
+- Sort by:
+  - most used
+  - highest rated
+  - recently assigned
+- Add vendor modal
+- Edit vendor modal
+- Archive/deactivate action
+- Vendor cards or a clean table/card hybrid layout
+
+Each vendor should show:
+- name
+- company name
+- trade category
+- phone
+- email
+- city/service area
+- preferred badge if applicable
+- active/inactive badge
+- average rating
+- total jobs completed
+- last assigned date
+
+Include strong empty states:
+- No vendors yet
+- No preferred vendors yet
+- No ratings yet
+
+Use practical copy like:
+- Assign trusted vendors in seconds
+- Build your private vendor network
+- Track who actually gets the job done
+
+======================================================================
+PHASE 6 — DASHBOARD INTEGRATION
+======================================================================
+
+Update the existing dashboard page to add vendor-aware widgets without ruining the current layout.
+
+Add cards/widgets for:
+- Requests needing vendor assignment
+- Active vendor jobs
+- Top vendors
+- Recently completed vendor jobs
+- Average completion time
+
+Keep this lightweight and visually consistent.
+
+======================================================================
+PHASE 7 — REQUEST DETAIL INTEGRATION
+======================================================================
+
+Inside the existing maintenance request workflow on the dashboard, add vendor assignment support.
+
+For each request, add a Vendor Assignment panel that can:
+- show current assigned vendor
+- show trade category match if possible
+- assign a vendor from saved vendors
+- reassign vendor
+- mark vendor contacted
+- set priority
+- set target completion date
+- show scheduled/completed dates
+- display assignment notes
+- show final cost if available
+- show last vendor review if one exists
+- show activity timeline for vendor-related actions
+
+IMPORTANT:
+Use simple suggestion logic for best-fit vendors:
+- same tradeCategory as issueType when possible
+- preferred vendors first
+- then highest rated
+- then most used
+- then recently assigned
+
+This is not AI. Keep it deterministic and simple.
+
+======================================================================
+PHASE 8 — REVIEW FLOW
+======================================================================
+
+When a request is marked completed and has a vendor assignment, allow the landlord to leave a PRIVATE internal review:
+
+Fields:
+- quality
+- speed
+- communication
+- price fairness
+- overall
+- notes
+
+Use a 1–5 scale.
+This review is never public.
+
+Show aggregate average rating per vendor on the Vendors page.
+
+======================================================================
+PHASE 9 — DEMO / SEED DATA
+======================================================================
+
+Update the demo seed flow in server/routes.ts to create:
+- sample vendors
+- sample vendor assignments
+- sample vendor reviews
+- sample activity log entries
+
+Use realistic landlord/vendor examples such as:
+- electrician
+- plumber
+- painter
+- handyman
+- HVAC technician
+
+Make the demo data help sell the feature.
+
+======================================================================
+PHASE 10 — QUALITY BAR
+======================================================================
+
+Do not dump all logic into one huge file.
+Keep the code modular and readable.
+
+Before making code changes:
+1. Inspect the current codebase
+2. Explain the exact files you will create
+3. Explain the exact files you will modify
+4. Explain schema changes
+5. Explain risks to current functionality
+
+Then implement in small logical steps.
+
+At the end, provide:
+- a summary of what was added
+- a list of changed files
+- any migration/db push steps needed
+- any follow-up improvements you recommend later

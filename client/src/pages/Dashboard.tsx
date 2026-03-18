@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { useUpdateRequestStatus } from "@/hooks/use-requests";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, AlertCircle, Phone, Mail, MapPin, Search, UserCheck, MessageSquare, Send, ClipboardList, AlertTriangle, CheckCircle2, Clock, DollarSign, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, AlertCircle, Phone, Mail, MapPin, Search, UserCheck, MessageSquare, Send, ClipboardList, AlertTriangle, CheckCircle2, Clock, DollarSign, Trash2, ChevronDown, ChevronUp, Briefcase, X, Star } from "lucide-react";
 import { Input } from "@/components/ui/Input";
+import { useVendors, useVendorAssignment, useAssignVendor, useClearVendorAssignment, useMarkVendorContacted } from "@/hooks/use-vendors";
 
 interface DashboardStats {
   totalRequests: number;
@@ -20,6 +21,160 @@ interface DashboardStats {
   completed: number;
   emergencies: number;
   totalProperties: number;
+}
+
+function VendorAssignPanel({ requestId }: { requestId: number }) {
+  const { data: vendors = [] } = useVendors();
+  const { data: assignmentData, isLoading } = useVendorAssignment(requestId);
+  const assignVendor = useAssignVendor(requestId);
+  const clearAssignment = useClearVendorAssignment(requestId);
+  const markContacted = useMarkVendorContacted(requestId);
+  const [showPicker, setShowPicker] = useState(false);
+  const [selectedVendorId, setSelectedVendorId] = useState("");
+  const [priority, setPriority] = useState("Normal");
+  const [notes, setNotes] = useState("");
+
+  const activeVendors = vendors.filter(v => v.status === "active");
+  const assignment = assignmentData?.assignment;
+  const assignedVendor = assignmentData?.vendor;
+
+  const handleAssign = async () => {
+    if (!selectedVendorId) return;
+    await assignVendor.mutateAsync({ vendorId: Number(selectedVendorId), priority, assignmentNotes: notes || undefined });
+    setShowPicker(false);
+    setSelectedVendorId("");
+    setNotes("");
+  };
+
+  const vendorOptions = [
+    { label: "Select vendor...", value: "" },
+    ...activeVendors.map(v => ({ label: `${v.name}${v.companyName ? ` (${v.companyName})` : ""} — ${v.tradeCategory}`, value: String(v.id) })),
+  ];
+
+  const priorityOptions = [
+    { label: "Normal", value: "Normal" },
+    { label: "High", value: "High" },
+    { label: "Emergency", value: "Emergency" },
+  ];
+
+  if (isLoading) return null;
+
+  return (
+    <div className="mt-3 pt-3 border-t border-border">
+      <div className="flex items-center gap-2 mb-2">
+        <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Vendor</span>
+      </div>
+
+      {assignment && assignedVendor ? (
+        <div className="bg-muted/50 rounded-xl p-3 space-y-2" data-testid={`vendor-assignment-${requestId}`}>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold truncate">{assignedVendor.name}</p>
+              {assignedVendor.companyName && <p className="text-xs text-muted-foreground truncate">{assignedVendor.companyName}</p>}
+              <div className="flex items-center gap-2 flex-wrap mt-1">
+                <Badge variant="outline" className="text-[10px] px-1.5">{assignedVendor.tradeCategory}</Badge>
+                {assignment.priority && assignment.priority !== "Normal" && (
+                  <Badge variant={assignment.priority === "Emergency" ? "destructive" : "warning"} className="text-[10px] px-1.5">{assignment.priority}</Badge>
+                )}
+                {assignment.contactedVendor && (
+                  <Badge className="bg-green-500/10 text-green-400 border-green-500/20 text-[10px] px-1.5">✓ Contacted</Badge>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-1 shrink-0">
+              {!assignment.contactedVendor && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-[10px]"
+                  onClick={() => markContacted.mutate(true)}
+                  disabled={markContacted.isPending}
+                  data-testid={`button-mark-contacted-${requestId}`}
+                >
+                  Mark Contacted
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-red-400"
+                onClick={() => clearAssignment.mutate()}
+                disabled={clearAssignment.isPending}
+                data-testid={`button-clear-vendor-${requestId}`}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+          {assignment.assignmentNotes && (
+            <p className="text-xs text-muted-foreground italic">"{assignment.assignmentNotes}"</p>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 px-2 text-[10px] text-muted-foreground"
+            onClick={() => { setSelectedVendorId(String(assignment.vendorId)); setPriority(assignment.priority || "Normal"); setNotes(assignment.assignmentNotes || ""); setShowPicker(true); }}
+            data-testid={`button-reassign-vendor-${requestId}`}
+          >
+            Reassign vendor
+          </Button>
+        </div>
+      ) : (
+        !showPicker && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 px-3 text-xs gap-1.5 w-full"
+            onClick={() => setShowPicker(true)}
+            data-testid={`button-assign-vendor-${requestId}`}
+          >
+            <Briefcase className="h-3.5 w-3.5" /> Assign Vendor
+          </Button>
+        )
+      )}
+
+      {showPicker && (
+        <div className="mt-2 space-y-2 bg-muted/30 rounded-xl p-3" data-testid={`vendor-picker-${requestId}`}>
+          <Select
+            value={selectedVendorId}
+            onChange={e => setSelectedVendorId(e.target.value)}
+            options={vendorOptions}
+            className="h-9 text-sm py-1"
+            data-testid={`select-vendor-${requestId}`}
+          />
+          <div className="flex gap-2">
+            <Select
+              value={priority}
+              onChange={e => setPriority(e.target.value)}
+              options={priorityOptions}
+              className="h-9 text-sm py-1 flex-1"
+              data-testid={`select-vendor-priority-${requestId}`}
+            />
+            <Button
+              size="sm"
+              className="h-9 px-3 text-xs"
+              onClick={handleAssign}
+              disabled={!selectedVendorId || assignVendor.isPending}
+              data-testid={`button-confirm-vendor-${requestId}`}
+            >
+              {assignVendor.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Assign"}
+            </Button>
+            <Button size="sm" variant="ghost" className="h-9 px-2" onClick={() => setShowPicker(false)} data-testid={`button-cancel-vendor-${requestId}`}>
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <Input
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Assignment notes (optional)"
+            className="h-8 text-xs"
+            data-testid={`input-vendor-notes-${requestId}`}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function RequestCosts({ requestId }: { requestId: number }) {
@@ -620,6 +775,7 @@ export default function Dashboard() {
                       )}
                     </div>
 
+                    <VendorAssignPanel requestId={request.id} />
                     <RequestMessages requestId={request.id} />
                     <RequestNotes requestId={request.id} />
                     <RequestCosts requestId={request.id} />

@@ -2,6 +2,7 @@ import { randomBytes } from "crypto";
 import { db } from "./db";
 import {
   properties, maintenanceRequests, maintenanceStaff, requestNotes, repairCosts, recurringTasks, requestMessages,
+  vendors, vendorAssignments, vendorReviews, maintenanceActivityLog,
   type Property, type InsertProperty,
   type MaintenanceRequest, type InsertMaintenanceRequest,
   type MaintenanceStaff, type InsertMaintenanceStaff,
@@ -9,8 +10,12 @@ import {
   type RepairCost, type InsertRepairCost,
   type RecurringTask, type InsertRecurringTask,
   type RequestMessage, type InsertRequestMessage,
+  type Vendor, type InsertVendor,
+  type VendorAssignment, type InsertVendorAssignment,
+  type VendorReview, type InsertVendorReview,
+  type ActivityLog, type InsertActivityLog,
 } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 function generateTrackingCode(): string {
   return randomBytes(4).toString("hex").toUpperCase();
@@ -54,6 +59,37 @@ export interface IStorage {
   updateRecurringTask(id: number, data: Partial<InsertRecurringTask>): Promise<RecurringTask>;
   completeRecurringTask(id: number, nextDueDate: Date): Promise<RecurringTask>;
   deleteRecurringTask(id: number): Promise<void>;
+
+  // Vendors
+  getVendorsByLandlord(landlordId: string): Promise<Vendor[]>;
+  getVendor(id: number): Promise<Vendor | undefined>;
+  createVendor(data: InsertVendor): Promise<Vendor>;
+  updateVendor(id: number, data: Partial<InsertVendor>): Promise<Vendor>;
+  archiveVendor(id: number): Promise<Vendor>;
+  deleteVendor(id: number): Promise<void>;
+
+  // Vendor Assignments
+  getVendorAssignmentByRequest(requestId: number): Promise<VendorAssignment | undefined>;
+  assignVendorToRequest(data: InsertVendorAssignment): Promise<VendorAssignment>;
+  updateVendorAssignment(requestId: number, data: Partial<InsertVendorAssignment>): Promise<VendorAssignment>;
+  clearVendorAssignment(requestId: number): Promise<void>;
+
+  // Vendor Reviews
+  getVendorReviews(vendorId: number, landlordId: string): Promise<VendorReview[]>;
+  getVendorReviewForRequest(requestId: number): Promise<VendorReview | undefined>;
+  createVendorReview(data: InsertVendorReview): Promise<VendorReview>;
+
+  // Activity Log
+  getActivityByRequest(requestId: number): Promise<ActivityLog[]>;
+  createActivityLog(data: InsertActivityLog): Promise<ActivityLog>;
+
+  // Analytics
+  getVendorStats(vendorId: number, landlordId: string): Promise<{
+    totalJobs: number;
+    avgOverallRating: number | null;
+    lastAssignedAt: Date | null;
+  }>;
+  getTopVendors(landlordId: string): Promise<Array<Vendor & { totalJobs: number; avgRating: number | null }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -74,10 +110,7 @@ export class DatabaseStorage implements IStorage {
   async deleteProperty(id: number): Promise<void> {
     const requests = await db.select().from(maintenanceRequests).where(eq(maintenanceRequests.propertyId, id));
     for (const req of requests) {
-      await db.delete(repairCosts).where(eq(repairCosts.requestId, req.id));
-      await db.delete(requestNotes).where(eq(requestNotes.requestId, req.id));
-      await db.delete(requestMessages).where(eq(requestMessages.requestId, req.id));
-      await db.delete(maintenanceRequests).where(eq(maintenanceRequests.id, req.id));
+      await this.deleteRequest(req.id);
     }
     await db.delete(recurringTasks).where(eq(recurringTasks.propertyId, id));
     await db.delete(properties).where(eq(properties.id, id));
@@ -120,6 +153,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteRequest(id: number): Promise<void> {
+    await db.delete(maintenanceActivityLog).where(eq(maintenanceActivityLog.requestId, id));
+    await db.delete(vendorReviews).where(eq(vendorReviews.requestId, id));
+    await db.delete(vendorAssignments).where(eq(vendorAssignments.requestId, id));
     await db.delete(repairCosts).where(eq(repairCosts.requestId, id));
     await db.delete(requestNotes).where(eq(requestNotes.requestId, id));
     await db.delete(requestMessages).where(eq(requestMessages.requestId, id));
@@ -228,6 +264,149 @@ export class DatabaseStorage implements IStorage {
 
   async deleteRecurringTask(id: number): Promise<void> {
     await db.delete(recurringTasks).where(eq(recurringTasks.id, id));
+  }
+
+  // ── Vendors ────────────────────────────────────────────────────────────────
+
+  async getVendorsByLandlord(landlordId: string): Promise<Vendor[]> {
+    return await db.select().from(vendors)
+      .where(eq(vendors.landlordId, landlordId))
+      .orderBy(desc(vendors.createdAt));
+  }
+
+  async getVendor(id: number): Promise<Vendor | undefined> {
+    const [vendor] = await db.select().from(vendors).where(eq(vendors.id, id));
+    return vendor;
+  }
+
+  async createVendor(data: InsertVendor): Promise<Vendor> {
+    const [vendor] = await db.insert(vendors).values(data).returning();
+    return vendor;
+  }
+
+  async updateVendor(id: number, data: Partial<InsertVendor>): Promise<Vendor> {
+    const [vendor] = await db.update(vendors)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(vendors.id, id))
+      .returning();
+    return vendor;
+  }
+
+  async archiveVendor(id: number): Promise<Vendor> {
+    const [vendor] = await db.update(vendors)
+      .set({ status: "archived", updatedAt: new Date() })
+      .where(eq(vendors.id, id))
+      .returning();
+    return vendor;
+  }
+
+  async deleteVendor(id: number): Promise<void> {
+    await db.delete(vendorReviews).where(eq(vendorReviews.vendorId, id));
+    await db.delete(vendorAssignments).where(eq(vendorAssignments.vendorId, id));
+    await db.delete(vendors).where(eq(vendors.id, id));
+  }
+
+  // ── Vendor Assignments ────────────────────────────────────────────────────
+
+  async getVendorAssignmentByRequest(requestId: number): Promise<VendorAssignment | undefined> {
+    const [assignment] = await db.select().from(vendorAssignments)
+      .where(eq(vendorAssignments.requestId, requestId));
+    return assignment;
+  }
+
+  async assignVendorToRequest(data: InsertVendorAssignment): Promise<VendorAssignment> {
+    await db.delete(vendorAssignments).where(eq(vendorAssignments.requestId, data.requestId));
+    const [assignment] = await db.insert(vendorAssignments).values(data).returning();
+    return assignment;
+  }
+
+  async updateVendorAssignment(requestId: number, data: Partial<InsertVendorAssignment>): Promise<VendorAssignment> {
+    const [assignment] = await db.update(vendorAssignments)
+      .set(data)
+      .where(eq(vendorAssignments.requestId, requestId))
+      .returning();
+    return assignment;
+  }
+
+  async clearVendorAssignment(requestId: number): Promise<void> {
+    await db.delete(vendorAssignments).where(eq(vendorAssignments.requestId, requestId));
+  }
+
+  // ── Vendor Reviews ────────────────────────────────────────────────────────
+
+  async getVendorReviews(vendorId: number, landlordId: string): Promise<VendorReview[]> {
+    return await db.select().from(vendorReviews)
+      .where(and(eq(vendorReviews.vendorId, vendorId), eq(vendorReviews.landlordId, landlordId)))
+      .orderBy(desc(vendorReviews.createdAt));
+  }
+
+  async getVendorReviewForRequest(requestId: number): Promise<VendorReview | undefined> {
+    const [review] = await db.select().from(vendorReviews)
+      .where(eq(vendorReviews.requestId, requestId));
+    return review;
+  }
+
+  async createVendorReview(data: InsertVendorReview): Promise<VendorReview> {
+    const [review] = await db.insert(vendorReviews).values(data).returning();
+    return review;
+  }
+
+  // ── Activity Log ──────────────────────────────────────────────────────────
+
+  async getActivityByRequest(requestId: number): Promise<ActivityLog[]> {
+    return await db.select().from(maintenanceActivityLog)
+      .where(eq(maintenanceActivityLog.requestId, requestId))
+      .orderBy(desc(maintenanceActivityLog.createdAt));
+  }
+
+  async createActivityLog(data: InsertActivityLog): Promise<ActivityLog> {
+    const [entry] = await db.insert(maintenanceActivityLog).values(data).returning();
+    return entry;
+  }
+
+  // ── Analytics ─────────────────────────────────────────────────────────────
+
+  async getVendorStats(vendorId: number, landlordId: string): Promise<{
+    totalJobs: number;
+    avgOverallRating: number | null;
+    lastAssignedAt: Date | null;
+  }> {
+    const assignments = await db.select().from(vendorAssignments)
+      .where(and(eq(vendorAssignments.vendorId, vendorId), eq(vendorAssignments.landlordId, landlordId)));
+
+    const reviews = await db.select().from(vendorReviews)
+      .where(and(eq(vendorReviews.vendorId, vendorId), eq(vendorReviews.landlordId, landlordId)));
+
+    const ratings = reviews.map(r => r.overallRating).filter((r): r is number => r !== null);
+    const avgOverallRating = ratings.length > 0
+      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+      : null;
+
+    const lastAssignment = assignments.sort((a, b) =>
+      new Date(b.assignedAt!).getTime() - new Date(a.assignedAt!).getTime()
+    )[0];
+
+    return {
+      totalJobs: assignments.length,
+      avgOverallRating,
+      lastAssignedAt: lastAssignment?.assignedAt ?? null,
+    };
+  }
+
+  async getTopVendors(landlordId: string): Promise<Array<Vendor & { totalJobs: number; avgRating: number | null }>> {
+    const allVendors = await this.getVendorsByLandlord(landlordId);
+    const activeVendors = allVendors.filter(v => v.status === "active");
+
+    const withStats = await Promise.all(activeVendors.map(async (v) => {
+      const stats = await this.getVendorStats(v.id, landlordId);
+      return { ...v, totalJobs: stats.totalJobs, avgRating: stats.avgOverallRating };
+    }));
+
+    return withStats.sort((a, b) => {
+      if (b.totalJobs !== a.totalJobs) return b.totalJobs - a.totalJobs;
+      if ((b.avgRating ?? 0) !== (a.avgRating ?? 0)) return (b.avgRating ?? 0) - (a.avgRating ?? 0);
+      return 0;
+    });
   }
 }
 

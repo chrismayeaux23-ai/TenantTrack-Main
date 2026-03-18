@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Building2, ClipboardList, LogOut, Menu, X, CreditCard, Users, UserCircle, Receipt, DollarSign, CalendarClock } from "lucide-react";
+import { Building2, ClipboardList, LogOut, Menu, X, CreditCard, Users, UserCircle, Receipt, DollarSign, CalendarClock, Briefcase } from "lucide-react";
 import { Button } from "../ui/Button";
 import logoPng from "@assets/file_000000001adc71f58731a09f21d2988d_1772208715788.png";
 
@@ -15,6 +15,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { name: "Properties", href: "/properties", icon: Building2 },
     { name: "Tenants", href: "/tenants", icon: UserCircle },
     { name: "Staff", href: "/staff", icon: Users },
+    { name: "Vendors", href: "/vendors", icon: Briefcase },
     { name: "Costs", href: "/costs", icon: DollarSign },
     { name: "Scheduled", href: "/scheduled", icon: CalendarClock },
     { name: "Billing", href: "/billing", icon: Receipt },
