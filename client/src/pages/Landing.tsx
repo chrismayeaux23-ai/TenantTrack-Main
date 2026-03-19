@@ -245,6 +245,31 @@ const TESTIMONIALS = [
   },
 ];
 
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border border-border rounded-2xl overflow-hidden bg-card">
+      <button
+        className="w-full text-left px-6 py-4 flex items-center justify-between gap-4 hover:bg-muted/50 transition-colors"
+        onClick={() => setOpen(o => !o)}
+        data-testid={`faq-toggle-${question.slice(0, 20).replace(/\s/g, "-").toLowerCase()}`}
+      >
+        <span className="font-semibold text-foreground text-sm md:text-base">{question}</span>
+        <span className={`shrink-0 h-5 w-5 flex items-center justify-center rounded-full border border-border transition-transform ${open ? "rotate-180" : ""}`}>
+          <svg className="h-3 w-3 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </button>
+      {open && (
+        <div className="px-6 pb-4 text-sm text-muted-foreground leading-relaxed border-t border-border pt-4">
+          {answer}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SlideVisual({ type }: { type: string }) {
   if (type === "add-property") return (
     <div className="bg-card rounded-2xl border border-border p-5 shadow-xl w-full max-w-sm mx-auto">
@@ -815,12 +840,12 @@ export default function Landing() {
               Know who to call, when they showed up, and what they did. VendorTrust scores every contractor automatically — so you dispatch with confidence, not guesswork.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Button size="lg" className="w-full sm:w-auto rounded-full text-lg shadow-xl shadow-primary/20 gap-2" onClick={() => window.location.href = '/login'} data-testid="button-get-started">
-                Get Started Free
+              <Button size="lg" className="w-full sm:w-auto rounded-full text-lg shadow-xl shadow-primary/20 gap-2" onClick={() => window.location.href = '/login?signup=1'} data-testid="button-get-started">
+                Start Free Trial
                 <ArrowRight className="h-5 w-5" />
               </Button>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto rounded-full text-lg border-border" onClick={() => scrollTo("how-it-works")} data-testid="button-see-how">
-                See How It Works
+              <Button variant="ghost" size="lg" className="w-full sm:w-auto rounded-full text-lg text-muted-foreground hover:text-foreground" onClick={() => setShowDemoLogin(true)} data-testid="button-see-demo">
+                View Live Demo
               </Button>
             </div>
             <div className="flex items-center gap-6 mt-8 text-sm text-muted-foreground">
@@ -997,15 +1022,36 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="py-10 px-6 border-y border-border bg-muted/30">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-muted-foreground">
+            {[
+              "Built for independent landlords",
+              "No enterprise complexity",
+              "Replaces spreadsheets and text chaos",
+              "No app required for tenants",
+              "Secure and reliable",
+            ].map(item => (
+              <div key={item} className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <Check className="h-2.5 w-2.5 text-primary" />
+                </div>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section id="features" className="py-24 px-6 bg-card/30 border-y border-border">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 text-sm px-4 py-1">Features</Badge>
+            <Badge variant="outline" className="mb-4 text-sm px-4 py-1">What You Get</Badge>
             <h2 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4">
-              Everything You Need to Manage Properties
+              Stop Managing Maintenance in Texts and Spreadsheets
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              From QR-powered maintenance requests to vendor trust scores and proof of completion — VendorTrust handles it all.
+              VendorTrust gives you a purpose-built command center — QR requests, vendor trust scores, dispatch tracking, and proof of completion.
             </p>
           </div>
 
@@ -1166,18 +1212,59 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section className="py-24 px-6 bg-card/30 border-y border-border">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4 text-sm px-4 py-1">FAQ</Badge>
+            <h2 className="text-3xl md:text-4xl font-display font-extrabold text-foreground">
+              Common Questions
+            </h2>
+          </div>
+          <div className="space-y-4">
+            {[
+              {
+                q: "Do tenants need to download an app?",
+                a: "No. Tenants scan the QR code with their phone camera and submit a request in a plain browser — no app, no account, no friction.",
+              },
+              {
+                q: "Can I use my existing vendors and contractors?",
+                a: "Yes. Add any contractor you already work with. VendorTrust will start tracking their reliability and building their trust score from the first job.",
+              },
+              {
+                q: "How does the vendor trust score work?",
+                a: "Each vendor gets a score from 0–100 based on ratings, job completion rate, no-show history, and tenure. The higher the score, the more reliable the vendor has proven to be.",
+              },
+              {
+                q: "What happens after the 14-day trial?",
+                a: "You'll be prompted to choose a plan. If you don't subscribe, your account is paused — your data is never deleted. No credit card is required to start the trial.",
+              },
+              {
+                q: "Is VendorTrust for large property companies?",
+                a: "Not at all. VendorTrust is designed for independent landlords managing 1 to 100+ units. No IT setup, no enterprise contracts — just log in and go.",
+              },
+            ].map((item, i) => (
+              <FaqItem key={i} question={item.q} answer={item.a} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary/10 to-emerald-400/5 rounded-3xl p-12 md:p-16 border border-primary/20">
           <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-4">
-            Ready to simplify maintenance?
+            Stop chasing vendors.<br className="hidden sm:block" /> Start managing maintenance.
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            Join landlords who've stopped chasing maintenance requests and started managing them. Set up in under 5 minutes.
+            Set up your first property in under 5 minutes. No credit card. No IT team. No chaos.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="rounded-full text-lg shadow-xl shadow-primary/20 gap-2 px-8" onClick={() => window.location.href = '/login'} data-testid="button-cta-final">
-              Get Started Free
+            <Button size="lg" className="rounded-full text-lg shadow-xl shadow-primary/20 gap-2 px-8" onClick={() => window.location.href = '/login?signup=1'} data-testid="button-cta-final">
+              Start Free Trial
               <ArrowRight className="h-5 w-5" />
+            </Button>
+            <Button size="lg" variant="outline" className="rounded-full text-lg border-border" onClick={() => setShowDemoLogin(true)} data-testid="button-cta-demo">
+              View Demo
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-4">14-day free trial &middot; No credit card &middot; Cancel anytime</p>

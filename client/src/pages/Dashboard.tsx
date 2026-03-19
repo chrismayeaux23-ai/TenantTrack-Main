@@ -898,20 +898,43 @@ export default function Dashboard() {
       </div>
 
       {filteredRequests.length === 0 ? (
-        <div className="bg-card border border-border/60 border-dashed rounded-2xl p-10 text-center flex flex-col items-center">
-          <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-            <CheckSquare className="h-8 w-8 text-primary" />
+        statusFilter !== "All" ? (
+          <div className="bg-card border border-dashed border-border rounded-2xl p-10 text-center flex flex-col items-center">
+            <div className="h-14 w-14 bg-muted rounded-2xl flex items-center justify-center mb-4">
+              <CheckSquare className="h-7 w-7 text-muted-foreground" />
+            </div>
+            <h3 className="text-base font-bold mb-1">No {statusFilter === "In-Progress" ? "In Progress" : statusFilter} orders</h3>
+            <p className="text-sm text-muted-foreground mb-3">No work orders match this filter right now.</p>
+            <button onClick={() => setStatusFilter("All")} className="text-sm text-primary hover:underline font-medium">
+              Show all work orders
+            </button>
           </div>
-          <h3 className="text-lg font-display font-bold mb-1">
-            {statusFilter === "All" ? "No work orders yet" : `No ${statusFilter === "In-Progress" ? "in-progress" : statusFilter.toLowerCase()} orders`}
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-            {statusFilter !== "All"
-              ? `No work orders match "${statusFilter === "In-Progress" ? "In Progress" : statusFilter}" right now. `
-              : "When tenants submit maintenance requests via QR code, they'll appear here. "}
-            {statusFilter !== "All" && <button onClick={() => setStatusFilter("All")} className="text-primary hover:underline">Show all orders</button>}
-          </p>
-        </div>
+        ) : (
+          <div className="bg-card border border-dashed border-border rounded-2xl p-8">
+            <div className="text-center mb-8">
+              <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <CheckSquare className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-display font-bold mb-1">No work orders yet</h3>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                When tenants scan your QR code and submit a maintenance request, it will appear here in real time.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto">
+              {[
+                { step: "1", label: "Add a property", sub: "Set up your first rental unit", href: "/properties" },
+                { step: "2", label: "Print the QR code", sub: "Post it in common areas", href: "/properties" },
+                { step: "3", label: "Add your vendors", sub: "Ready to dispatch when needed", href: "/vendors" },
+              ].map(item => (
+                <a key={item.step} href={item.href} className="block bg-muted/50 hover:bg-muted border border-border rounded-xl p-4 transition-colors text-left">
+                  <div className="text-xs font-bold text-primary mb-1.5">Step {item.step}</div>
+                  <div className="text-sm font-semibold text-foreground">{item.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{item.sub}</div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )
       ) : (
         <div className="space-y-3">
           {filteredRequests.map((request) => {

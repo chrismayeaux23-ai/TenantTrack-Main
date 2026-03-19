@@ -582,23 +582,45 @@ export default function Vendors() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : vendors.length === 0 ? (
-          <div className="bg-card border border-dashed border-border rounded-3xl p-16 text-center">
-            <div className="h-20 w-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
-              <Briefcase className="h-10 w-10 text-muted-foreground" />
+          <div className="bg-card border border-dashed border-border rounded-3xl p-10">
+            <div className="text-center mb-8">
+              <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Briefcase className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-display font-bold mb-2">Build your vendor network</h3>
+              <p className="text-muted-foreground max-w-sm mx-auto text-sm">
+                Add contractors you already trust. VendorTrust tracks their reliability, job history, and ratings — automatically building their trust score over time.
+              </p>
             </div>
-            <h3 className="text-xl font-bold mb-2">Build Your Vendor Network</h3>
-            <p className="text-muted-foreground max-w-md mx-auto mb-6">
-              Save your trusted contractors here. Assign them to maintenance requests, track job history, and rate their work internally.
-            </p>
-            <Button onClick={() => setShowAddModal(true)} className="gap-2" data-testid="button-add-first-vendor">
-              <Plus className="h-4 w-4" /> Add Your First Vendor
-            </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-6">
+              {[
+                { icon: "🔧", label: "Plumber", sub: "Water & pipe issues" },
+                { icon: "⚡", label: "Electrician", sub: "Wiring & panels" },
+                { icon: "❄️", label: "HVAC Tech", sub: "Heating & cooling" },
+              ].map(v => (
+                <div key={v.label} className="bg-muted/50 border border-border rounded-xl p-3 text-center">
+                  <div className="text-2xl mb-1">{v.icon}</div>
+                  <div className="text-sm font-semibold text-foreground">{v.label}</div>
+                  <div className="text-xs text-muted-foreground">{v.sub}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-center">
+              <Button onClick={() => setShowAddModal(true)} className="gap-2 rounded-xl" data-testid="button-add-first-vendor">
+                <Plus className="h-4 w-4" /> Add Your First Vendor
+              </Button>
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="bg-card border border-dashed border-border rounded-2xl p-12 text-center">
-            <X className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+            <div className="h-12 w-12 bg-muted rounded-xl flex items-center justify-center mx-auto mb-4">
+              <X className="h-6 w-6 text-muted-foreground" />
+            </div>
             <h3 className="font-bold mb-1">No vendors match your filters</h3>
-            <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
+            <p className="text-sm text-muted-foreground mb-3">Try adjusting your search or trade filter.</p>
+            <button onClick={() => setShowAddModal(true)} className="text-sm text-primary hover:underline font-medium">
+              + Add a new vendor
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">

@@ -1,0 +1,304 @@
+You are working inside my EXISTING app, which has already been upgraded into VendorTrust.
+
+IMPORTANT:
+Do NOT rebuild the product.
+Do NOT change core functionality unless necessary for UX clarity.
+Your job is to transform the app into a high-converting SaaS product that clearly communicates value and drives paid subscriptions.
+
+This phase is focused on:
+- landing page
+- pricing page
+- onboarding flow
+- in-app messaging
+- conversion optimization
+
+==================================================
+CORE PRODUCT POSITIONING
+==================================================
+
+VendorTrust is NOT a generic property management tool.
+
+It is:
+“A maintenance command center that helps landlords dispatch, track, and trust maintenance vendors without chaos.”
+
+The product solves:
+- unreliable vendors
+- missed maintenance follow-ups
+- communication overload (texts, calls, emails)
+- lack of visibility into job status
+- no accountability or proof of completion
+
+Everything you design must reinforce this.
+
+==================================================
+PHASE 1 — LANDING PAGE (HIGH-CONVERSION)
+==================================================
+
+Redesign or upgrade the landing page to feel like a real SaaS homepage.
+
+Structure:
+
+------------------------------------------
+HERO SECTION
+------------------------------------------
+
+Headline options (pick best and refine):
+- “Dispatch reliable maintenance vendors without the chaos.”
+- “Know exactly who to trust for every repair.”
+- “Stop chasing vendors. Start managing maintenance.”
+
+Subheadline:
+Explain clearly in one sentence:
+Tenant submits → you assign → you track → you verify → you build a trusted vendor network.
+
+Primary CTA:
+- “Start Free Trial”
+Secondary CTA:
+- “See How It Works”
+
+------------------------------------------
+HOW IT WORKS (3–4 STEPS)
+------------------------------------------
+
+Step 1:
+Tenant submits maintenance request (QR or form)
+
+Step 2:
+You assign a trusted vendor instantly
+
+Step 3:
+Track scheduling + progress in one place
+
+Step 4:
+Get proof of completion + build vendor trust scores
+
+------------------------------------------
+FEATURE HIGHLIGHTS (NOT GENERIC)
+------------------------------------------
+
+Focus on outcomes, not features:
+- Vendor Trust Scores (know who actually shows up)
+- Smart Dispatch (assign the right vendor fast)
+- Maintenance Timeline (no more guessing)
+- Proof of Completion (photos + notes)
+- Real-Time Visibility (everything in one place)
+
+------------------------------------------
+SOCIAL PROOF (FAKE BUT REALISTIC FOR NOW)
+------------------------------------------
+
+Add 2–3 testimonial placeholders like:
+“This saved me hours every week chasing vendors.”
+“I finally know who I can trust for repairs.”
+
+------------------------------------------
+CTA SECTION
+------------------------------------------
+
+Reinforce:
+“Stop managing maintenance in texts and spreadsheets.”
+
+Button:
+Start Free Trial
+
+==================================================
+PHASE 2 — PRICING PAGE (SIMPLE + CLEAR)
+==================================================
+
+Create or improve pricing page.
+
+Plans:
+
+------------------------------------------
+STARTER — $29/mo
+------------------------------------------
+- Up to 10 units
+- Maintenance request tracking
+- Vendor management
+- Basic vendor scoring
+
+------------------------------------------
+PRO — $59/mo
+------------------------------------------
+- Up to 50 units
+- Smart vendor recommendations
+- Scheduling + dispatch tools
+- Completion tracking + proof
+- Priority support
+
+------------------------------------------
+GROWTH — $99/mo
+------------------------------------------
+- Unlimited or high unit cap
+- Advanced vendor analytics
+- Performance tracking
+- Preferred vendor system
+- Everything in Pro
+
+------------------------------------------
+
+Add:
+- “No contracts. Cancel anytime.”
+- Free trial messaging (7 or 14 days)
+
+Highlight Pro plan visually.
+
+==================================================
+PHASE 3 — ONBOARDING FLOW (CRITICAL)
+==================================================
+
+Right now onboarding is likely weak or generic.
+
+Fix it.
+
+Create a simple onboarding experience after signup:
+
+Step 1:
+“Add your first property”
+(minimal required fields)
+
+Step 2:
+“Add your first vendor”
+(pre-fill example categories: plumber, electrician, handyman)
+
+Step 3:
+“Create or simulate your first maintenance request”
+
+Optional:
+Offer a “Use demo data” button for instant experience
+
+Goal:
+User should reach “aha moment” in under 2 minutes.
+
+==================================================
+PHASE 4 — IN-APP EMPTY STATES
+==================================================
+
+Empty states should guide users.
+
+Examples:
+
+------------------------------------------
+No vendors yet:
+------------------------------------------
+“Add your first vendor to start dispatching maintenance jobs.”
+
+------------------------------------------
+No requests yet:
+------------------------------------------
+“Have a tenant submit a request or create one manually.”
+
+------------------------------------------
+No completed jobs:
+------------------------------------------
+“Completed jobs will appear here with proof and vendor performance data.”
+
+Make them helpful, not blank.
+
+==================================================
+PHASE 5 — DASHBOARD COPY UPGRADE
+==================================================
+
+Upgrade wording across the app.
+
+Avoid generic terms like:
+- “Dashboard”
+- “Requests”
+- “Vendors”
+
+Enhance them:
+
+- “Maintenance Command Center”
+- “Active Jobs”
+- “Vendor Network”
+- “Dispatch Queue”
+
+Microcopy should reinforce value:
+- “Waiting on vendor response”
+- “Needs scheduling”
+- “Completed with proof”
+
+==================================================
+PHASE 6 — TRUST & CREDIBILITY ELEMENTS
+==================================================
+
+Add small but important credibility signals:
+
+- “Built for independent landlords”
+- “No enterprise complexity”
+- “Designed to replace spreadsheets and text chaos”
+- “Secure and reliable”
+
+Optional:
+Add a small FAQ section:
+- Do tenants need an account?
+- Can I use my existing vendors?
+- How does vendor scoring work?
+
+==================================================
+PHASE 7 — UX POLISH
+==================================================
+
+Make the app feel premium:
+
+- consistent spacing
+- better button hierarchy
+- loading states
+- skeleton loaders where appropriate
+- success/error toasts
+- hover states
+- smoother transitions
+
+Avoid clutter.
+
+==================================================
+PHASE 8 — DEMO MODE / SAMPLE DATA
+==================================================
+
+Ensure that new users can instantly see value.
+
+If not already done:
+- add a “View Demo” or “Load Sample Data” option
+- populate dashboard with realistic VendorTrust scenarios
+
+==================================================
+PHASE 9 — FINAL CHECK
+==================================================
+
+After implementing:
+
+- ensure all pages load correctly
+- ensure navigation works
+- ensure pricing page is accessible
+- ensure onboarding flows correctly
+- ensure landing page reflects actual product
+- ensure app feels cohesive
+
+==================================================
+IMPORTANT STRATEGY RULES
+==================================================
+
+Do NOT:
+- add unnecessary features
+- overcomplicate onboarding
+- turn this into a full property management suite
+- use corporate or vague language
+
+DO:
+- keep messaging simple
+- emphasize time savings and reliability
+- focus on vendor trust + maintenance clarity
+- make the product feel immediately useful
+
+==================================================
+DELIVERABLE
+==================================================
+
+Implement all improvements directly in the app and then provide:
+- summary of UI/UX changes
+- what was added to landing page
+- pricing implementation
+- onboarding changes
+- any recommendations for further conversion improvements
+
+Be decisive and optimize for conversion, not perfection.

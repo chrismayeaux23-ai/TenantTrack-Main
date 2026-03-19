@@ -1,9 +1,10 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
+import { useProperties } from "@/hooks/use-properties";
 import { Loader2 } from "lucide-react";
 
 import NotFound from "@/pages/not-found";
@@ -28,6 +29,7 @@ import Vendors from "@/pages/Vendors";
 import VendorDetail from "@/pages/VendorDetail";
 import Analytics from "@/pages/Analytics";
 import RequestDetail from "@/pages/RequestDetail";
+import Onboarding from "@/pages/Onboarding";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -42,6 +44,33 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
   if (!isAuthenticated) {
     return <Redirect to="/" />;
+  }
+
+  return <Component />;
+}
+
+function OnboardingGuard({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { data: properties, isLoading: propsLoading } = useProperties();
+  const [location] = useLocation();
+
+  if (authLoading || (isAuthenticated && propsLoading)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect to="/" />;
+  }
+
+  const skipOnboarding = localStorage.getItem("onboarding_complete") === "true";
+  const hasProperties = properties && properties.length > 0;
+
+  if (!hasProperties && !skipOnboarding && location !== "/onboarding") {
+    return <Redirect to="/onboarding" />;
   }
 
   return <Component />;
@@ -64,70 +93,70 @@ function Router() {
       <Route path="/report/:propertyId" component={TenantReport} />
       <Route path="/track/:code" component={TrackRequest} />
       <Route path="/track" component={TrackRequest} />
-      
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/features" component={Features} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
+
       <Route path="/flyer/:propertyId">
         <ProtectedRoute component={PrintFlyer} />
       </Route>
-      
+
       <Route path="/">
         {isAuthenticated ? <Dashboard /> : <Landing />}
       </Route>
 
+      <Route path="/onboarding">
+        <ProtectedRoute component={Onboarding} />
+      </Route>
+
       <Route path="/dashboard">
-        <ProtectedRoute component={Dashboard} />
+        <OnboardingGuard component={Dashboard} />
       </Route>
 
       <Route path="/properties">
-        <ProtectedRoute component={Properties} />
+        <OnboardingGuard component={Properties} />
       </Route>
-      
+
       <Route path="/tenants">
-        <ProtectedRoute component={Tenants} />
+        <OnboardingGuard component={Tenants} />
       </Route>
 
       <Route path="/staff">
-        <ProtectedRoute component={Staff} />
+        <OnboardingGuard component={Staff} />
       </Route>
 
       <Route path="/billing">
-        <ProtectedRoute component={Billing} />
+        <OnboardingGuard component={Billing} />
       </Route>
 
       <Route path="/costs">
-        <ProtectedRoute component={CostTracking} />
+        <OnboardingGuard component={CostTracking} />
       </Route>
 
       <Route path="/scheduled">
-        <ProtectedRoute component={RecurringMaintenance} />
+        <OnboardingGuard component={RecurringMaintenance} />
       </Route>
 
       <Route path="/vendors/:id">
-        <ProtectedRoute component={VendorDetail} />
+        <OnboardingGuard component={VendorDetail} />
       </Route>
 
       <Route path="/vendors">
-        <ProtectedRoute component={Vendors} />
+        <OnboardingGuard component={Vendors} />
       </Route>
 
       <Route path="/analytics">
-        <ProtectedRoute component={Analytics} />
+        <OnboardingGuard component={Analytics} />
       </Route>
 
       <Route path="/requests/:id">
-        <ProtectedRoute component={RequestDetail} />
-      </Route>
-
-      <Route path="/pricing">
-        <ProtectedRoute component={Pricing} />
+        <OnboardingGuard component={RequestDetail} />
       </Route>
 
       <Route path="/profile">
         <ProtectedRoute component={Profile} />
       </Route>
-
-      <Route path="/features" component={Features} />
-      <Route path="/terms" component={Terms} />
-      <Route path="/privacy" component={Privacy} />
 
       <Route component={NotFound} />
     </Switch>

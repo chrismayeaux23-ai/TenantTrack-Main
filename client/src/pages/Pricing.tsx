@@ -1,68 +1,83 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Loader2, Check, Zap, Building2, Crown, X } from "lucide-react";
+import { Loader2, Check, Zap, Building2, Crown, X, ArrowLeft, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/use-auth";
+import { Link } from "wouter";
+import logoPng from "@assets/file_000000001adc71f58731a09f21d2988d_1772208715788.png";
 
-const HARDCODED_PLANS = [
+const PLANS = [
   {
     tier: "starter",
     name: "Starter",
-    description: "For small landlords (1–5 units)",
+    description: "For small landlords managing 1–5 units",
     price: 29,
     icon: Building2,
+    color: "text-blue-400",
+    bg: "bg-blue-400/10",
     features: [
       { label: "QR maintenance system", included: true },
-      { label: "Basic dashboard", included: true },
+      { label: "Tenant request portal", included: true },
       { label: "Email notifications", included: true },
       { label: "Photo uploads", included: true },
+      { label: "Up to 5 properties", included: true },
       { label: "Priority request highlighting", included: false },
-      { label: "Maintenance history tracking", included: false },
-      { label: "Reporting & exports", included: false },
+      { label: "Vendor trust scores", included: false },
+      { label: "Analytics & reporting", included: false },
+      { label: "Staff assignment", included: false },
       { label: "Priority support", included: false },
     ],
   },
   {
     tier: "growth",
     name: "Growth",
-    description: "For 6–25 units",
+    description: "For landlords managing 6–25 units",
     price: 59,
     icon: Zap,
     highlight: true,
+    color: "text-primary",
+    bg: "bg-primary/10",
     features: [
       { label: "Everything in Starter", included: true },
+      { label: "Unlimited properties", included: true },
       { label: "Priority request highlighting", included: true },
-      { label: "Maintenance history tracking", included: true },
-      { label: "Basic reporting", included: true },
-      { label: "Custom QR per unit", included: true },
+      { label: "Vendor trust scores (0–100)", included: true },
+      { label: "Vendor dispatch & tracking", included: true },
       { label: "Staff assignment", included: true },
-      { label: "Advanced reporting", included: false },
+      { label: "Job history & proof of completion", included: true },
+      { label: "Analytics & reporting", included: false },
+      { label: "Cost tracking", included: false },
       { label: "Priority support", included: false },
     ],
   },
   {
     tier: "pro",
     name: "Pro",
-    description: "For 25+ units",
+    description: "For professional landlords with 25+ units",
     price: 99,
     icon: Crown,
+    color: "text-amber-400",
+    bg: "bg-amber-400/10",
     features: [
       { label: "Everything in Growth", included: true },
-      { label: "Advanced reporting", included: true },
-      { label: "Export features", included: true },
+      { label: "Advanced analytics & reporting", included: true },
+      { label: "Cost tracking & exports", included: true },
+      { label: "Scheduled recurring maintenance", included: true },
+      { label: "Early access to new features", included: true },
       { label: "Priority support", included: true },
-      { label: "Early access features", included: true },
-      { label: "Cost tracking & reports", included: true },
-      { label: "Scheduled maintenance", included: true },
-      { label: "Unlimited properties", included: true },
+      { label: "Dedicated onboarding call", included: true },
+      { label: "Custom integrations (on request)", included: true },
+      { label: "", included: true },
+      { label: "", included: true },
     ],
   },
 ];
 
 export default function Pricing() {
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
 
   const { data: stripePlans } = useQuery<any[]>({
     queryKey: ["/api/stripe/plans"],
@@ -75,6 +90,7 @@ export default function Pricing() {
 
   const { data: subData, isLoading: subLoading } = useQuery<any>({
     queryKey: ["/api/stripe/subscription"],
+    enabled: isAuthenticated,
   });
 
   const checkoutMutation = useMutation({
@@ -103,19 +119,6 @@ export default function Pricing() {
     },
   });
 
-  if (subLoading) {
-    return (
-      <AppLayout>
-        <div className="h-[60vh] flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      </AppLayout>
-    );
-  }
-
-  const currentTier = subData?.tier || "trial";
-  const hasSubscription = !!subData?.subscription;
-
   const stripePriceMap = new Map<string, string>();
   if (stripePlans?.length) {
     for (const p of stripePlans) {
@@ -124,101 +127,225 @@ export default function Pricing() {
     }
   }
 
+  const currentTier = subData?.tier || "trial";
+  const hasSubscription = !!subData?.subscription;
+
+  const handlePlanClick = (tier: string) => {
+    if (!isAuthenticated) {
+      window.location.href = "/login?signup=1";
+      return;
+    }
+    const priceId = stripePriceMap.get(tier);
+    if (priceId) {
+      checkoutMutation.mutate({ priceId, tier });
+    } else {
+      toast({ title: "Coming Soon", description: "This plan is not yet available for checkout.", variant: "destructive" });
+    }
+  };
+
   return (
-    <AppLayout>
-      <div className="mb-8 text-center max-w-2xl mx-auto">
-        <h1 className="text-3xl font-display font-bold text-foreground mb-2">Choose Your Plan</h1>
-        <p className="text-muted-foreground text-lg">
-          All plans include a 14-day free trial. No credit card required to start.
-        </p>
-        {hasSubscription && (
-          <div className="mt-4">
-            <Button variant="outline" onClick={() => portalMutation.mutate()} data-testid="button-manage-billing">
-              Manage Billing
-            </Button>
+    <div className="min-h-screen bg-background">
+      {/* Nav */}
+      <nav className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-30 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <img src={logoPng} alt="VendorTrust" className="h-8 w-8 rounded-lg object-contain" />
+            <span className="font-display font-bold text-lg text-foreground">VendorTrust</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            {isAuthenticated ? (
+              <Button variant="outline" size="sm" onClick={() => window.location.href = "/dashboard"}>
+                <ArrowLeft className="h-4 w-4 mr-1" />
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => window.location.href = "/login"}>
+                  Log in
+                </Button>
+                <Button size="sm" className="rounded-full gap-1" onClick={() => window.location.href = "/login?signup=1"}>
+                  Start Free Trial
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </nav>
 
-      <div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
-        {HARDCODED_PLANS.map((plan) => {
-          const Icon = plan.icon;
-          const isCurrentPlan = currentTier === plan.tier && hasSubscription;
-          const priceId = stripePriceMap.get(plan.tier);
-          const canCheckout = !!priceId;
-
-          return (
-            <div
-              key={plan.tier}
-              className={`
-                relative bg-card rounded-2xl p-6 border flex flex-col
-                ${plan.highlight ? "border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/20" : "border-border shadow-sm"}
-              `}
-              data-testid={`card-plan-${plan.tier}`}
-            >
-              {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-bold">
-                    Most Popular
-                  </Badge>
-                </div>
-              )}
-
-              <div className="mb-6">
-                <div className={`h-12 w-12 rounded-xl flex items-center justify-center mb-4 ${plan.highlight ? "bg-primary/10" : "bg-muted"}`}>
-                  <Icon className={`h-6 w-6 ${plan.highlight ? "text-primary" : "text-muted-foreground"}`} />
-                </div>
-                <h3 className="text-xl font-bold">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-              </div>
-
-              <div className="mb-6">
-                <span className="text-4xl font-display font-extrabold">${plan.price}</span>
-                <span className="text-muted-foreground">/month</span>
-              </div>
-
-              <ul className="space-y-3 mb-8 flex-1">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    {feature.included ? (
-                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    ) : (
-                      <X className="h-4 w-4 text-muted-foreground/30 mt-0.5 shrink-0" />
-                    )}
-                    <span className={feature.included ? "" : "text-muted-foreground/50"}>{feature.label}</span>
-                  </li>
-                ))}
-              </ul>
-
+      <div className="max-w-6xl mx-auto px-6 py-16">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <Badge variant="outline" className="mb-4 text-sm px-4 py-1">Pricing</Badge>
+          <h1 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4">
+            Simple, honest pricing
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+            Try any plan free for 14 days. No credit card required. Cancel anytime.
+          </p>
+          {hasSubscription && (
+            <div className="mt-6">
               <Button
-                className="w-full rounded-xl"
-                variant={plan.highlight ? "default" : "outline"}
-                size="lg"
-                disabled={isCurrentPlan || checkoutMutation.isPending || !canCheckout}
-                onClick={() => {
-                  if (priceId) checkoutMutation.mutate({ priceId, tier: plan.tier });
-                }}
-                data-testid={`button-subscribe-${plan.tier}`}
+                variant="outline"
+                onClick={() => portalMutation.mutate()}
+                disabled={portalMutation.isPending}
+                data-testid="button-manage-billing"
               >
-                {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                {isCurrentPlan ? "Current Plan" : !canCheckout ? "Coming Soon" : "Start Free Trial"}
+                {portalMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Manage Billing
               </Button>
             </div>
-          );
-        })}
-      </div>
+          )}
+        </div>
 
-      <div className="mt-12 text-center space-y-2">
-        <p className="text-sm text-muted-foreground">
-          14-day free trial on all plans. No credit card required. Cancel anytime.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          By subscribing, you agree to our{" "}
-          <a href="/terms" className="text-primary hover:underline">Terms & Conditions</a>{" "}
-          and{" "}
-          <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>.
-        </p>
+        {/* Plan Cards */}
+        {subLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6 mb-16">
+            {PLANS.map((plan) => {
+              const Icon = plan.icon;
+              const isCurrentPlan = isAuthenticated && currentTier === plan.tier && hasSubscription;
+              const priceId = stripePriceMap.get(plan.tier);
+              const canCheckout = !isAuthenticated || !!priceId;
+
+              return (
+                <div
+                  key={plan.tier}
+                  className={`relative bg-card rounded-3xl p-7 border flex flex-col transition-all ${
+                    plan.highlight
+                      ? "border-primary shadow-2xl shadow-primary/10 ring-2 ring-primary/20 scale-[1.02]"
+                      : "border-border shadow-sm hover:border-border/80 hover:shadow-md"
+                  }`}
+                  data-testid={`card-plan-${plan.tier}`}
+                >
+                  {plan.highlight && (
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-primary text-primary-foreground px-3 py-1 text-xs font-bold shadow">
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
+
+                  <div className="mb-6">
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mb-4 ${plan.bg}`}>
+                      <Icon className={`h-6 w-6 ${plan.color}`} />
+                    </div>
+                    <h3 className="text-xl font-display font-bold text-foreground">{plan.name}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
+                  </div>
+
+                  <div className="mb-7">
+                    <div className="flex items-end gap-1">
+                      <span className="text-5xl font-display font-extrabold text-foreground">${plan.price}</span>
+                      <span className="text-muted-foreground mb-1.5">/month</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">after 14-day free trial</p>
+                  </div>
+
+                  <ul className="space-y-2.5 mb-8 flex-1">
+                    {plan.features.filter(f => f.label).map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm">
+                        {feature.included ? (
+                          <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                        ) : (
+                          <X className="h-4 w-4 text-muted-foreground/25 mt-0.5 shrink-0" />
+                        )}
+                        <span className={feature.included ? "text-foreground" : "text-muted-foreground/40"}>
+                          {feature.label}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Button
+                    className="w-full rounded-xl"
+                    variant={plan.highlight ? "default" : "outline"}
+                    size="lg"
+                    disabled={isCurrentPlan || checkoutMutation.isPending || !canCheckout}
+                    onClick={() => handlePlanClick(plan.tier)}
+                    data-testid={`button-subscribe-${plan.tier}`}
+                  >
+                    {checkoutMutation.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    {isCurrentPlan ? "Current Plan" : !canCheckout && isAuthenticated ? "Coming Soon" : "Start Free Trial"}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Trust row */}
+        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 py-8 border-y border-border mb-12 text-sm text-muted-foreground">
+          {[
+            "No credit card to start",
+            "Cancel anytime",
+            "Your data is always yours",
+            "SOC 2 compliant infrastructure",
+            "Instant setup — no IT required",
+          ].map(item => (
+            <div key={item} className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-primary shrink-0" />
+              <span>{item}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* FAQ */}
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-2xl font-display font-bold text-foreground text-center mb-8">Pricing FAQ</h2>
+          <div className="space-y-4">
+            {[
+              {
+                q: "What happens after the trial ends?",
+                a: "After 14 days, you'll be prompted to subscribe. If you don't, your account is paused — your data stays safe and nothing is deleted.",
+              },
+              {
+                q: "Can I switch plans?",
+                a: "Yes. Upgrade or downgrade anytime from the Billing section. Changes take effect immediately and are prorated.",
+              },
+              {
+                q: "Is there a per-unit fee?",
+                a: "No. Plans are flat monthly rates — not per unit. Whether you have 5 or 50 units, you pay the same plan price.",
+              },
+              {
+                q: "Do you offer annual billing?",
+                a: "Annual billing with a discount is coming soon. Get in touch if you'd like early access to an annual plan.",
+              },
+            ].map((item, i) => (
+              <div key={i} className="bg-card border border-border rounded-2xl p-5">
+                <p className="font-semibold text-foreground text-sm mb-2">{item.q}</p>
+                <p className="text-sm text-muted-foreground">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="text-center mt-16 py-12 bg-gradient-to-br from-primary/10 to-emerald-400/5 rounded-3xl border border-primary/20 px-8">
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">
+            Ready to bring order to your maintenance chaos?
+          </h2>
+          <p className="text-muted-foreground mb-6">Start your free 14-day trial — no credit card, no setup fees.</p>
+          <Button
+            size="lg"
+            className="rounded-full px-10 gap-2 text-base shadow-lg shadow-primary/20"
+            onClick={() => window.location.href = isAuthenticated ? "/dashboard" : "/login?signup=1"}
+            data-testid="button-cta-pricing-bottom"
+          >
+            {isAuthenticated ? "Go to Dashboard" : "Start Free Trial"}
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+          <p className="text-xs text-muted-foreground mt-3">
+            Questions? Email us at{" "}
+            <a href="mailto:support@tenant-track.com" className="text-primary hover:underline">
+              support@tenant-track.com
+            </a>
+          </p>
+        </div>
       </div>
-    </AppLayout>
+    </div>
   );
 }
