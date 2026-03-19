@@ -1,0 +1,419 @@
+You are working inside my EXISTING app called TenantTrack.
+
+IMPORTANT:
+Do NOT rebuild this app from scratch.
+Do NOT remove existing working features unless absolutely necessary.
+You must EXTEND and UPGRADE the current codebase into a stronger product called:
+
+VENDORTRUST
+
+VendorTrust is a landlord/property manager maintenance coordination platform focused on:
+1. maintenance request intake
+2. vendor dispatch
+3. vendor reliability tracking
+4. scheduling and status visibility
+5. proof of completion
+6. landlord confidence in who to hire again
+
+The app already has a strong base:
+- React + Vite + TypeScript frontend
+- Express + TypeScript backend
+- PostgreSQL + Drizzle ORM
+- existing auth
+- existing properties
+- maintenance requests
+- staff management
+- recurring tasks
+- cost tracking
+- vendor tables / vendor assignments / vendor reviews already partially present
+
+Your job is to turn the existing product into a polished SaaS called VendorTrust while preserving the current TenantTrack strengths.
+
+==================================================
+PRIMARY PRODUCT DIRECTION
+==================================================
+
+The current TenantTrack app is useful, but it needs to evolve from “request tracking” into “request-to-resolution vendor coordination.”
+
+VendorTrust should feel like:
+“the easiest way for landlords to dispatch, track, and trust maintenance vendors.”
+
+Core promise:
+From tenant issue -> assign the right vendor -> track progress -> verify completion -> store vendor performance data for better future decisions.
+
+==================================================
+NON-NEGOTIABLE GOALS
+==================================================
+
+1. Keep all current major TenantTrack functionality working.
+2. Upgrade branding and UI language from generic maintenance tracker into VendorTrust.
+3. Add missing vendor coordination workflows.
+4. Make the app feel polished, premium, and production-ready.
+5. Build features in a way that matches the current stack and architecture.
+6. Avoid unnecessary complexity or enterprise bloat.
+7. Prioritize small landlords and small property managers managing roughly 5–200 units.
+
+==================================================
+PHASE 1 — REBRAND + PRODUCT POSITIONING
+==================================================
+
+Update the app branding from TenantTrack to VendorTrust in:
+- landing page
+- nav/sidebar
+- page titles
+- metadata
+- auth screens
+- pricing text
+- dashboard headings
+- any public-facing copy
+
+New product messaging should focus on:
+- trusted vendors
+- faster dispatch
+- accountability
+- real maintenance visibility
+- keeping repair coordination out of texts/spreadsheets
+
+Do NOT remove the QR-based tenant maintenance request flow.
+Keep it as a major strength of the product.
+
+==================================================
+PHASE 2 — GAP ANALYSIS BEFORE BUILDING
+==================================================
+
+First inspect the existing codebase and determine:
+- which vendor features already exist
+- what tables and routes are already implemented
+- what frontend pages already exist
+- what can be reused vs extended
+
+Then create a short internal implementation plan and follow it.
+
+Do not ask me for permission between each step.
+Just execute carefully and logically.
+
+==================================================
+PHASE 3 — REQUIRED NEW/UPGRADED FEATURES
+==================================================
+
+Add or improve the following features:
+
+------------------------------------------
+A. VENDOR PERFORMANCE SCORE
+------------------------------------------
+
+Create a real vendor trust/reliability system.
+
+Each vendor should have a visible performance score based on factors like:
+- average review rating
+- completion speed
+- communication responsiveness
+- completion rate
+- no-show / missed appointment count
+- emergency job success
+- repeat usage count
+
+Create a clear formula in code that can be adjusted later.
+Show this score in the vendor list and vendor detail pages.
+
+Also display:
+- total jobs completed
+- average turnaround time
+- average final cost
+- last job completed date
+- preferred vendor badge
+- active / archived status
+
+------------------------------------------
+B. DISPATCH WORKFLOW
+------------------------------------------
+
+Build a much stronger vendor assignment workflow for maintenance requests.
+
+Each request should support:
+- recommended vendor suggestions based on trade category, service area, rating, and preferred status
+- assignment status
+- contacted status
+- scheduled date/time
+- arrival window
+- job status timeline
+
+Statuses should include something like:
+- New
+- Needs Dispatch
+- Vendor Assigned
+- Scheduled
+- In Progress
+- Waiting on Parts
+- Completed
+- Cancelled
+
+When a vendor is assigned, the request detail page should clearly show:
+- who is assigned
+- whether they were contacted
+- scheduled time
+- notes
+- priority
+- proof of completion once done
+
+------------------------------------------
+C. VENDOR SCHEDULING
+------------------------------------------
+
+Add vendor scheduling fields and UI.
+
+Each vendor assignment should support:
+- scheduled date
+- scheduled time
+- arrival window text
+- completion date
+- internal coordination notes
+
+Create a landlord-friendly scheduling UI directly inside the request page or request drawer/modal.
+
+If a landlord edits the schedule, the timeline should update automatically.
+
+------------------------------------------
+D. PROOF OF COMPLETION
+------------------------------------------
+
+This is critical.
+
+Add completion proof so landlords can verify that work was actually done.
+
+When a job is completed, require or strongly encourage:
+- completion notes
+- before/after photos if available
+- final cost
+- materials used (optional)
+- invoice/reference number (optional)
+
+Display this in a “Completion Summary” section on the request detail page.
+
+------------------------------------------
+E. VENDOR ACTIVITY TIMELINE
+------------------------------------------
+
+Every request should have a cleaner activity log / timeline.
+
+Track events like:
+- request created
+- vendor assigned
+- vendor changed
+- vendor contacted
+- schedule set
+- schedule updated
+- work started
+- work completed
+- review left
+- completion proof uploaded
+
+Make the timeline useful and visual.
+
+------------------------------------------
+F. SMART VENDOR RECOMMENDATIONS
+------------------------------------------
+
+When dispatching a request, the app should suggest the best vendors using existing data.
+
+Recommendation criteria:
+- matching trade category
+- preferred vendor
+- high trust score
+- recent performance
+- service area match
+- active status only
+
+Create a “Recommended Vendors” section when assigning a vendor.
+
+This is not AI fluff.
+It should be deterministic and useful.
+
+------------------------------------------
+G. LANDLORD DASHBOARD UPGRADES
+------------------------------------------
+
+Upgrade the main dashboard to emphasize VendorTrust metrics.
+
+Add cards/widgets for:
+- open requests needing dispatch
+- requests scheduled today
+- jobs waiting on vendor response
+- jobs completed this week
+- average vendor rating
+- most reliable vendors
+- emergency jobs open now
+
+Make it feel like an operations dashboard, not just a maintenance inbox.
+
+------------------------------------------
+H. VENDOR DIRECTORY / DETAIL EXPERIENCE
+------------------------------------------
+
+Improve the Vendors page into a serious operational tool.
+
+Each vendor card/detail view should support:
+- photo/avatar placeholder
+- trade category
+- contact info
+- city/service area
+- license info
+- insurance info
+- preferred vendor tag
+- trust score
+- review stats
+- recent jobs
+- notes
+- archive / restore
+- edit flow
+
+Vendor detail page should feel premium and data-rich.
+
+------------------------------------------
+I. JOB COST + PERFORMANCE CONNECTION
+------------------------------------------
+
+Tie vendor outcomes to cost tracking better.
+
+For each vendor, calculate:
+- total dollars spent
+- average job cost
+- highest cost job
+- cheapest cost job
+- review average
+- number of completed jobs
+
+Show this on vendor stats.
+
+------------------------------------------
+J. PUBLIC / LANDING PAGE UPDATE
+------------------------------------------
+
+Update public-facing landing page to sell VendorTrust properly.
+
+The landing page should explain:
+- tenant submits request
+- landlord dispatches trusted vendor
+- landlord tracks status
+- landlord confirms proof of completion
+- landlord builds a trusted vendor network over time
+
+Headline examples should be in this style:
+“Dispatch trusted maintenance vendors without the text-message chaos.”
+or
+“The maintenance command center for landlords who need reliable vendors.”
+
+Do not make it sound generic or enterprise-corporate.
+
+==================================================
+UX / UI REQUIREMENTS
+==================================================
+
+The UI should feel:
+- darker modern SaaS aesthetic if it matches the current design
+- cleaner
+- more premium
+- less cluttered
+- easy for non-technical landlords
+
+Use the existing component patterns and styling system where possible.
+Preserve consistency with the current app.
+
+Where helpful:
+- add cards
+- badges
+- filters
+- sorting
+- quick actions
+- empty states
+- better loading states
+- confirmation dialogs
+- success/error toasts
+
+Important:
+The vendor dispatch experience should feel like one of the strongest parts of the app.
+
+==================================================
+DATABASE / BACKEND REQUIREMENTS
+==================================================
+
+Inspect the existing schema first.
+Then extend it only where needed.
+
+Likely additions or upgrades may include fields like:
+- vendor assignments: scheduledAt, arrivalWindow, startedAt, completedAt, status, completionNotes, proofPhotoUrls, invoiceNumber, materialsUsed
+- vendors: trustScore cache, lastCompletedJobAt, emergencyAvailable, averageResponseHours, noShowCount
+- request activity logs if not already sufficient
+- optional vendor service tags / trade specialties
+
+Keep schema clean and avoid overengineering.
+
+Update:
+- Drizzle schema
+- insert/update validation
+- storage layer
+- API routes
+- frontend hooks/query invalidation
+- seed/demo data
+
+==================================================
+DEMO DATA REQUIREMENTS
+==================================================
+
+Update the demo seed data so the app immediately looks impressive.
+
+Create realistic demo data including:
+- 5–8 vendors across trades like plumbing, electrical, HVAC, painting, handyman
+- some vendors with stronger trust scores than others
+- several requests in different states
+- at least one emergency request
+- at least one scheduled request
+- at least one completed request with proof of completion and review
+- dashboard metrics that make the app feel alive
+
+==================================================
+TECHNICAL STANDARDS
+==================================================
+
+- Maintain TypeScript correctness
+- Reuse the current architecture
+- Keep files organized and readable
+- Avoid duplicate logic
+- Use React Query patterns already in the app
+- Use current Express route style
+- Keep naming consistent
+- Do not introduce unnecessary new libraries unless clearly needed
+- Make the app run cleanly in Replit
+
+After implementing:
+1. run through the code for errors
+2. fix TypeScript issues
+3. ensure routes and pages connect properly
+4. ensure seed/demo login still works
+5. ensure the app feels cohesive
+
+==================================================
+IMPORTANT PRODUCT STRATEGY
+==================================================
+
+Do NOT turn this into a giant all-in-one property management system.
+Do NOT focus on rent collection, accounting, leasing, or generic PM bloat.
+
+This product should stay focused on:
+maintenance coordination + trusted vendor operations
+
+That focus is what makes VendorTrust valuable.
+
+==================================================
+DELIVERABLES
+==================================================
+
+Complete the upgrade in code and then provide a summary of:
+- what was added
+- what existing code was reused
+- what database changes were made
+- what pages/routes were changed
+- what still could be improved next
+
+Do the work directly in this codebase.
+Be decisive, thoughtful, and practical.

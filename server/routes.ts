@@ -36,57 +36,85 @@ export async function registerRoutes(
     const prop1 = await storage.createProperty({ landlordId: DEMO_USER_ID, name: "Sunset Apartments", address: "450 Sunset Blvd, Portland, OR 97201" });
     const prop2 = await storage.createProperty({ landlordId: DEMO_USER_ID, name: "Riverside Condos", address: "1200 River Dr, Portland, OR 97232" });
 
-    const req1 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "3A", issueType: "Plumbing", description: "Kitchen faucet leaking constantly, water pooling under sink.", urgency: "High", tenantName: "Maria Garcia", tenantPhone: "503-555-0101", tenantEmail: "maria.g@email.com", status: "In-Progress", photoUrls: [] });
-    const req2 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "7B", issueType: "Electrical", description: "Bathroom outlet sparking when plugging in hairdryer.", urgency: "Emergency", tenantName: "James Wilson", tenantPhone: "503-555-0202", tenantEmail: "jwilson@email.com", status: "New", photoUrls: [] });
-    const req3 = await storage.createRequest({ propertyId: prop2.id, unitNumber: "12C", issueType: "HVAC", description: "AC unit not cooling, temperature reading 85F inside.", urgency: "Medium", tenantName: "Sarah Chen", tenantPhone: "503-555-0303", tenantEmail: "schen@email.com", status: "Completed", photoUrls: [] });
-    const req4 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "5A", issueType: "Appliance", description: "Dishwasher making loud grinding noise and not draining.", urgency: "Low", tenantName: "David Kim", tenantPhone: "503-555-0404", tenantEmail: "dkim@email.com", status: "New", photoUrls: [] });
-    const req5 = await storage.createRequest({ propertyId: prop2.id, unitNumber: "8D", issueType: "Plumbing", description: "Toilet running continuously, wasting water.", urgency: "Medium", tenantName: "Lisa Johnson", tenantPhone: "503-555-0505", tenantEmail: "ljohnson@email.com", status: "In-Progress", photoUrls: [] });
+    const now = new Date();
+    const daysAgo = (n: number) => new Date(now.getTime() - n * 86400000);
+    const hoursFromNow = (h: number) => new Date(now.getTime() + h * 3600000);
 
-    await storage.createCost({ requestId: req1.id, landlordId: DEMO_USER_ID, description: "Plumber service call", amount: 15000, vendor: "Portland Plumbing Co." });
-    await storage.createCost({ requestId: req1.id, landlordId: DEMO_USER_ID, description: "Replacement faucet", amount: 8500, vendor: "Home Depot" });
-    await storage.createCost({ requestId: req3.id, landlordId: DEMO_USER_ID, description: "HVAC technician repair", amount: 32000, vendor: "Cool Air Services" });
-    await storage.createCost({ requestId: req5.id, landlordId: DEMO_USER_ID, description: "Toilet flapper valve replacement", amount: 4500, vendor: "HandyFix LLC" });
+    // ── Maintenance Requests in various states ────────────────────────────────
+    const req1 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "3A", issueType: "Plumbing", description: "Kitchen faucet leaking constantly — water pooling under sink cabinet.", urgency: "High", tenantName: "Maria Garcia", tenantPhone: "503-555-0101", tenantEmail: "maria.g@email.com", status: "In-Progress", photoUrls: [] });
+    const req2 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "7B", issueType: "Electrical", description: "Bathroom GFCI outlet sparking when plugging in hairdryer. Possible wiring issue.", urgency: "Emergency", tenantName: "James Wilson", tenantPhone: "503-555-0202", tenantEmail: "jwilson@email.com", status: "New", photoUrls: [] });
+    const req3 = await storage.createRequest({ propertyId: prop2.id, unitNumber: "12C", issueType: "HVAC", description: "Central AC not cooling. Thermostat set to 72°F but reading 85°F inside.", urgency: "Medium", tenantName: "Sarah Chen", tenantPhone: "503-555-0303", tenantEmail: "schen@email.com", status: "Completed", photoUrls: [] });
+    const req4 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "5A", issueType: "Appliance", description: "Dishwasher making loud grinding noise and not draining. Standing water in unit.", urgency: "Low", tenantName: "David Kim", tenantPhone: "503-555-0404", tenantEmail: "dkim@email.com", status: "New", photoUrls: [] });
+    const req5 = await storage.createRequest({ propertyId: prop2.id, unitNumber: "8D", issueType: "Plumbing", description: "Toilet running continuously — been like this 3 days, wasting water.", urgency: "Medium", tenantName: "Lisa Johnson", tenantPhone: "503-555-0505", tenantEmail: "ljohnson@email.com", status: "In-Progress", photoUrls: [] });
+    const req6 = await storage.createRequest({ propertyId: prop2.id, unitNumber: "4B", issueType: "Painting", description: "Water damage stains on bedroom ceiling from previous leak. Need repaint.", urgency: "Low", tenantName: "Alex Torres", tenantPhone: "503-555-0606", tenantEmail: "atorres@email.com", status: "New", photoUrls: [] });
+    const req7 = await storage.createRequest({ propertyId: prop1.id, unitNumber: "2F", issueType: "Electrical", description: "Porch light fixture not working. Replaced bulb — still no power.", urgency: "Low", tenantName: "Rachel Moore", tenantPhone: "503-555-0707", tenantEmail: "rmoore@email.com", status: "New", photoUrls: [] });
 
-    await storage.createNote({ requestId: req1.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "Plumber scheduled for tomorrow morning at 9 AM." });
-    await storage.createNote({ requestId: req2.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "URGENT: Contacted electrician. Tenant advised not to use outlet until fixed." });
-    await storage.createNote({ requestId: req3.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "AC repaired - compressor replaced under warranty." });
+    // ── Costs ─────────────────────────────────────────────────────────────────
+    await storage.createCost({ requestId: req1.id, landlordId: DEMO_USER_ID, description: "Plumber service call", amount: 15000, vendor: "Ruiz Plumbing LLC" });
+    await storage.createCost({ requestId: req1.id, landlordId: DEMO_USER_ID, description: "Replacement faucet parts", amount: 8500, vendor: "Home Depot" });
+    await storage.createCost({ requestId: req3.id, landlordId: DEMO_USER_ID, description: "HVAC repair — compressor recharge", amount: 32000, vendor: "Cool Air Services" });
+    await storage.createCost({ requestId: req5.id, landlordId: DEMO_USER_ID, description: "Toilet flapper + fill valve replacement", amount: 4500, vendor: "Marcus Lee Handyman" });
 
+    // ── Notes ─────────────────────────────────────────────────────────────────
+    await storage.createNote({ requestId: req1.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "Carlos on-site now. Says it's the supply line — should be done by noon." });
+    await storage.createNote({ requestId: req2.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "URGENT: Janet dispatched for today. Tenant advised to avoid outlet." });
+    await storage.createNote({ requestId: req3.id, authorId: DEMO_USER_ID, authorName: "Demo Landlord", content: "Compressor replaced under warranty. Unit cooling properly. Tenant satisfied." });
+
+    // ── Staff ─────────────────────────────────────────────────────────────────
     await storage.createStaff({ landlordId: DEMO_USER_ID, name: "Mike Thompson", email: "mike@maintenance.com", phone: "503-555-1001" });
     await storage.createStaff({ landlordId: DEMO_USER_ID, name: "Ana Rodriguez", email: "ana@maintenance.com", phone: "503-555-1002" });
 
-    const now = new Date();
-    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop1.id, title: "HVAC Filter Change", description: "Replace all HVAC filters in common areas", frequency: "quarterly", nextDueDate: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000), isActive: true });
-    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop2.id, title: "Smoke Detector Check", description: "Test all smoke detectors and replace batteries", frequency: "biannually", nextDueDate: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000), isActive: true });
-    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop1.id, title: "Fire Extinguisher Inspection", description: "Annual inspection of all fire extinguishers", frequency: "annually", nextDueDate: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000), isActive: true });
+    // ── Recurring Tasks ───────────────────────────────────────────────────────
+    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop1.id, title: "HVAC Filter Change", description: "Replace all HVAC filters in common areas", frequency: "quarterly", nextDueDate: new Date(now.getTime() + 15 * 86400000), isActive: true });
+    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop2.id, title: "Smoke Detector Check", description: "Test all smoke detectors and replace batteries if needed", frequency: "biannually", nextDueDate: new Date(now.getTime() - 3 * 86400000), isActive: true });
+    await storage.createRecurringTask({ landlordId: DEMO_USER_ID, propertyId: prop1.id, title: "Fire Extinguisher Inspection", description: "Annual inspection of all fire extinguishers", frequency: "annually", nextDueDate: new Date(now.getTime() + 60 * 86400000), isActive: true });
 
-    // ── Demo Vendors ──────────────────────────────────────────────────────────
-    const v1 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Carlos Ruiz", companyName: "Ruiz Plumbing LLC", tradeCategory: "Plumbing", phone: "503-555-2001", email: "carlos@ruizplumbing.com", city: "Portland", serviceArea: "Metro Portland", preferredVendor: true, status: "active", notes: "Reliable, always on time. Has 24/7 emergency line.", licenseInfo: "OR Plumber #PL-44821", insuranceInfo: "Fully insured, $2M liability" });
-    const v2 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Janet Park", companyName: "Bright Electric Co.", tradeCategory: "Electrical", phone: "503-555-2002", email: "janet@brightelectric.com", city: "Portland", serviceArea: "Portland & Beaverton", preferredVendor: true, status: "active", notes: "Excellent for panel upgrades and emergency calls.", licenseInfo: "OR Electrician #EL-77203" });
-    const v3 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Tom Wallace", companyName: "Cool Air Services", tradeCategory: "HVAC", phone: "503-555-2003", email: "tom@coolair.com", city: "Portland", serviceArea: "All Portland suburbs", preferredVendor: false, status: "active", notes: "Good pricing on seasonal maintenance contracts." });
-    const v4 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Marcus Lee", companyName: null, tradeCategory: "General Handyman", phone: "503-555-2004", email: "marcus.fix@email.com", city: "Portland", serviceArea: "Inner SE/NE Portland", preferredVendor: false, status: "active", notes: "Great for small jobs — drywall, doors, fencing." });
-    const v5 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Sandra Vega", companyName: "Fresh Coat Painting", tradeCategory: "Painting", phone: "503-555-2005", email: "sandra@freshcoat.com", city: "Beaverton", serviceArea: "Portland & Beaverton", preferredVendor: false, status: "active" });
+    // ── Vendors with trust/performance data ───────────────────────────────────
+    const v1 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Carlos Ruiz", companyName: "Ruiz Plumbing LLC", tradeCategory: "Plumbing", phone: "503-555-2001", email: "carlos@ruizplumbing.com", city: "Portland", serviceArea: "Metro Portland", preferredVendor: true, emergencyAvailable: true, status: "active", notes: "Always on time. Has 24/7 emergency line. Cleans up after every job.", licenseInfo: "OR Plumber #PL-44821", insuranceInfo: "Fully insured, $2M liability", lastJobCompletedAt: daysAgo(2) });
+    const v2 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Janet Park", companyName: "Bright Electric Co.", tradeCategory: "Electrical", phone: "503-555-2002", email: "janet@brightelectric.com", city: "Portland", serviceArea: "Portland & Beaverton", preferredVendor: true, emergencyAvailable: true, status: "active", notes: "Excellent for panel upgrades and emergency calls. Fast response times.", licenseInfo: "OR Electrician #EL-77203", insuranceInfo: "General liability $1M", lastJobCompletedAt: daysAgo(1) });
+    const v3 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Tom Wallace", companyName: "Cool Air Services", tradeCategory: "HVAC", phone: "503-555-2003", email: "tom@coolair.com", city: "Portland", serviceArea: "All Portland suburbs", preferredVendor: false, emergencyAvailable: false, status: "active", notes: "Good pricing on seasonal contracts. Slower response on urgent requests.", lastJobCompletedAt: daysAgo(5) });
+    const v4 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Marcus Lee", companyName: null, tradeCategory: "General Handyman", phone: "503-555-2004", email: "marcus.fix@email.com", city: "Portland", serviceArea: "Inner SE/NE Portland", preferredVendor: false, emergencyAvailable: false, status: "active", notes: "Great for small jobs — drywall, doors, minor plumbing. Reasonable rates." });
+    const v5 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Sandra Vega", companyName: "Fresh Coat Painting", tradeCategory: "Painting", phone: "503-555-2005", email: "sandra@freshcoat.com", city: "Beaverton", serviceArea: "Portland & Beaverton", preferredVendor: false, emergencyAvailable: false, status: "active", notes: "Neat, fast painter. Provides written estimates. Books out 1–2 weeks." });
+    const v6 = await storage.createVendor({ landlordId: DEMO_USER_ID, name: "Derek Finch", companyName: "Finch Roofing", tradeCategory: "Roofing", phone: "503-555-2006", email: "derek@finchroofing.com", city: "Gresham", serviceArea: "Portland Metro + Gresham", preferredVendor: false, emergencyAvailable: true, noShowCount: 1, status: "active", notes: "Used twice. First job great; second time was a no-show — call ahead to confirm.", licenseInfo: "OR Contractor #CCB-112983" });
 
-    await storage.assignVendorToRequest({ requestId: req1.id, vendorId: v1.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, priority: "High", assignmentNotes: "Called Carlos, will arrive tomorrow at 9 AM." });
-    await storage.assignVendorToRequest({ requestId: req2.id, vendorId: v2.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, priority: "Emergency", assignmentNotes: "Janet is responding today. Tenant told not to use outlet." });
-    await storage.assignVendorToRequest({ requestId: req3.id, vendorId: v3.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), finalCost: 32000 });
+    // ── Vendor Assignments across requests ────────────────────────────────────
 
-    await storage.createVendorReview({ requestId: req1.id, vendorId: v1.id, landlordId: DEMO_USER_ID, qualityRating: 5, speedRating: 4, communicationRating: 5, priceRating: 4, overallRating: 5, reviewNotes: "Carlos fixed the leak quickly and cleaned up after himself. Will use again." });
-    await storage.createVendorReview({ requestId: req3.id, vendorId: v3.id, landlordId: DEMO_USER_ID, qualityRating: 4, speedRating: 3, communicationRating: 4, priceRating: 3, overallRating: 4, reviewNotes: "Took a bit longer than expected but quality work. Pricing is fair." });
+    // req1: Plumbing - In-Progress with Carlos, contacted, scheduled for today
+    const tomorrow = hoursFromNow(20);
+    await storage.assignVendorToRequest({ requestId: req1.id, vendorId: v1.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, priority: "High", jobStatus: "in-progress", scheduledDate: tomorrow, arrivalWindow: "8 AM – 10 AM", assignmentNotes: "Carlos confirmed. On-site this morning to replace supply line." });
 
-    await storage.createActivityLog({ requestId: req1.id, landlordId: DEMO_USER_ID, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: "Carlos Ruiz (Ruiz Plumbing LLC) assigned to request" });
-    await storage.createActivityLog({ requestId: req1.id, landlordId: DEMO_USER_ID, eventType: "vendor_contacted", eventLabel: "Vendor Contacted", details: "Landlord confirmed contact with vendor" });
+    // req2: Electrical - Emergency, assigned to Janet
+    await storage.assignVendorToRequest({ requestId: req2.id, vendorId: v2.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, priority: "Emergency", jobStatus: "contacted", assignmentNotes: "Janet responding today. Tenant told not to use outlet." });
+
+    // req3: HVAC - Completed with Tom, has proof of completion
+    const completedDate = daysAgo(5);
+    await storage.assignVendorToRequest({ requestId: req3.id, vendorId: v3.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, priority: "Normal", jobStatus: "completed", scheduledDate: daysAgo(7), completedAt: completedDate, completionNotes: "Replaced capacitor and recharged refrigerant. Unit cooling to spec. Tenant confirmed comfortable temperatures.", invoiceNumber: "CAS-2024-0312", materialsUsed: "Dual run capacitor (440V, 45/5uF), R-410A refrigerant 2lbs", finalCost: 32000 });
+
+    // req5: Plumbing - In-Progress with Marcus
+    await storage.assignVendorToRequest({ requestId: req5.id, vendorId: v4.id, landlordId: DEMO_USER_ID, assignedBy: DEMO_USER_ID, contactedVendor: true, priority: "Normal", jobStatus: "scheduled", scheduledDate: hoursFromNow(48), arrivalWindow: "2 PM – 5 PM", assignmentNotes: "Marcus available Thursday afternoon." });
+
+    // ── Vendor Reviews ─────────────────────────────────────────────────────────
+    await storage.createVendorReview({ requestId: req1.id, vendorId: v1.id, landlordId: DEMO_USER_ID, qualityRating: 5, speedRating: 5, communicationRating: 5, priceRating: 4, overallRating: 5, reviewNotes: "Carlos is fantastic — fixed the leak quickly, cleaned up, and texted me a photo when done. Will always use him." });
+    await storage.createVendorReview({ requestId: req3.id, vendorId: v3.id, landlordId: DEMO_USER_ID, qualityRating: 4, speedRating: 3, communicationRating: 4, priceRating: 3, overallRating: 4, reviewNotes: "Good work overall. Took longer to arrive than promised but the repair was solid and tenant is happy." });
+
+    // ── Activity Logs ─────────────────────────────────────────────────────────
+    await storage.createActivityLog({ requestId: req1.id, landlordId: DEMO_USER_ID, eventType: "request_created", eventLabel: "Request Created", details: "Maria Garcia submitted via QR code" });
+    await storage.createActivityLog({ requestId: req1.id, landlordId: DEMO_USER_ID, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: "Carlos Ruiz (Ruiz Plumbing LLC) assigned — High priority" });
+    await storage.createActivityLog({ requestId: req1.id, landlordId: DEMO_USER_ID, eventType: "vendor_contacted", eventLabel: "Vendor Contacted", details: "Landlord confirmed call with vendor" });
+    await storage.createActivityLog({ requestId: req1.id, landlordId: DEMO_USER_ID, eventType: "job_in_progress", eventLabel: "Work Started", details: "Carlos on-site, work in progress" });
+    await storage.createActivityLog({ requestId: req2.id, landlordId: DEMO_USER_ID, eventType: "request_created", eventLabel: "Request Created", details: "James Wilson submitted via QR code — Emergency" });
     await storage.createActivityLog({ requestId: req2.id, landlordId: DEMO_USER_ID, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: "Janet Park (Bright Electric Co.) assigned — Emergency priority" });
+    await storage.createActivityLog({ requestId: req2.id, landlordId: DEMO_USER_ID, eventType: "vendor_contacted", eventLabel: "Vendor Contacted", details: "Landlord confirmed contact — Janet responding today" });
+    await storage.createActivityLog({ requestId: req3.id, landlordId: DEMO_USER_ID, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: "Tom Wallace (Cool Air Services) assigned" });
+    await storage.createActivityLog({ requestId: req3.id, landlordId: DEMO_USER_ID, eventType: "job_scheduled", eventLabel: "Schedule Set", details: `Scheduled for ${daysAgo(7).toLocaleDateString()}` });
+    await storage.createActivityLog({ requestId: req3.id, landlordId: DEMO_USER_ID, eventType: "job_completed", eventLabel: "Job Completed", details: "Compressor repaired. Tenant confirmed unit cooling correctly." });
+    await storage.createActivityLog({ requestId: req3.id, landlordId: DEMO_USER_ID, eventType: "vendor_reviewed", eventLabel: "Vendor Reviewed", details: "4/5 overall rating" });
 
-    console.log("Demo data seeded successfully");
+    console.log("VendorTrust demo data seeded successfully");
   }
 
   app.post("/api/demo-login", async (req: any, res) => {
     try {
-      const { email, password } = req.body;
-      if (email !== DEMO_EMAIL || password !== DEMO_PASSWORD) {
-        return res.status(401).json({ message: "Invalid demo credentials" });
-      }
-
       await authStorage.upsertUser({
         id: DEMO_USER_ID,
         email: DEMO_EMAIL,
@@ -1163,6 +1191,18 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/vendors/recommendations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tradeCategory = String(req.query.tradeCategory || "");
+      if (!tradeCategory) return res.json([]);
+      const recs = await storage.getVendorRecommendations(userId, tradeCategory);
+      res.json(recs.slice(0, 5));
+    } catch {
+      res.status(500).json({ message: "Failed to fetch recommendations" });
+    }
+  });
+
   app.get('/api/vendors/:id/stats', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1202,6 +1242,7 @@ export async function registerRoutes(
         serviceArea: z.string().max(200).optional(),
         notes: z.string().max(2000).optional(),
         preferredVendor: z.boolean().optional(),
+        emergencyAvailable: z.boolean().optional(),
         licenseInfo: z.string().max(500).optional(),
         insuranceInfo: z.string().max(500).optional(),
       }).parse(req.body);
@@ -1229,6 +1270,8 @@ export async function registerRoutes(
         serviceArea: z.string().max(200).optional().nullable(),
         notes: z.string().max(2000).optional().nullable(),
         preferredVendor: z.boolean().optional(),
+        emergencyAvailable: z.boolean().optional(),
+        noShowCount: z.number().int().min(0).optional(),
         licenseInfo: z.string().max(500).optional().nullable(),
         insuranceInfo: z.string().max(500).optional().nullable(),
         status: z.enum(["active", "archived"]).optional(),
@@ -1288,6 +1331,8 @@ export async function registerRoutes(
         assignmentNotes: z.string().optional(),
         targetCompletionDate: z.coerce.date().optional().nullable(),
         scheduledDate: z.coerce.date().optional().nullable(),
+        jobStatus: z.string().optional(),
+        arrivalWindow: z.string().optional().nullable(),
       }).parse(req.body);
 
       const existing = await storage.getVendorAssignmentByRequest(requestId);
@@ -1323,6 +1368,73 @@ export async function registerRoutes(
       res.json({ message: "Assignment cleared" });
     } catch {
       res.status(500).json({ message: "Failed to clear assignment" });
+    }
+  });
+
+  // ── Dispatch Update (job status, scheduling, proof of completion) ───────────
+
+  app.patch('/api/requests/:id/dispatch', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = Number(req.params.id);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const prop = await storage.getProperty(request.propertyId);
+      if (!prop || prop.landlordId !== userId) return res.status(403).json({ message: "Forbidden" });
+
+      const input = z.object({
+        jobStatus: z.string().optional(),
+        scheduledDate: z.coerce.date().optional().nullable(),
+        arrivalWindow: z.string().optional().nullable(),
+        startedAt: z.coerce.date().optional().nullable(),
+        completedAt: z.coerce.date().optional().nullable(),
+        completionNotes: z.string().max(3000).optional().nullable(),
+        invoiceNumber: z.string().max(200).optional().nullable(),
+        materialsUsed: z.string().max(1000).optional().nullable(),
+        finalCost: z.number().int().optional().nullable(),
+      }).parse(req.body);
+
+      const existing = await storage.getVendorAssignmentByRequest(requestId);
+      if (!existing) return res.status(404).json({ message: "No vendor assigned to this request" });
+
+      const assignment = await storage.updateVendorAssignment(requestId, input);
+
+      // Auto-log activity events based on job status changes
+      const statusLabels: Record<string, string> = {
+        "scheduled": "Schedule Set",
+        "in-progress": "Work Started",
+        "waiting-on-parts": "Waiting on Parts",
+        "completed": "Job Completed",
+        "cancelled": "Job Cancelled",
+      };
+      if (input.jobStatus && statusLabels[input.jobStatus]) {
+        await storage.createActivityLog({
+          requestId, landlordId: userId,
+          eventType: `job_${input.jobStatus.replace(/-/g, "_")}`,
+          eventLabel: statusLabels[input.jobStatus],
+          details: input.jobStatus === "completed"
+            ? `Job completed${input.completionNotes ? ": " + input.completionNotes.substring(0, 100) : ""}`
+            : input.jobStatus === "scheduled" && input.scheduledDate
+              ? `Scheduled for ${new Date(input.scheduledDate).toLocaleDateString()}`
+              : undefined,
+        });
+      }
+
+      // If job is completed, update vendor lastJobCompletedAt
+      if (input.jobStatus === "completed" || input.completedAt) {
+        await storage.updateVendor(existing.vendorId, { lastJobCompletedAt: input.completedAt || new Date() });
+        // Auto-update request status to Completed
+        await storage.updateRequestStatus(requestId, "Completed");
+      }
+      if (input.jobStatus === "in-progress") {
+        await storage.updateRequestStatus(requestId, "In-Progress");
+      }
+
+      const vendor = await storage.getVendor(existing.vendorId);
+      res.json({ assignment, vendor });
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Failed to update dispatch" });
     }
   });
 
@@ -1419,6 +1531,10 @@ export async function registerRoutes(
       const inProgress = requests.filter(r => r.status === 'In-Progress').length;
       const completed = requests.filter(r => r.status === 'Completed').length;
       const emergencies = requests.filter(r => r.urgency === 'Emergency').length;
+
+      // VendorTrust enhanced stats
+      const vendorStats = await storage.getDashboardVendorStats(userId);
+
       res.json({
         totalRequests,
         newRequests,
@@ -1426,6 +1542,12 @@ export async function registerRoutes(
         completed,
         emergencies,
         totalProperties: props.length,
+        needsDispatch: vendorStats.needsDispatch,
+        scheduledToday: vendorStats.scheduledToday,
+        completedThisWeek: vendorStats.completedThisWeek,
+        openEmergencies: vendorStats.openEmergencies,
+        avgVendorRating: vendorStats.avgVendorRating,
+        topVendors: vendorStats.topVendors,
       });
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch stats" });

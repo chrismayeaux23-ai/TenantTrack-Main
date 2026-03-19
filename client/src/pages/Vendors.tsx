@@ -15,9 +15,22 @@ import { TRADE_CATEGORIES } from "@shared/schema";
 import {
   Briefcase, Plus, Search, Star, Phone, Mail, MapPin,
   Edit2, Trash2, Archive, CheckCircle2, Loader2, ChevronDown,
-  ChevronUp, Shield, FileText, X,
+  ChevronUp, Shield, FileText, X, ShieldCheck, Zap, AlertTriangle, Clock,
 } from "lucide-react";
 import { format } from "date-fns";
+
+function TrustScore({ score }: { score: number }) {
+  const color = score >= 80 ? "text-green-400 bg-green-400/10 border-green-400/20"
+    : score >= 60 ? "text-yellow-400 bg-yellow-400/10 border-yellow-400/20"
+    : "text-red-400 bg-red-400/10 border-red-400/20";
+  const label = score >= 80 ? "High Trust" : score >= 60 ? "Medium" : "Low";
+  return (
+    <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border text-xs font-bold ${color}`}>
+      <ShieldCheck className="h-3 w-3" />
+      {score} <span className="font-normal opacity-70">· {label}</span>
+    </div>
+  );
+}
 
 // ── Star Rating Display ────────────────────────────────────────────────────────
 function StarRow({ rating, max = 5 }: { rating: number | null; max?: number }) {
@@ -198,17 +211,50 @@ function VendorDetail({ vendor, onClose }: { vendor: Vendor; onClose: () => void
       </div>
 
       {stats && (
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: "Jobs Done", val: stats.totalJobs },
-            { label: "Avg Rating", val: stats.avgOverallRating ? `${stats.avgOverallRating.toFixed(1)}/5` : "N/A" },
-            { label: "Last Used", val: stats.lastAssignedAt ? format(new Date(stats.lastAssignedAt), "MMM d") : "Never" },
-          ].map(s => (
-            <div key={s.label} className="bg-muted/50 rounded-xl p-3 text-center">
-              <p className="text-lg font-bold">{s.val}</p>
-              <p className="text-xs text-muted-foreground">{s.label}</p>
+        <div className="space-y-3">
+          {(stats as any).trustScore !== undefined && (
+            <div className="flex items-center gap-3 bg-muted/40 rounded-xl p-3">
+              <ShieldCheck className="h-5 w-5 text-primary shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground mb-0.5">VendorTrust Score</p>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-muted rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${(stats as any).trustScore >= 80 ? "bg-green-400" : (stats as any).trustScore >= 60 ? "bg-yellow-400" : "bg-red-400"}`}
+                      style={{ width: `${(stats as any).trustScore}%` }}
+                    />
+                  </div>
+                  <span className={`text-sm font-bold ${(stats as any).trustScore >= 80 ? "text-green-400" : (stats as any).trustScore >= 60 ? "text-yellow-400" : "text-red-400"}`}>
+                    {(stats as any).trustScore}/100
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">Based on ratings, completion rate, and experience</p>
+              </div>
             </div>
-          ))}
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "Jobs Done", val: stats.totalJobs },
+              { label: "Avg Rating", val: stats.avgOverallRating ? `${stats.avgOverallRating.toFixed(1)}/5` : "N/A" },
+              { label: "Last Used", val: stats.lastAssignedAt ? format(new Date(stats.lastAssignedAt), "MMM d") : "Never" },
+            ].map(s => (
+              <div key={s.label} className="bg-muted/50 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold">{s.val}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
+              </div>
+            ))}
+          </div>
+          {(vendor as any).noShowCount > 0 && (
+            <div className="flex items-center gap-2 bg-red-500/5 border border-red-500/20 rounded-xl p-3">
+              <AlertTriangle className="h-4 w-4 text-red-400 shrink-0" />
+              <p className="text-xs text-red-400">{(vendor as any).noShowCount} recorded no-show{(vendor as any).noShowCount !== 1 ? "s" : ""} — confirm arrival before committing</p>
+            </div>
+          )}
+          {(vendor as any).emergencyAvailable && (
+            <div className="flex items-center gap-2 text-xs text-green-400">
+              <Zap className="h-3.5 w-3.5" /> Available for 24/7 emergency calls
+            </div>
+          )}
         </div>
       )}
 
@@ -305,6 +351,11 @@ function VendorCard({
 
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="outline" className="text-xs">{vendor.tradeCategory}</Badge>
+        {(vendor as any).emergencyAvailable && (
+          <span className="text-[10px] text-red-400 flex items-center gap-0.5 font-medium">
+            <Zap className="h-2.5 w-2.5" /> 24/7 Emergency
+          </span>
+        )}
         {vendor.city && (
           <span className="text-xs text-muted-foreground flex items-center gap-0.5">
             <MapPin className="h-3 w-3" />{vendor.city}
@@ -326,18 +377,23 @@ function VendorCard({
       </div>
 
       {stats && (
-        <div className="flex items-center gap-3 pt-1 border-t border-border">
-          <div className="flex-1">
-            <StarRow rating={stats.avgOverallRating} />
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {stats.totalJobs} job{stats.totalJobs !== 1 ? "s" : ""}
-          </span>
-          {stats.lastAssignedAt && (
-            <span className="text-xs text-muted-foreground">
-              Last: {format(new Date(stats.lastAssignedAt), "MMM d")}
-            </span>
+        <div className="space-y-1.5 pt-1 border-t border-border">
+          {(stats as any).trustScore !== undefined && (
+            <TrustScore score={(stats as any).trustScore} />
           )}
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <StarRow rating={stats.avgOverallRating} />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {stats.totalJobs} job{stats.totalJobs !== 1 ? "s" : ""}
+            </span>
+            {(vendor as any).noShowCount > 0 && (
+              <span className="text-[10px] text-red-400 flex items-center gap-0.5">
+                <AlertTriangle className="h-2.5 w-2.5" /> {(vendor as any).noShowCount} no-show{(vendor as any).noShowCount !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
         </div>
       )}
 
@@ -439,8 +495,10 @@ export default function Vendors() {
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground">Vendors</h1>
-            <p className="text-muted-foreground mt-1">Your private network of trusted contractors and service providers.</p>
+            <h1 className="text-2xl md:text-3xl font-display font-extrabold text-foreground flex items-center gap-2">
+              <ShieldCheck className="h-7 w-7 text-primary" /> Vendor Network
+            </h1>
+            <p className="text-muted-foreground mt-1">Trusted contractors, scored by performance. Smart dispatch starts here.</p>
           </div>
           <Button onClick={() => setShowAddModal(true)} className="shrink-0 gap-2" data-testid="button-add-vendor">
             <Plus className="h-4 w-4" /> Add Vendor
@@ -448,13 +506,15 @@ export default function Vendors() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: "Total Active", val: activeCount },
-            { label: "Preferred", val: preferredCount },
-            { label: "Trade Types", val: new Set(vendors.filter(v => v.status === "active").map(v => v.tradeCategory)).size },
+            { label: "Active Vendors", val: activeCount, icon: Briefcase, color: "text-primary" },
+            { label: "Preferred", val: preferredCount, icon: Star, color: "text-yellow-400" },
+            { label: "24/7 Emergency", val: vendors.filter(v => (v as any).emergencyAvailable && v.status === "active").length, icon: Zap, color: "text-red-400" },
+            { label: "Trade Types", val: new Set(vendors.filter(v => v.status === "active").map(v => v.tradeCategory)).size, icon: ShieldCheck, color: "text-green-400" },
           ].map(s => (
             <div key={s.label} className="bg-card border border-border rounded-2xl p-4 text-center">
+              <s.icon className={`h-5 w-5 mx-auto mb-1 ${s.color}`} />
               <p className="text-2xl font-display font-extrabold text-foreground">{s.val}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
             </div>

@@ -86,10 +86,26 @@ export interface IStorage {
   // Analytics
   getVendorStats(vendorId: number, landlordId: string): Promise<{
     totalJobs: number;
+    completedJobs: number;
     avgOverallRating: number | null;
+    avgQualityRating: number | null;
+    avgSpeedRating: number | null;
+    avgCommunicationRating: number | null;
+    avgFinalCost: number | null;
+    totalSpent: number;
     lastAssignedAt: Date | null;
+    trustScore: number;
   }>;
-  getTopVendors(landlordId: string): Promise<Array<Vendor & { totalJobs: number; avgRating: number | null }>>;
+  getTopVendors(landlordId: string): Promise<Array<Vendor & { totalJobs: number; avgRating: number | null; trustScore: number }>>;
+  getVendorRecommendations(landlordId: string, tradeCategory: string): Promise<Array<Vendor & { totalJobs: number; avgRating: number | null; trustScore: number }>>;
+  getDashboardVendorStats(landlordId: string): Promise<{
+    needsDispatch: number;
+    scheduledToday: number;
+    completedThisWeek: number;
+    openEmergencies: number;
+    avgVendorRating: number | null;
+    topVendors: Array<Vendor & { totalJobs: number; avgRating: number | null; trustScore: number }>;
+  }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -368,8 +384,15 @@ export class DatabaseStorage implements IStorage {
 
   async getVendorStats(vendorId: number, landlordId: string): Promise<{
     totalJobs: number;
+    completedJobs: number;
     avgOverallRating: number | null;
+    avgQualityRating: number | null;
+    avgSpeedRating: number | null;
+    avgCommunicationRating: number | null;
+    avgFinalCost: number | null;
+    totalSpent: number;
     lastAssignedAt: Date | null;
+    trustScore: number;
   }> {
     const assignments = await db.select().from(vendorAssignments)
       .where(and(eq(vendorAssignments.vendorId, vendorId), eq(vendorAssignments.landlordId, landlordId)));
@@ -377,37 +400,161 @@ export class DatabaseStorage implements IStorage {
     const reviews = await db.select().from(vendorReviews)
       .where(and(eq(vendorReviews.vendorId, vendorId), eq(vendorReviews.landlordId, landlordId)));
 
-    const ratings = reviews.map(r => r.overallRating).filter((r): r is number => r !== null);
-    const avgOverallRating = ratings.length > 0
-      ? ratings.reduce((a, b) => a + b, 0) / ratings.length
-      : null;
+    const vendor = await this.getVendor(vendorId);
 
-    const lastAssignment = assignments.sort((a, b) =>
+    const completed = assignments.filter(a => a.jobStatus === "completed" || a.completedAt !== null);
+    const ratings = reviews.map(r => r.overallRating).filter((r): r is number => r !== null);
+    const qualityRatings = reviews.map(r => r.qualityRating).filter((r): r is number => r !== null);
+    const speedRatings = reviews.map(r => r.speedRating).filter((r): r is number => r !== null);
+    const commRatings = reviews.map(r => r.communicationRating).filter((r): r is number => r !== null);
+    const costs = assignments.map(a => a.finalCost).filter((c): c is number => c !== null);
+
+    const avg = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+    const avgOverallRating = avg(ratings);
+    const lastAssignment = [...assignments].sort((a, b) =>
       new Date(b.assignedAt!).getTime() - new Date(a.assignedAt!).getTime()
     )[0];
 
+    const totalSpent = costs.reduce((a, b) => a + b, 0);
+
+    // VendorTrust Score (0–100)
+    const trustScore = computeTrustScore({
+      totalJobs: assignments.length,
+      completedJobs: completed.length,
+      avgRating: avgOverallRating,
+      noShowCount: vendor?.noShowCount ?? 0,
+      preferredVendor: vendor?.preferredVendor ?? false,
+    });
+
     return {
       totalJobs: assignments.length,
+      completedJobs: completed.length,
       avgOverallRating,
+      avgQualityRating: avg(qualityRatings),
+      avgSpeedRating: avg(speedRatings),
+      avgCommunicationRating: avg(commRatings),
+      avgFinalCost: costs.length > 0 ? Math.round(totalSpent / costs.length) : null,
+      totalSpent,
       lastAssignedAt: lastAssignment?.assignedAt ?? null,
+      trustScore,
     };
   }
 
-  async getTopVendors(landlordId: string): Promise<Array<Vendor & { totalJobs: number; avgRating: number | null }>> {
+  async getTopVendors(landlordId: string): Promise<Array<Vendor & { totalJobs: number; avgRating: number | null; trustScore: number }>> {
     const allVendors = await this.getVendorsByLandlord(landlordId);
     const activeVendors = allVendors.filter(v => v.status === "active");
 
     const withStats = await Promise.all(activeVendors.map(async (v) => {
       const stats = await this.getVendorStats(v.id, landlordId);
-      return { ...v, totalJobs: stats.totalJobs, avgRating: stats.avgOverallRating };
+      return { ...v, totalJobs: stats.totalJobs, avgRating: stats.avgOverallRating, trustScore: stats.trustScore };
     }));
 
+    return withStats.sort((a, b) => b.trustScore - a.trustScore);
+  }
+
+  async getVendorRecommendations(landlordId: string, tradeCategory: string): Promise<Array<Vendor & { totalJobs: number; avgRating: number | null; trustScore: number }>> {
+    const allVendors = await this.getVendorsByLandlord(landlordId);
+    const matching = allVendors.filter(v =>
+      v.status === "active" &&
+      (v.tradeCategory === tradeCategory || v.tradeCategory === "General Handyman")
+    );
+
+    const withStats = await Promise.all(matching.map(async (v) => {
+      const stats = await this.getVendorStats(v.id, landlordId);
+      return { ...v, totalJobs: stats.totalJobs, avgRating: stats.avgOverallRating, trustScore: stats.trustScore };
+    }));
+
+    // Sort: preferred first, then by trust score
     return withStats.sort((a, b) => {
-      if (b.totalJobs !== a.totalJobs) return b.totalJobs - a.totalJobs;
-      if ((b.avgRating ?? 0) !== (a.avgRating ?? 0)) return (b.avgRating ?? 0) - (a.avgRating ?? 0);
-      return 0;
+      if (a.preferredVendor && !b.preferredVendor) return -1;
+      if (!a.preferredVendor && b.preferredVendor) return 1;
+      return b.trustScore - a.trustScore;
     });
   }
+
+  async getDashboardVendorStats(landlordId: string): Promise<{
+    needsDispatch: number;
+    scheduledToday: number;
+    completedThisWeek: number;
+    openEmergencies: number;
+    avgVendorRating: number | null;
+    topVendors: Array<Vendor & { totalJobs: number; avgRating: number | null; trustScore: number }>;
+  }> {
+    const requests = await this.getRequestsByLandlord(landlordId);
+    const allAssignments = await db.select().from(vendorAssignments).where(eq(vendorAssignments.landlordId, landlordId));
+    const assignedRequestIds = new Set(allAssignments.map(a => a.requestId));
+
+    const needsDispatch = requests.filter(r =>
+      r.status !== "Completed" && !assignedRequestIds.has(r.id)
+    ).length;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const scheduledToday = allAssignments.filter(a => {
+      if (!a.scheduledDate) return false;
+      const d = new Date(a.scheduledDate);
+      return d >= today && d < tomorrow;
+    }).length;
+
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const completedThisWeek = allAssignments.filter(a =>
+      a.completedAt && new Date(a.completedAt) >= weekAgo
+    ).length;
+
+    const openEmergencies = requests.filter(r =>
+      r.urgency === "Emergency" && r.status !== "Completed"
+    ).length;
+
+    const allReviews = await db.select().from(vendorReviews).where(eq(vendorReviews.landlordId, landlordId));
+    const ratings = allReviews.map(r => r.overallRating).filter((r): r is number => r !== null);
+    const avgVendorRating = ratings.length > 0
+      ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
+      : null;
+
+    const topVendors = (await this.getTopVendors(landlordId)).slice(0, 5);
+
+    return { needsDispatch, scheduledToday, completedThisWeek, openEmergencies, avgVendorRating, topVendors };
+  }
+}
+
+// ── VendorTrust Score Formula ─────────────────────────────────────────────────
+// Score 0–100 based on: rating, completion rate, total jobs, preferred status
+export function computeTrustScore(params: {
+  totalJobs: number;
+  completedJobs: number;
+  avgRating: number | null;
+  noShowCount: number;
+  preferredVendor: boolean;
+}): number {
+  let score = 50; // base
+
+  // Rating component (0–30 pts)
+  if (params.avgRating !== null) {
+    score += Math.round((params.avgRating / 5) * 30);
+  }
+
+  // Completion rate component (0–20 pts)
+  if (params.totalJobs > 0) {
+    const rate = params.completedJobs / params.totalJobs;
+    score += Math.round(rate * 20);
+  }
+
+  // Experience component (0–15 pts): more jobs = higher confidence
+  const expBonus = Math.min(params.totalJobs * 2.5, 15);
+  score += Math.round(expBonus);
+
+  // No-show penalty (-10 per no-show, max -20)
+  score -= Math.min(params.noShowCount * 10, 20);
+
+  // Preferred vendor bonus (+5)
+  if (params.preferredVendor) score += 5;
+
+  return Math.max(0, Math.min(100, score));
 }
 
 export const storage = new DatabaseStorage();

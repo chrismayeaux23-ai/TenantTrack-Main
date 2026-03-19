@@ -2,13 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
 import { 
   QrCode, Smartphone, ShieldCheck, Mail, Phone, 
   ArrowRight, Check, DollarSign, CalendarClock, 
   Users, ClipboardList, Building2, Zap, Crown,
   ChevronDown, Star, BarChart3, FileDown, X, MessageSquare,
-  LogIn, Eye, EyeOff, ChevronLeft, ChevronRight,
+  LogIn, ChevronLeft, ChevronRight,
   Camera, Bell, Wrench, BarChart2, MapPin, Printer
 } from "lucide-react";
 import logoPng from "@assets/file_000000001adc71f58731a09f21d2988d_1772208715788.png";
@@ -23,7 +22,8 @@ const PLANS = [
     icon: Building2,
     features: [
       "QR maintenance system",
-      "Basic dashboard",
+      "Vendor dispatch & tracking",
+      "VendorTrust scores",
       "Email notifications",
       "Photo uploads",
     ],
@@ -37,10 +37,10 @@ const PLANS = [
     highlight: true,
     features: [
       "Everything in Starter",
-      "Priority request highlighting",
-      "Maintenance history tracking",
-      "Basic reporting",
-      "Custom QR per unit",
+      "Smart vendor recommendations",
+      "Job status pipeline",
+      "Proof of completion capture",
+      "Activity timeline per job",
       "Staff assignment",
     ],
   },
@@ -52,10 +52,10 @@ const PLANS = [
     icon: Crown,
     features: [
       "Everything in Growth",
-      "Advanced reporting",
-      "CSV export",
-      "Cost tracking & reports",
+      "Advanced vendor analytics",
+      "Cost tracking & CSV export",
       "Scheduled maintenance",
+      "Bilingual tenant UI",
       "Priority support",
     ],
   },
@@ -107,9 +107,9 @@ const SLIDES = [
     section: "How It Works",
     stepLabel: "Step 5 of 6",
     tabLabel: "Dashboard",
-    title: "Manage Every Request from One Dashboard",
-    description: "Your dashboard shows every open, in-progress, and completed request — sorted by urgency, filtered by property, and always up to date. Update status, add internal notes, assign to staff, and message tenants directly.",
-    bullets: ["Filter by property, status, or urgency", "Assign to your maintenance staff instantly", "Two-way messaging with tenants on every request"],
+    title: "Dispatch & Track Every Job from One Dashboard",
+    description: "Your dispatch center shows every open request — with smart vendor recommendations, job status pipeline, scheduling, and proof of completion. Assign, track, and close jobs without leaving the dashboard.",
+    bullets: ["Smart vendor picks ranked by trust score", "Job pipeline: Assigned → Scheduled → Completed", "Proof of completion with invoice and notes"],
     accent: "from-orange-500/20 to-primary/10",
     visual: "dashboard",
   },
@@ -123,47 +123,47 @@ const SLIDES = [
     accent: "from-rose-500/20 to-primary/10",
     visual: "costs",
   },
-  // ── WHY TENANTTRACK ───────────────────────────────────
+  // ── WHY VENDORTRUST ───────────────────────────────────
   {
-    section: "Why TenantTrack?",
+    section: "Why VendorTrust?",
     stepLabel: "The Problem",
     tabLabel: "The Problem",
-    title: "The Old Way Is Silently Costing You",
-    description: "Most landlords manage maintenance through a patchwork of texts, calls, sticky notes, and voicemails. It feels manageable — until it isn't. Requests get missed. Tenants get frustrated. Costs go untracked. Preventive work gets forgotten.",
+    title: "Vendor Chaos Is Silently Costing You",
+    description: "Most landlords dispatch vendors by memory, gut feel, and whoever picks up the phone. No records, no scores, no visibility. A bad contractor costs more than their invoice — in time, repeat trips, and tenant churn.",
     bullets: [
-      "Random 2 AM texts you miss or forget",
-      "No paper trail when disputes arise",
-      "Tax season becomes a receipt-box nightmare",
-      "One missed smoke detector check = liability",
+      "No-shows with no paper trail to defend yourself",
+      "Repeating the same bad contractor because you forgot",
+      "Zero visibility once a job is \"assigned\"",
+      "Invoices and completion records scattered everywhere",
     ],
     accent: "from-red-500/15 to-red-900/5",
     visual: "why-pains",
   },
   {
-    section: "Why TenantTrack?",
+    section: "Why VendorTrust?",
     stepLabel: "The Solution",
     tabLabel: "The Solution",
-    title: "Everything Organized, Nothing Slips Through",
-    description: "TenantTrack gives you a single place for every request, every cost, every schedule, and every conversation. No spreadsheets. No sticky notes. No missed texts. Just a clean system that works.",
+    title: "Know Who to Call. Know When It's Done.",
+    description: "VendorTrust gives every contractor a performance score based on ratings, completion rate, and job history. Dispatch smarter, track every status change, and capture proof of completion — all in one place.",
     bullets: [
-      "Every request logged with photos & timestamps",
-      "Full cost history per property — tax-ready CSV",
-      "Staff accountability on every assigned job",
-      "Preventive schedule reminders so you stay ahead",
+      "VendorTrust scores eliminate the guesswork",
+      "Job pipeline: Assigned → Scheduled → Completed",
+      "Completion notes, invoice numbers, materials recorded",
+      "Activity log on every request — full paper trail",
     ],
     accent: "from-primary/15 to-emerald-900/10",
     visual: "why-comparison",
   },
   {
-    section: "Why TenantTrack?",
+    section: "Why VendorTrust?",
     stepLabel: "Real Results",
     tabLabel: "Real Results",
     title: "Landlords Who Switch Don't Go Back",
-    description: "Once your maintenance system runs itself, you spend less time firefighting and more time growing your portfolio. TenantTrack pays for itself in the first month — usually at tax time alone.",
+    description: "Once your vendor network is scored and your dispatch is automated, you stop firefighting and start scaling. VendorTrust pays for itself the first time you avoid a bad contractor repeat.",
     bullets: [
       "Set up in under 5 minutes, no IT help needed",
-      "Tenants love it — no app, no friction",
-      "Cost reports save hours at tax time",
+      "Tenants love it — scan, report, track",
+      "Vendor scorecards protect your time and money",
       "14-day free trial, cancel anytime",
     ],
     accent: "from-violet-500/15 to-primary/10",
@@ -188,57 +188,57 @@ const SLIDES = [
 
 const FEATURES = [
   {
-    icon: QrCode,
-    title: "QR Code System",
-    desc: "Print unique QR codes for each property or unit. Tenants scan with their phone camera to open an instant reporting form.",
+    icon: ShieldCheck,
+    title: "VendorTrust Scores",
+    desc: "Every vendor gets a 0–100 trust score based on ratings, completion rate, job history, and reliability. Dispatch with confidence.",
   },
   {
-    icon: Smartphone,
-    title: "No App Required",
-    desc: "Tenants report issues from any phone browser. Upload photos, describe the problem, and submit in under 60 seconds.",
+    icon: QrCode,
+    title: "QR Maintenance Requests",
+    desc: "Tenants scan a property QR code and submit an issue in 60 seconds. No app, no account — just a simple mobile form.",
+  },
+  {
+    icon: Zap,
+    title: "Smart Dispatch",
+    desc: "Get vendor recommendations ranked by trust score and trade match. Assign, schedule, and track job status — all in one place.",
   },
   {
     icon: ClipboardList,
-    title: "Smart Dashboard",
-    desc: "See all requests at a glance with status badges, urgency levels, tenant info, and real-time analytics.",
+    title: "Job Status Pipeline",
+    desc: "Move jobs through: Assigned → Contacted → Scheduled → In-Progress → Completed. Full visibility at every step.",
   },
   {
-    icon: Users,
-    title: "Staff Assignment",
-    desc: "Add your maintenance team and assign requests directly. Everyone stays in the loop without group texts.",
+    icon: Check,
+    title: "Proof of Completion",
+    desc: "Record completion notes, invoice numbers, and materials used when a job is done. Always have a paper trail.",
   },
   {
     icon: DollarSign,
     title: "Cost Tracking",
-    desc: "Log repair costs per request with vendor details. Generate reports and export to CSV for tax time.",
+    desc: "Log repair costs per request with vendor details. Export to CSV for tax time — your accountant will love you.",
   },
   {
     icon: CalendarClock,
     title: "Scheduled Maintenance",
-    desc: "Set up recurring tasks like HVAC filter changes and smoke detector checks. Never miss preventive maintenance again.",
-  },
-  {
-    icon: MessageSquare,
-    title: "Tenant Messaging",
-    desc: "Two-way messaging tied to each request. Tenants message from their tracking page, landlords reply from the dashboard. No phone tag.",
+    desc: "Set up recurring tasks like HVAC filter changes and fire extinguisher checks. Never miss preventive maintenance again.",
   },
 ];
 
 const TESTIMONIALS = [
   {
-    quote: "I used to get random texts at 2 AM about leaky faucets. Now tenants scan the QR code and I see everything organized in my dashboard.",
+    quote: "The vendor trust scores changed everything. I used to just call whoever picked up. Now I dispatch the highest-rated plumber in under a minute.",
     name: "Property Manager",
     role: "12 units in Portland, OR",
     stars: 5,
   },
   {
-    quote: "The cost tracking alone pays for itself at tax time. I used to keep receipts in a shoebox — now everything is exported to CSV in one click.",
+    quote: "I had a contractor no-show twice before VendorTrust flagged his record. That alone saved me from a third bad experience.",
     name: "Independent Landlord",
-    role: "6 units in Austin, TX",
+    role: "18 units in Austin, TX",
     stars: 5,
   },
   {
-    quote: "My tenants love it. No app to download, no account to create. They scan, report, and get a tracking code. Simple.",
+    quote: "Proof of completion with invoice numbers — my accountant called me a changed man. Everything is just there when I need it.",
     name: "Real Estate Investor",
     role: "22 units in Denver, CO",
     stars: 5,
@@ -563,7 +563,7 @@ function SlideVisual({ type }: { type: string }) {
         </div>
         <div className="bg-primary/10 border border-primary/30 rounded-2xl p-3">
           <p className="text-[10px] font-bold text-primary mb-2.5 flex items-center gap-1">
-            <Check className="h-3 w-3" /> With TenantTrack
+            <Check className="h-3 w-3" /> With VendorTrust
           </p>
           <ul className="space-y-1.5">
             {[
@@ -681,9 +681,6 @@ function SlideVisual({ type }: { type: string }) {
 
 export default function Landing() {
   const [showDemoLogin, setShowDemoLogin] = useState(() => window.location.search.includes("demo=1"));
-  const [demoEmail, setDemoEmail] = useState("landlord@test.com");
-  const [demoPassword, setDemoPassword] = useState("demo123");
-  const [showPassword, setShowPassword] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [demoError, setDemoError] = useState("");
 
@@ -720,7 +717,6 @@ export default function Landing() {
       const res = await fetch("/api/demo-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: demoEmail, password: demoPassword }),
         credentials: "include",
       });
       if (!res.ok) {
@@ -728,7 +724,7 @@ export default function Landing() {
         setDemoError(data.message || "Login failed");
         return;
       }
-      window.location.href = "/";
+      window.location.href = "/dashboard";
     } catch {
       setDemoError("Connection failed. Please try again.");
     } finally {
@@ -742,60 +738,38 @@ export default function Landing() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={() => setShowDemoLogin(false)}>
           <div className="bg-card border border-border rounded-2xl p-8 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-xl font-bold text-foreground">Try the Demo</h3>
-                <p className="text-sm text-muted-foreground mt-1">Explore TenantTrack with sample data</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Try VendorTrust</h3>
+                  <p className="text-sm text-muted-foreground">Instant access — no signup needed</p>
+                </div>
               </div>
               <button onClick={() => setShowDemoLogin(false)} className="text-muted-foreground hover:text-foreground p-1" data-testid="button-close-demo">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Email</label>
-                <Input
-                  type="email"
-                  value={demoEmail}
-                  onChange={e => setDemoEmail(e.target.value)}
-                  className="h-12"
-                  data-testid="input-demo-email"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1.5 block">Password</label>
-                <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={demoPassword}
-                    onChange={e => setDemoPassword(e.target.value)}
-                    className="h-12 pr-12"
-                    data-testid="input-demo-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    data-testid="button-toggle-password"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
-              {demoError && (
-                <p className="text-sm text-red-400" data-testid="text-demo-error">{demoError}</p>
-              )}
-              <Button
-                className="w-full h-12 rounded-xl text-base"
-                onClick={handleDemoLogin}
-                disabled={demoLoading}
-                data-testid="button-demo-login"
-              >
-                {demoLoading ? "Logging in..." : "Log In to Demo"}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Demo credentials are pre-filled. Just click "Log In to Demo" to explore.
-              </p>
+            <div className="bg-muted/40 rounded-xl p-4 mb-5 space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground"><Check className="h-4 w-4 text-primary" /> 6 vendors with live trust scores</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><Check className="h-4 w-4 text-primary" /> 7 maintenance requests to dispatch</div>
+              <div className="flex items-center gap-2 text-muted-foreground"><Check className="h-4 w-4 text-primary" /> Pro plan features unlocked</div>
             </div>
+            {demoError && (
+              <p className="text-sm text-red-400 mb-3" data-testid="text-demo-error">{demoError}</p>
+            )}
+            <Button
+              className="w-full h-12 rounded-xl text-base gap-2"
+              onClick={handleDemoLogin}
+              disabled={demoLoading}
+              data-testid="button-demo-login"
+            >
+              {demoLoading ? "Loading demo..." : <>Enter Demo Dashboard <ArrowRight className="h-4 w-4" /></>}
+            </Button>
+            <p className="text-xs text-center text-muted-foreground mt-3">
+              Uses a shared demo account · Changes reset periodically
+            </p>
           </div>
         </div>
       )}
@@ -803,8 +777,8 @@ export default function Landing() {
       <nav className="fixed top-0 w-full z-50 glass-panel border-b-0">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={logoPng} alt="TenantTrack Logo" className="h-10 w-10 object-contain rounded-lg" />
-            <span className="font-display font-bold text-xl text-foreground">TenantTrack</span>
+            <img src={logoPng} alt="VendorTrust Logo" className="h-10 w-10 object-contain rounded-lg" />
+            <span className="font-display font-bold text-xl text-foreground">VendorTrust</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
             <Link href="/features" className="hover:text-foreground transition-colors" data-testid="nav-features">Features</Link>
@@ -834,11 +808,11 @@ export default function Landing() {
               14-day free trial &middot; No credit card required
             </div>
             <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
-              Maintenance Requests <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">Made Effortless.</span>
+              Vendor Dispatch <br className="hidden md:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-emerald-400">Built on Trust.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed">
-              Generate QR codes for your properties. Tenants scan, snap a photo, and report issues instantly — no app download needed. You manage everything from one beautiful dashboard.
+              Know who to call, when they showed up, and what they did. VendorTrust scores every contractor automatically — so you dispatch with confidence, not guesswork.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <Button size="lg" className="w-full sm:w-auto rounded-full text-lg shadow-xl shadow-primary/20 gap-2" onClick={() => window.location.href = '/login'} data-testid="button-get-started">
@@ -869,7 +843,7 @@ export default function Landing() {
             <div className="relative p-2 bg-gradient-to-tr from-primary/20 to-emerald-400/10 rounded-[2.5rem] overflow-hidden">
               <img
                 src={heroPng}
-                alt="TenantTrack Dashboard Preview"
+                alt="VendorTrust Dashboard Preview"
                 className="rounded-[2rem] shadow-2xl border border-white/10 w-full object-cover aspect-video lg:aspect-square"
               />
             </div>
@@ -1031,7 +1005,7 @@ export default function Landing() {
               Everything You Need to Manage Properties
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              From QR-powered requests to cost reports for tax season — TenantTrack handles it all.
+              From QR-powered maintenance requests to vendor trust scores and proof of completion — VendorTrust handles it all.
             </p>
           </div>
 
@@ -1059,14 +1033,14 @@ export default function Landing() {
 
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <div className="p-8 rounded-3xl bg-red-500/5 border border-red-500/20">
-            <h3 className="text-xl font-bold mb-4 text-red-400">Without TenantTrack</h3>
+            <h3 className="text-xl font-bold mb-4 text-red-400">Without VendorTrust</h3>
             <ul className="space-y-3">
               {[
-                "Random texts and calls at all hours",
-                "Forgotten requests and angry tenants",
-                "No record of repair costs for taxes",
-                "Missed preventive maintenance deadlines",
-                "No way to track what staff is doing",
+                "Dispatching contractors by memory or gut feel",
+                "No-shows with no record to reference",
+                "\"Job done\" with no proof, no invoice, no notes",
+                "Repeating bad contractors you forgot were bad",
+                "No visibility between assigned and completed",
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                   <X className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
@@ -1076,14 +1050,14 @@ export default function Landing() {
             </ul>
           </div>
           <div className="p-8 rounded-3xl bg-primary/5 border border-primary/20">
-            <h3 className="text-xl font-bold mb-4 text-primary">With TenantTrack</h3>
+            <h3 className="text-xl font-bold mb-4 text-primary">With VendorTrust</h3>
             <ul className="space-y-3">
               {[
-                "Organized requests with photos and details",
-                "Real-time status tracking for tenants",
-                "Cost reports exportable for tax deductions",
-                "Automated recurring maintenance reminders",
-                "Staff assignment with full accountability",
+                "Trust scores surface your best vendor instantly",
+                "No-show history logged and visible forever",
+                "Proof of completion with invoice and materials",
+                "Full job status pipeline with timestamps",
+                "Activity timeline on every request",
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                   <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
@@ -1100,7 +1074,7 @@ export default function Landing() {
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4 text-sm px-4 py-1">Testimonials</Badge>
             <h2 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4">
-              Landlords Love TenantTrack
+              Landlords Trust VendorTrust
             </h2>
           </div>
 
@@ -1215,11 +1189,11 @@ export default function Landing() {
           <div className="grid md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center gap-3 mb-4">
-                <img src={logoPng} alt="TenantTrack" className="h-10 w-10 rounded-lg" />
-                <span className="font-display font-bold text-xl text-foreground">TenantTrack</span>
+                <img src={logoPng} alt="VendorTrust" className="h-10 w-10 rounded-lg" />
+                <span className="font-display font-bold text-xl text-foreground">VendorTrust</span>
               </div>
               <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
-                The modern maintenance request system for rental property owners. QR-powered, mobile-first, and built for landlords who want to stay organized.
+                The smart maintenance platform for landlords. QR-powered requests, vendor trust scores, and full job dispatch — all in one place.
               </p>
             </div>
 
@@ -1251,7 +1225,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} TenantTrack. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} VendorTrust. All rights reserved.</p>
             <div className="flex gap-4">
               <Link href="/terms" className="hover:text-primary transition-colors" data-testid="link-terms">Terms & Conditions</Link>
               <Link href="/privacy" className="hover:text-primary transition-colors" data-testid="link-privacy">Privacy Policy</Link>

@@ -70,6 +70,10 @@ function Router() {
         {isAuthenticated ? <Dashboard /> : <Landing />}
       </Route>
 
+      <Route path="/dashboard">
+        <ProtectedRoute component={Dashboard} />
+      </Route>
+
       <Route path="/properties">
         <ProtectedRoute component={Properties} />
       </Route>

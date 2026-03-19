@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Building2, ClipboardList, LogOut, Menu, X, CreditCard, Users, UserCircle, Receipt, DollarSign, CalendarClock, Briefcase } from "lucide-react";
+import { Building2, ClipboardList, LogOut, Menu, X, CreditCard, Users, UserCircle, Receipt, DollarSign, CalendarClock, Briefcase, ShieldCheck } from "lucide-react";
 import { Button } from "../ui/Button";
 import logoPng from "@assets/file_000000001adc71f58731a09f21d2988d_1772208715788.png";
 
@@ -25,7 +25,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const bottomNav = [
     { name: "Requests", href: "/", icon: ClipboardList },
     { name: "Properties", href: "/properties", icon: Building2 },
-    { name: "Scheduled", href: "/scheduled", icon: CalendarClock },
+    { name: "Vendors", href: "/vendors", icon: Briefcase },
     { name: "More", href: "__menu__", icon: Menu },
   ];
 
@@ -33,8 +33,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       <div className="md:hidden flex items-center justify-between p-4 bg-card border-b border-border sticky top-0 z-40">
         <Link href="/" className="flex items-center gap-2" data-testid="link-mobile-home">
-          <img src={logoPng} alt="TenantTrack Logo" className="h-8 w-8 object-contain rounded-lg" />
-          <span className="font-display font-bold text-xl">TenantTrack</span>
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <ShieldCheck className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <span className="font-display font-bold text-xl tracking-tight">VendorTrust</span>
         </Link>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2" data-testid="button-mobile-menu">
           {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -45,12 +47,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         fixed inset-y-0 left-0 z-30 w-72 bg-card border-r border-border flex flex-col transition-transform duration-300 ease-in-out md:static md:translate-x-0
         ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
-        <div className="hidden md:flex items-center gap-3 p-6">
-          <img src={logoPng} alt="TenantTrack Logo" className="h-10 w-10 object-contain rounded-xl" />
-          <span className="font-display font-bold text-2xl text-foreground tracking-tight">TenantTrack</span>
+        <div className="hidden md:flex items-center gap-3 p-6 border-b border-border/50">
+          <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center shadow-md shadow-primary/20">
+            <ShieldCheck className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <span className="font-display font-bold text-xl text-foreground tracking-tight block">VendorTrust</span>
+            <span className="text-xs text-muted-foreground">Vendor Coordination</span>
+          </div>
         </div>
 
-        <nav className="flex-1 px-4 py-6 md:py-0 space-y-2">
+        <nav className="flex-1 px-4 py-6 md:py-4 space-y-1">
           {navigation.map((item) => {
             const isActive = location === item.href;
             return (
@@ -66,7 +73,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 `}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-5 w-5 flex-shrink-0" />
                 {item.name}
               </Link>
             );

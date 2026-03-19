@@ -94,6 +94,10 @@ export const vendors = pgTable("vendors", {
   licenseInfo: text("license_info"),
   insuranceInfo: text("insurance_info"),
   status: text("status").default("active"),
+  // VendorTrust additions
+  emergencyAvailable: boolean("emergency_available").default(false),
+  noShowCount: integer("no_show_count").default(0),
+  lastJobCompletedAt: timestamp("last_job_completed_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -109,7 +113,15 @@ export const vendorAssignments = pgTable("vendor_assignments", {
   priority: text("priority").default("Normal"),
   targetCompletionDate: timestamp("target_completion_date"),
   scheduledDate: timestamp("scheduled_date"),
+  // VendorTrust dispatch workflow additions
+  jobStatus: text("job_status").default("assigned"),
+  arrivalWindow: text("arrival_window"),
+  startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
+  completionNotes: text("completion_notes"),
+  proofPhotoUrls: text("proof_photo_urls").array(),
+  invoiceNumber: text("invoice_number"),
+  materialsUsed: text("materials_used"),
   assignmentNotes: text("assignment_notes"),
   finalCost: integer("final_cost"),
 });
@@ -214,3 +226,28 @@ export const TRADE_CATEGORIES = [
 ] as const;
 
 export type TradeCategory = typeof TRADE_CATEGORIES[number];
+
+// ── VendorTrust: Job Status Pipeline ──────────────────────────────────────────
+export const JOB_STATUSES = [
+  "needs-dispatch",
+  "assigned",
+  "contacted",
+  "scheduled",
+  "in-progress",
+  "waiting-on-parts",
+  "completed",
+  "cancelled",
+] as const;
+
+export type JobStatus = typeof JOB_STATUSES[number];
+
+export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
+  "needs-dispatch": "Needs Dispatch",
+  "assigned": "Vendor Assigned",
+  "contacted": "Vendor Contacted",
+  "scheduled": "Scheduled",
+  "in-progress": "In Progress",
+  "waiting-on-parts": "Waiting on Parts",
+  "completed": "Completed",
+  "cancelled": "Cancelled",
+};
