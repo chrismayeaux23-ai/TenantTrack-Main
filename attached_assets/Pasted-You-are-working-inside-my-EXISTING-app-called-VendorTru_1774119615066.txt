@@ -1,0 +1,75 @@
+You are working inside my EXISTING app called VendorTrust.
+
+Your task is to build ONLY automated operational notifications for vendors, landlords/property managers, and tenants where appropriate.
+
+GOAL
+Reduce manual follow-up by sending the right maintenance workflow notifications automatically.
+
+SCOPE
+Do not build SMS unless the current stack already supports it easily.
+Email-first MVP is fine.
+Do not redesign unrelated parts of the app.
+
+BUILD THESE FEATURES
+
+1. VENDOR NOTIFICATIONS
+Send emails for:
+- vendor assigned to job
+- vendor magic link sent
+- vendor reminder before scheduled job
+- reschedule notification
+- cancellation notification if job is cancelled/reassigned
+
+2. LANDLORD / MANAGER NOTIFICATIONS
+Send alerts for:
+- vendor accepts
+- vendor declines
+- vendor proposes new time
+- vendor marks en route
+- vendor marks started
+- vendor marks completed
+- vendor has not responded by deadline if that field exists already
+- emergency request remains unassigned
+
+3. TENANT NOTIFICATIONS
+Where current app logic already supports tenant communication, send updates for:
+- vendor scheduled
+- appointment rescheduled
+- job marked completed
+
+Keep tenant messaging clean and minimal.
+
+4. NOTIFICATION HISTORY
+Track notification records so the app knows:
+- type
+- recipient
+- related request
+- sentAt
+- status
+- last error if any
+
+5. UI INTEGRATION
+Inside request detail/admin area show:
+- last notification sent
+- notification history summary
+- resend latest relevant notification when appropriate
+
+6. TEMPLATE QUALITY
+Use short, practical, operations-focused email copy.
+Do not use marketing language.
+Make subject lines clear and scannable.
+
+TECHNICAL RULES
+- reuse current email service patterns
+- keep mailer logic centralized
+- avoid duplicated email code
+- type everything
+- fail gracefully and log errors cleanly
+
+WHEN DONE, PROVIDE
+1. files changed
+2. notification types implemented
+3. new schema fields/tables
+4. routes/endpoints added
+5. test checklist
+6. env vars needed
