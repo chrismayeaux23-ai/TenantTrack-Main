@@ -3,8 +3,8 @@ import { db } from "./db";
 import { vendorAssignments, maintenanceRequests, properties, vendors } from "@shared/schema";
 import { users } from "@shared/models/auth";
 import { eq, and, sql, isNull, lt } from "drizzle-orm";
-import { getSlaThreshold, autoDispatchRequest } from "./dispatchEngine";
-import { sendLandlordAlertEmail } from "./emailService";
+import { getSlaThreshold, autoDispatchRequest, scoreVendorsForRequest } from "./dispatchEngine";
+import { sendLandlordAlertEmail, sendVendorReminderEmail } from "./emailService";
 
 export async function checkSlaViolations() {
   try {
@@ -116,6 +116,59 @@ export async function checkSlaViolations() {
             }
           }
         }
+      }
+    }
+    const upcomingJobs = await db.select().from(vendorAssignments)
+      .where(and(
+        eq(vendorAssignments.jobStatus, "scheduled"),
+        sql`${vendorAssignments.scheduledDate} IS NOT NULL`,
+        sql`${vendorAssignments.scheduledDate} > ${now}`,
+        sql`${vendorAssignments.scheduledDate} < ${new Date(now.getTime() + 24 * 60 * 60 * 1000)}`,
+        sql`(${vendorAssignments.lastReminderSentAt} IS NULL OR ${vendorAssignments.lastReminderSentAt} < ${new Date(now.getTime() - 12 * 60 * 60 * 1000)})`
+      ));
+
+    for (const job of upcomingJobs) {
+      const vendor = await storage.getVendor(job.vendorId);
+      const request = await storage.getRequest(job.requestId);
+      const property = request ? await storage.getProperty(request.propertyId) : null;
+
+      if (vendor?.email && job.magicToken) {
+        sendVendorReminderEmail({
+          vendorEmail: vendor.email,
+          vendorName: vendor.name,
+          propertyName: property?.name || "Property",
+          unitNumber: request?.unitNumber || "",
+          issueType: request?.issueType || "",
+          scheduledDate: job.scheduledDate ? new Date(job.scheduledDate).toLocaleString() : "",
+          magicToken: job.magicToken,
+        }).catch(() => {});
+
+        await db.update(vendorAssignments)
+          .set({ lastReminderSentAt: now })
+          .where(eq(vendorAssignments.id, job.id));
+
+        console.log(`Sent reminder to ${vendor.name} for job ${job.requestId}`);
+      }
+    }
+
+    for (const assignment of pendingAssignments) {
+      const request = await storage.getRequest(assignment.requestId);
+      if (request) {
+        try {
+          const recommendations = await scoreVendorsForRequest(assignment.requestId, assignment.landlordId);
+          const nextVendor = recommendations.find((r: any) => r.vendor.id !== assignment.vendorId);
+          if (nextVendor) {
+            const existing = await storage.getEscalationsByRequest(assignment.requestId);
+            const latestEscalation = existing.find(e => e.escalationType === "no-response");
+            if (latestEscalation) {
+              await storage.updateSlaEscalation(latestEscalation.id, {
+                suggestedVendorId: nextVendor.vendor.id,
+                suggestedVendorName: nextVendor.vendor.name,
+                suggestedScore: nextVendor.score,
+              });
+            }
+          }
+        } catch {}
       }
     }
   } catch (err) {

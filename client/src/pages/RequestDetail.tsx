@@ -98,6 +98,26 @@ export default function RequestDetail() {
     enabled: !!requestId,
   });
 
+  const { data: escalations = [] } = useQuery<any[]>({
+    queryKey: ["/api/requests", requestId, "escalations"],
+    queryFn: async () => {
+      const res = await fetch(`/api/requests/${requestId}/escalations`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!requestId,
+  });
+
+  const { data: notifications = [] } = useQuery<any[]>({
+    queryKey: ["/api/requests", requestId, "notifications"],
+    queryFn: async () => {
+      const res = await fetch(`/api/requests/${requestId}/notifications`, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!requestId,
+  });
+
   const { data: messages = [] } = useQuery<any[]>({
     queryKey: ["/api/messages", requestId],
     queryFn: async () => {
@@ -835,8 +855,103 @@ export default function RequestDetail() {
             </div>
           </div>
 
-          {/* Right column — Costs + Activity */}
+          {/* Right column — SLA + Costs + Activity */}
           <div className="lg:col-span-2 space-y-6">
+            {/* SLA & Dispatch Info */}
+            {assignment && (
+              <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle className="h-4 w-4 text-primary" />
+                  <h2 className="font-semibold text-foreground">SLA & Dispatch</h2>
+                </div>
+
+                {assignment.dispatchMode && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Dispatch Mode</span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {assignment.dispatchMode === "auto" ? "Auto-Dispatch" : "Manual"}
+                    </Badge>
+                  </div>
+                )}
+
+                {assignment.responseDeadline && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Response Deadline</span>
+                    {(() => {
+                      const deadline = new Date(assignment.responseDeadline);
+                      const now = new Date();
+                      const isOverdue = deadline < now && assignment.vendorResponseStatus === "pending-response";
+                      const isUpcoming = deadline > now && deadline.getTime() - now.getTime() < 2 * 60 * 60 * 1000;
+                      return (
+                        <span className={`text-xs font-medium ${isOverdue ? "text-red-400" : isUpcoming ? "text-yellow-400" : "text-foreground"}`} data-testid="text-response-deadline">
+                          {isOverdue ? "OVERDUE — " : ""}{formatDistanceToNow(deadline, { addSuffix: true })}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {assignment.dispatchScore && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Dispatch Score</span>
+                    <span className="text-foreground font-bold">{assignment.dispatchScore} pts</span>
+                  </div>
+                )}
+
+                {escalations.length > 0 && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-xs font-semibold text-red-400 mb-2 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />Escalation History
+                    </p>
+                    <div className="space-y-2">
+                      {escalations.map((esc: any) => (
+                        <div key={esc.id} className="bg-red-500/5 border border-red-500/15 rounded-lg p-2.5">
+                          <div className="flex items-center justify-between mb-1">
+                            <Badge variant="outline" className="text-[10px] text-red-400 border-red-500/30">
+                              {esc.escalationType.replace(/-/g, " ")}
+                            </Badge>
+                            <span className="text-[10px] text-muted-foreground">
+                              {formatDistanceToNow(new Date(esc.createdAt), { addSuffix: true })}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{esc.reason}</p>
+                          {esc.suggestedVendorName && (
+                            <div className="mt-1.5 flex items-center gap-1.5 text-xs">
+                              <Sparkles className="h-3 w-3 text-primary" />
+                              <span className="text-foreground">Suggested: <strong>{esc.suggestedVendorName}</strong></span>
+                              {esc.suggestedScore && <span className="text-muted-foreground">({esc.suggestedScore} pts)</span>}
+                              <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[10px] text-primary ml-auto" onClick={() => {
+                                setSelectedVendorId(String(esc.suggestedVendorId));
+                                setShowPicker(true);
+                              }} data-testid={`button-reassign-suggested-${esc.id}`}>
+                                Reassign
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {notifications.length > 0 && (
+                  <div className="pt-2 border-t border-border">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                      <Mail className="h-3 w-3" />Notification Log
+                    </p>
+                    <div className="space-y-1">
+                      {notifications.slice(0, 5).map((n: any) => (
+                        <div key={n.id} className="flex items-center justify-between text-[11px]">
+                          <span className="text-muted-foreground capitalize">{n.notificationType} via {n.channel}</span>
+                          <span className="text-muted-foreground">{formatDistanceToNow(new Date(n.sentAt), { addSuffix: true })}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Cost Summary */}
             <div className="bg-card border border-border rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">

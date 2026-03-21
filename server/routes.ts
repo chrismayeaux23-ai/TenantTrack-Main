@@ -1502,6 +1502,9 @@ export async function registerRoutes(
         const vendor = await storage.getVendor(input.vendorId);
         await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: vendor ? `${vendor.name}${vendor.companyName ? ` (${vendor.companyName})` : ''} assigned` : undefined });
       }
+      if (request.status === "New") {
+        await storage.updateRequestStatus(requestId, "In-Progress");
+      }
       const vendor = await storage.getVendor(assignment.vendorId);
       res.json({ assignment, vendor });
     } catch (err) {
@@ -1735,9 +1738,12 @@ export async function registerRoutes(
       const result = await autoDispatchRequest(requestId, userId, mode);
 
       if (result.assigned) {
+        const request = await storage.getRequest(requestId);
+        if (request?.status === "New") {
+          await storage.updateRequestStatus(requestId, "In-Progress");
+        }
         const vendor = await storage.getVendor(result.assigned.vendorId);
         if (vendor?.email && result.assigned.magicToken) {
-          const request = await storage.getRequest(requestId);
           const property = request ? await storage.getProperty(request.propertyId) : null;
           sendVendorDispatchEmail({
             vendorEmail: vendor.email,
@@ -1839,6 +1845,12 @@ export async function registerRoutes(
       let eventType = "";
       let eventLabel = "";
 
+      const getLandlordEmail = async () => {
+        const u = await db.select().from(users).where(eq(users.id, assignment.landlordId)).then(r => r[0]);
+        return u?.email;
+      };
+      const getVendorRecord = async () => storage.getVendor(assignment.vendorId);
+
       switch (action) {
         case "accept":
           updateData.vendorResponseStatus = "accepted";
@@ -1846,6 +1858,20 @@ export async function registerRoutes(
           updateData.jobStatus = assignment.scheduledDate ? "scheduled" : "assigned";
           eventType = "vendor-accepted";
           eventLabel = "Vendor accepted the job";
+          await storage.updateRequestStatus(assignment.requestId, "In-Progress");
+          {
+            const landlordEmail = await getLandlordEmail();
+            const vendor = await getVendorRecord();
+            if (landlordEmail) {
+              sendLandlordAlertEmail({
+                landlordEmail,
+                alertType: "vendor-accepted",
+                requestId: assignment.requestId,
+                vendorName: vendor?.name || "Vendor",
+                message: `${vendor?.name} has accepted the maintenance job${assignment.scheduledDate ? ` scheduled for ${new Date(assignment.scheduledDate).toLocaleString()}` : ''}.`,
+              }).catch(() => {});
+            }
+          }
           break;
         case "decline":
           updateData.vendorResponseStatus = "declined";
@@ -1853,16 +1879,18 @@ export async function registerRoutes(
           updateData.jobStatus = "needs-dispatch";
           eventType = "vendor-declined";
           eventLabel = "Vendor declined the job";
-          const landlordUser = await db.select().from(users).where(eq(users.id, assignment.landlordId)).then(r => r[0]);
-          if (landlordUser?.email) {
-            const vendor = await storage.getVendor(assignment.vendorId);
-            sendLandlordAlertEmail({
-              landlordEmail: landlordUser.email,
-              alertType: "vendor-declined",
-              requestId: assignment.requestId,
-              vendorName: vendor?.name || "Vendor",
-              message: `${vendor?.name} has declined the maintenance job.`,
-            }).catch(() => {});
+          {
+            const landlordEmail = await getLandlordEmail();
+            const vendor = await getVendorRecord();
+            if (landlordEmail) {
+              sendLandlordAlertEmail({
+                landlordEmail,
+                alertType: "vendor-declined",
+                requestId: assignment.requestId,
+                vendorName: vendor?.name || "Vendor",
+                message: `${vendor?.name} has declined the maintenance job.`,
+              }).catch(() => {});
+            }
           }
           break;
         case "propose-time":
@@ -1871,18 +1899,46 @@ export async function registerRoutes(
           updateData.proposedTime = new Date(proposedTime);
           eventType = "vendor-proposed-time";
           eventLabel = `Vendor proposed new time: ${new Date(proposedTime).toLocaleString()}`;
+          {
+            const landlordEmail = await getLandlordEmail();
+            const vendor = await getVendorRecord();
+            if (landlordEmail) {
+              sendLandlordAlertEmail({
+                landlordEmail,
+                alertType: "vendor-proposed-time",
+                requestId: assignment.requestId,
+                vendorName: vendor?.name || "Vendor",
+                message: `${vendor?.name} proposed a new time: ${new Date(proposedTime).toLocaleString()}.`,
+              }).catch(() => {});
+            }
+          }
           break;
         case "en-route":
           updateData.enRouteAt = new Date();
           updateData.jobStatus = "in-progress";
           eventType = "vendor-en-route";
           eventLabel = "Vendor is en route";
+          await storage.updateRequestStatus(assignment.requestId, "In-Progress");
+          {
+            const landlordEmail = await getLandlordEmail();
+            const vendor = await getVendorRecord();
+            if (landlordEmail) {
+              sendLandlordAlertEmail({
+                landlordEmail,
+                alertType: "vendor-en-route",
+                requestId: assignment.requestId,
+                vendorName: vendor?.name || "Vendor",
+                message: `${vendor?.name} is en route to the job site.`,
+              }).catch(() => {});
+            }
+          }
           break;
         case "started":
           updateData.startedAt = new Date();
           updateData.jobStatus = "in-progress";
           eventType = "vendor-started";
           eventLabel = "Vendor started work";
+          await storage.updateRequestStatus(assignment.requestId, "In-Progress");
           break;
         case "completed":
           updateData.completedAt = new Date();
@@ -1894,9 +1950,21 @@ export async function registerRoutes(
           eventType = "vendor-completed";
           eventLabel = "Vendor completed the job";
           await storage.updateRequestStatus(assignment.requestId, "Completed");
-          const vendorRecord = await storage.getVendor(assignment.vendorId);
-          if (vendorRecord) {
-            await storage.updateVendor(vendorRecord.id, { lastJobCompletedAt: new Date() } as any);
+          {
+            const vendorRecord = await getVendorRecord();
+            if (vendorRecord) {
+              await storage.updateVendor(vendorRecord.id, { lastJobCompletedAt: new Date() } as any);
+            }
+            const landlordEmail = await getLandlordEmail();
+            if (landlordEmail) {
+              sendLandlordAlertEmail({
+                landlordEmail,
+                alertType: "vendor-completed",
+                requestId: assignment.requestId,
+                vendorName: vendorRecord?.name || "Vendor",
+                message: `${vendorRecord?.name} has completed the maintenance job.${finalCost ? ` Final cost: $${finalCost}` : ''}`,
+              }).catch(() => {});
+            }
           }
           break;
         default:
@@ -2048,6 +2116,7 @@ export async function registerRoutes(
             vendorResponseStatus: assignment.vendorResponseStatus,
             arrivalWindow: assignment.arrivalWindow,
             dispatchScore: assignment.dispatchScore,
+            responseDeadline: assignment.responseDeadline,
           } : null,
         };
       });
@@ -2111,6 +2180,28 @@ export async function registerRoutes(
       res.json(escalations);
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch escalations" });
+    }
+  });
+
+  app.get('/api/requests/:id/escalations', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const escalations = await storage.getEscalationsByRequest(requestId);
+      res.json(escalations);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch escalations" });
+    }
+  });
+
+  app.get('/api/requests/:id/notifications', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const assignment = await storage.getVendorAssignmentByRequest(requestId);
+      if (!assignment) return res.json([]);
+      const notifications = await storage.getNotificationsByAssignment(assignment.id);
+      res.json(notifications);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch notifications" });
     }
   });
 
@@ -2219,15 +2310,44 @@ export async function registerRoutes(
 
       const updated = await storage.updateVendorAssignment(requestId, updateData);
 
-      const action = scheduledDate ? "rescheduled" : "unscheduled";
+      const schedAction = scheduledDate ? "rescheduled" : "unscheduled";
       await storage.createActivityLog({
         requestId,
         landlordId: userId,
-        eventType: `job-${action}`,
+        eventType: `job-${schedAction}`,
         eventLabel: scheduledDate
           ? `Job ${assignment.scheduledDate ? 'rescheduled' : 'scheduled'} to ${new Date(scheduledDate).toLocaleString()}`
           : "Job unscheduled",
       });
+
+      if (scheduledDate) {
+        const request = await storage.getRequest(requestId);
+        const vendor = await storage.getVendor(assignment.vendorId);
+        const property = request ? await storage.getProperty(request.propertyId) : null;
+        if (request?.tenantEmail) {
+          sendTenantVendorScheduledEmail({
+            tenantEmail: request.tenantEmail,
+            tenantName: request.tenantName || "Tenant",
+            propertyName: property?.name || "Property",
+            unitNumber: request.unitNumber || "",
+            issueType: request.issueType || "",
+            vendorName: vendor?.name || "Vendor",
+            scheduledDate: new Date(scheduledDate).toLocaleString(),
+            trackingCode: request.trackingCode || "",
+          }).catch(() => {});
+        }
+        if (vendor?.email && assignment.magicToken) {
+          sendVendorReminderEmail({
+            vendorEmail: vendor.email,
+            vendorName: vendor.name,
+            propertyName: property?.name || "Property",
+            unitNumber: request?.unitNumber || "",
+            issueType: request?.issueType || "",
+            scheduledDate: new Date(scheduledDate).toLocaleString(),
+            magicToken: assignment.magicToken,
+          }).catch(() => {});
+        }
+      }
 
       res.json(updated);
     } catch (err) {

@@ -95,6 +95,7 @@ export interface IStorage {
   createSlaEscalation(data: InsertSlaEscalation): Promise<SlaEscalation>;
   getEscalationsByRequest(requestId: number): Promise<SlaEscalation[]>;
   getEscalationsByLandlord(landlordId: string): Promise<SlaEscalation[]>;
+  updateSlaEscalation(id: number, data: Partial<SlaEscalation>): Promise<SlaEscalation>;
 
   // Vendor Notifications
   createVendorNotification(data: InsertVendorNotification): Promise<VendorNotification>;
@@ -440,6 +441,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(slaEscalations)
       .where(eq(slaEscalations.requestId, requestId))
       .orderBy(desc(slaEscalations.createdAt));
+  }
+
+  async updateSlaEscalation(id: number, data: Partial<SlaEscalation>): Promise<SlaEscalation> {
+    const [updated] = await db.update(slaEscalations).set(data).where(eq(slaEscalations.id, id)).returning();
+    return updated;
   }
 
   async getEscalationsByLandlord(landlordId: string): Promise<SlaEscalation[]> {

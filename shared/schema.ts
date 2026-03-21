@@ -150,6 +150,7 @@ export const vendorAssignments = pgTable("vendor_assignments", {
   vendorNotes: text("vendor_notes"),
   schedulingNotes: text("scheduling_notes"),
   estimatedDuration: integer("estimated_duration"),
+  lastReminderSentAt: timestamp("last_reminder_sent_at"),
 });
 
 export const slaEscalations = pgTable("sla_escalations", {
@@ -162,6 +163,9 @@ export const slaEscalations = pgTable("sla_escalations", {
   newVendorId: integer("new_vendor_id"),
   reason: text("reason").notNull(),
   resolvedAt: timestamp("resolved_at"),
+  suggestedVendorId: integer("suggested_vendor_id"),
+  suggestedVendorName: text("suggested_vendor_name"),
+  suggestedScore: integer("suggested_score"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
