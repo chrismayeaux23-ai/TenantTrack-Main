@@ -3,7 +3,7 @@ import { useProperty } from "@/hooks/use-properties";
 import { QRCodeSVG } from "qrcode.react";
 import { Loader2, Printer, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import logoPng from "@assets/vendortrust-logo.png";
+import logoPng from "@assets/vendortrust-full-nobg.png";
 
 export default function PrintFlyer() {
   const { propertyId } = useParams<{ propertyId: string }>();

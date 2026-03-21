@@ -11,6 +11,7 @@ import { PhotoUploadGroup } from "@/components/PhotoUploadGroup";
 import { Wrench, CheckCircle2, Loader2, Info, Globe } from "lucide-react";
 import type { MaintenanceRequestInput } from "@shared/routes";
 import { type Lang, t } from "@/lib/i18n";
+import logoPng from "@assets/vendortrust-icon-nobg.png";
 
 function PoweredBy() {
   return (
@@ -21,7 +22,7 @@ function PoweredBy() {
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
       >
-        <Wrench className="h-3 w-3" />
+        <img src={logoPng} alt="VendorTrust" className="h-4 w-4 object-contain" />
         Powered by VendorTrust
       </a>
     </div>
@@ -156,9 +157,7 @@ export default function TenantReport() {
     <div className="min-h-screen bg-background">
       <header className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-3">
-          <div className="bg-primary/10 p-2 rounded-xl">
-            <Wrench className="h-6 w-6 text-primary" />
-          </div>
+          <img src={logoPng} alt="VendorTrust" className="h-10 w-10 rounded-xl object-contain" />
           <div className="flex-1">
             <h1 className="font-display font-bold text-lg leading-tight text-foreground">{txt.headerTitle}</h1>
             <p className="text-xs font-medium text-muted-foreground">{property.name}</p>

@@ -10,7 +10,7 @@ import {
   LogIn, ChevronLeft, ChevronRight,
   Camera, Bell, Wrench, BarChart2, MapPin, Printer
 } from "lucide-react";
-import logoPng from "@assets/vendortrust-logo.png";
+import logoPng from "@assets/vendortrust-full-nobg.png";
 
 const PLANS = [
   {

@@ -3,9 +3,10 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Building2, ClipboardList, LogOut, Menu, X, Users, UserCircle,
-  Receipt, DollarSign, CalendarClock, Briefcase, ShieldCheck, BarChart2,
+  Receipt, DollarSign, CalendarClock, Briefcase, BarChart2,
   ChevronRight, Columns3, Calendar
 } from "lucide-react";
+import logoIcon from "@assets/vendortrust-icon-nobg.png";
 import { Button } from "../ui/Button";
 import { TrialBanner } from "@/components/TrialBanner";
 
@@ -72,9 +73,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile top bar */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-card border-b border-border sticky top-0 z-40">
         <Link href="/" className="flex items-center gap-2.5" data-testid="link-mobile-home">
-          <div className="h-8 w-8 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-            <ShieldCheck className="h-4 w-4 text-white" />
-          </div>
+          <img src={logoIcon} alt="VendorTrust" className="h-8 w-8 rounded-lg object-contain" />
           <span className="font-display font-bold text-lg tracking-tight">VendorTrust</span>
         </Link>
         <button
@@ -95,9 +94,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       >
         {/* Logo */}
         <div className="hidden md:flex items-center gap-3 px-5 py-5 border-b" style={{ borderColor: "hsl(226 22% 12%)" }}>
-          <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
-            <ShieldCheck className="h-4.5 w-4.5 text-white" />
-          </div>
+          <img src={logoIcon} alt="VendorTrust" className="h-9 w-9 rounded-lg object-contain" />
           <div>
             <span className="font-display font-bold text-base text-foreground tracking-tight block leading-tight">VendorTrust</span>
             <span className="text-[10px] text-muted-foreground/70 font-medium tracking-wide">PROPERTY MAINTENANCE OS</span>

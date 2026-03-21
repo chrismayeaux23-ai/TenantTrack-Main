@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, CheckCircle, XCircle, Clock, MapPin, AlertTriangle, Phone, Wrench, Navigation, Play, Flag, MessageSquare, Image } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import logoPng from "@assets/vendortrust-logo.png";
+import logoPng from "@assets/vendortrust-icon-nobg.png";
 
 const RESPONSE_LABELS: Record<string, { label: string; color: string }> = {
   "pending-response": { label: "Awaiting Your Response", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },

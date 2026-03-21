@@ -11,7 +11,7 @@ import {
   X, AlertTriangle, ThumbsUp, Percent, Timer,
   HandCoins, Megaphone, Target, Lock, Send
 } from "lucide-react";
-import logoPng from "@assets/vendortrust-logo.png";
+import logoPng from "@assets/vendortrust-full-nobg.png";
 
 const HERO_FEATURES = [
   "QR code maintenance system",
