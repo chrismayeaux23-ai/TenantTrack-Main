@@ -1,146 +1,201 @@
 # VendorTrust
 
-VendorTrust is a mobile-first SaaS platform for landlords and property owners to manage maintenance requests via QR codes, coordinate vendor dispatch with trust scoring, and track repair costs — all in one dashboard.
+VendorTrust is a modern maintenance dispatch and vendor coordination platform built for landlords and property managers.
 
-Tenants submit maintenance issues instantly by scanning a QR code. Landlords dispatch trusted vendors, track job status, and manage costs across their entire portfolio.
-
----
-
-## Product Walkthrough
-
-Watch a quick demo of VendorTrust:
-
-[![VendorTrust Demo](https://img.youtube.com/vi/3Y8qK9X28ko/0.jpg)](https://www.youtube.com/watch?v=3Y8qK9X28ko)
+It replaces messy calls, texts, and spreadsheets with a structured system for automatically assigning vendors, managing schedules, tracking job progress, and handling maintenance operations end-to-end.
 
 ---
 
-## Live Demo
+## 🚀 What VendorTrust Solves
 
-You can explore the platform using the demo credentials below:
+Maintenance coordination is one of the most chaotic parts of property management.
 
-Email: landlord@test.com  
+* Vendors don’t respond
+* Scheduling is inconsistent
+* Jobs fall through the cracks
+* Follow-ups take too much time
+* There’s no clear system of record
+
+VendorTrust turns this into a **clear, automated workflow**:
+
+1. A request is created
+2. The best vendor is recommended or assigned
+3. The vendor receives a secure job link
+4. The vendor accepts or proposes a time
+5. The job is scheduled and tracked
+6. Notifications keep everyone in sync
+7. The system escalates if a vendor doesn’t respond
+
+---
+
+## 🧠 Core Features
+
+### ⚙️ Smart Dispatch System
+
+* Recommend or auto-assign the best vendor
+* Scoring based on trust, performance, and availability
+* Preferred vendor prioritization
+* Fallback vendor suggestions if no response
+
+### 🔗 Vendor Magic-Link Portal
+
+* Vendors access jobs without creating accounts
+* Accept, decline, or propose new time
+* Mark en route, started, and completed
+* Submit notes and completion details
+
+### 📅 Scheduling & Calendar
+
+* Schedule and reschedule jobs easily
+* Day, week, and list views
+* Conflict detection for vendor double-booking
+* Track upcoming workload across properties
+
+### ⏱ SLA & Escalation Engine
+
+* Response deadlines based on urgency
+* Detect no-response scenarios automatically
+* Recommend next-best vendor
+* Keep jobs from getting stuck
+
+### 📊 Dispatch Board (Ops Command Center)
+
+* Kanban-style workflow:
+
+  * Needs Dispatch
+  * Awaiting Response
+  * Scheduled
+  * In Progress
+  * Waiting on Parts
+  * Completed
+* Prioritize urgent and overdue jobs
+* Take quick actions directly from the board
+
+### 🛠 Vendor Management & Trust Scores
+
+* Track vendor performance over time
+* Trust score based on:
+
+  * job history
+  * reviews
+  * no-show behavior
+* Identify top-performing contractors instantly
+
+### 📋 Maintenance Request Management
+
+* Full lifecycle tracking from intake to completion
+* Store notes, invoices, materials, and final cost
+* Maintain clean audit trail for every job
+
+### 🔔 Automated Notifications
+
+* Vendor assignment and reminders
+* Vendor response alerts
+* Scheduling and rescheduling updates
+* Tenant updates when work is scheduled or completed
+
+### 🏠 Tenant Request System
+
+* QR code submission flow (no app required)
+* Photo uploads and detailed issue reporting
+* Status tracking via unique code
+
+---
+
+## 🧱 Tech Stack
+
+**Frontend**
+
+* React + TypeScript
+* Vite
+* TailwindCSS
+* Shadcn UI / Radix UI
+
+**Backend**
+
+* Node.js + Express
+* TypeScript
+* Drizzle ORM
+
+**Database**
+
+* PostgreSQL
+
+**Integrations**
+
+* Stripe (subscriptions)
+* Resend (email notifications)
+* Replit Object Storage (file uploads)
+
+---
+
+## ⚡ Getting Started
+
+```bash
+git clone https://github.com/your-username/vendortrust.git
+cd vendortrust
+npm install
+npm run dev
+```
+
+---
+
+## 🔐 Environment Variables
+
+Required:
+
+* DATABASE_URL
+* SESSION_SECRET
+
+Optional:
+
+* RESEND_API_KEY
+* GOOGLE_CLIENT_ID
+* GOOGLE_CLIENT_SECRET
+* EMAIL_FROM
+
+---
+
+## 🧪 Demo Access
+
+Email: [landlord@test.com](mailto:landlord@test.com)
 Password: demo123
 
 ---
 
-## Who VendorTrust Is Built For
+## 🎯 Product Vision
 
-Independent landlords and small property management companies who need a simple, powerful system for maintenance coordination and vendor management.
+VendorTrust is evolving into a fully automated maintenance dispatch system where:
 
----
-
-## Everything a Landlord Needs
-
-VendorTrust replaces scattered texts, spreadsheets, and sticky notes with one organized maintenance management system featuring vendor trust scores, dispatch coordination, and cost tracking.
-
----
-
-## Key Features
-
-- **QR Code Maintenance System** — Tenants scan and submit issues in 60 seconds with photos
-- **Vendor Trust Scores** — Every contractor rated 0–100 based on job performance
-- **Smart Vendor Dispatch** — Assign, schedule, and track vendors per request
-- **Proof of Completion** — Capture completion notes, invoices, materials, and final costs
-- **Vendor Leaderboard & Analytics** — Performance insights across your vendor network
-- **Tenant Request Tracking** — Tenants check status anytime with a tracking code (no app needed)
-- **Bilingual Tenant UI** — English/Spanish support for tenant-facing pages
-- **Tenant–Landlord Messaging** — Two-way messages tied to each request
-- **Staff Assignment** — Assign maintenance requests to team members
-- **Recurring Maintenance** — Schedule and track preventive maintenance tasks
-- **Cost Tracking & Reports** — Log costs per request, export CSV for accounting
-- **Stripe Subscriptions** — Three tiers: Starter ($29), Growth ($59), Pro ($99) with 14-day trial
-- **Email Notifications** — Automated alerts via Resend for new requests, status updates, and assignments
-- **Mobile-First Design** — Dark theme, responsive layout, works on any device
+* The right vendor is assigned instantly
+* Vendors respond without manual follow-up
+* Scheduling happens seamlessly
+* Jobs never fall through the cracks
 
 ---
 
-## Tech Stack
+## 🚧 Current Status
 
-**Frontend**
-- React + TypeScript
-- Vite
-- TailwindCSS
-- Shadcn UI / Radix UI
+VendorTrust is in **private beta**.
 
-**Backend**
-- Node.js + Express
-- TypeScript
-- Drizzle ORM
-
-**Database**
-- PostgreSQL
-
-**Integrations**
-- Stripe (subscription payments)
-- Resend (email notifications)
-- Replit Object Storage (photo uploads)
+Core workflows are implemented and actively being refined based on real usage.
 
 ---
 
-## Environment Variables
+## 🤝 Contributing
 
-Required:
-- `DATABASE_URL` — PostgreSQL connection string
-- `SESSION_SECRET` — Session encryption key
-
-Optional:
-- `RESEND_API_KEY` — For email notifications
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — For Google OAuth
-- `EMAIL_FROM` — Sender address (e.g. `VendorTrust <notifications@vendortrust.com>`)
+Contributions, feedback, and ideas are welcome.
 
 ---
 
-## Development
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Build the application:
-
-```bash
-npm run build
-```
-
----
-
-## Required Services
-
-VendorTrust requires the following services to run:
-
-- Node.js
-- PostgreSQL
-
-Optional integrations:
-
-- Stripe (for subscriptions)
-- Resend (for email notifications)
-- S3-compatible storage for file uploads
-
----
-
-## Repository Purpose
-
-This repository contains the full source code for the VendorTrust SaaS platform.
-
----
-
-## License
+## 📄 License
 
 MIT License
 
 ---
 
-## Author
+## 👤 Author
 
 Christopher Mayeaux
 
-VendorTrust was created as a vertical SaaS solution designed to simplify property maintenance management and vendor coordination for independent landlords and property investors.
+VendorTrust is a vertical SaaS platform built to modernize maintenance operations for landlords and property managers.
