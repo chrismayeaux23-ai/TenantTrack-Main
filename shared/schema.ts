@@ -144,6 +144,12 @@ export const vendorAssignments = pgTable("vendor_assignments", {
   rescheduledFrom: timestamp("rescheduled_from"),
   rescheduledTo: timestamp("rescheduled_to"),
   magicToken: text("magic_token").unique(),
+  magicTokenExpiresAt: timestamp("magic_token_expires_at"),
+  vendorLinkSentAt: timestamp("vendor_link_sent_at"),
+  vendorRespondedAt: timestamp("vendor_responded_at"),
+  vendorNotes: text("vendor_notes"),
+  schedulingNotes: text("scheduling_notes"),
+  estimatedDuration: integer("estimated_duration"),
 });
 
 export const slaEscalations = pgTable("sla_escalations", {

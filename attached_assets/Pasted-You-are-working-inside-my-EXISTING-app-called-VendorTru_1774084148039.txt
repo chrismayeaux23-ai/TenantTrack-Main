@@ -1,0 +1,239 @@
+You are working inside my EXISTING app called VendorTrust.
+
+VendorTrust already has:
+- landlord auth
+- properties
+- maintenance requests
+- vendor directory
+- vendor trust scores
+- vendor recommendations by trade
+- manual vendor assignment
+- dispatch statuses
+- scheduled date + arrival window
+- completion notes / invoice / materials / final cost
+- dashboard stats
+
+Your job in this prompt is to build ONLY these two major upgrades:
+
+1. VENDOR MAGIC-LINK PORTAL
+2. REAL SCHEDULING CALENDAR
+
+Do NOT rebuild the app.
+Do NOT change billing/auth unless absolutely necessary.
+Do NOT break existing request, vendor, or dashboard flows.
+Work inside the current architecture and extend it cleanly.
+
+==================================================
+FEATURE 1: VENDOR MAGIC-LINK PORTAL
+==================================================
+
+GOAL:
+Allow assigned vendors to interact with jobs without creating a full vendor account.
+
+Build a secure magic-link workflow so a landlord can assign a job to a vendor, and that vendor receives a link that lets them open a limited vendor job page.
+
+VENDOR PORTAL MVP REQUIREMENTS:
+- Vendor can open a magic link tied to a specific work order / request
+- Vendor can view:
+  - property name
+  - unit
+  - issue title / category
+  - request description
+  - urgency
+  - tenant contact info only if already intended by current product logic
+  - scheduled date
+  - arrival window
+  - landlord / manager contact name if available
+- Vendor can take these actions:
+  - Accept job
+  - Decline job
+  - Propose new time
+  - Mark En Route
+  - Mark Started
+  - Mark Completed
+- Vendor can add short notes
+- Vendor can submit completion notes
+- Vendor can optionally upload or attach proof-of-completion photos if current stack makes that straightforward for MVP
+- Vendor should NOT be able to access unrelated jobs or landlord admin screens
+
+SECURITY REQUIREMENTS:
+- Use signed, expiring, single-purpose magic links
+- Token should be stored/validated securely
+- Token should be scoped to the assigned vendor + assigned request
+- Expiration should be reasonable for MVP (for example 7 days, refreshable by landlord resending)
+- Add revoke/regenerate flow when landlord reassigns vendor
+- Never expose internal admin data on vendor pages
+
+DATA / STATUS REQUIREMENTS:
+Add and wire up vendor response states:
+- pending-response
+- accepted
+- declined
+- proposed-new-time
+- no-response
+
+Add timestamps where useful:
+- vendorLinkSentAt
+- vendorRespondedAt
+- acceptedAt
+- declinedAt
+- enRouteAt
+- startedAt
+- completedAt
+- proposedTimeAt
+
+If the vendor proposes a new time:
+- store proposed date/time and note
+- show this clearly in landlord/admin UI
+- do NOT silently overwrite the official scheduled date until landlord approves or manually updates
+
+LANDLORD UX REQUIREMENTS:
+Inside the existing landlord request detail / dispatch area:
+- Show vendor response status clearly
+- Show “last vendor action”
+- Add actions:
+  - Send magic link
+  - Resend magic link
+  - Revoke magic link
+- Show whether link is active / expired / used recently
+- If vendor declines, clearly return request to dispatch attention state
+
+EMAIL / COMMUNICATION REQUIREMENTS:
+- Reuse existing email patterns and structure if present
+- Send vendor assignment email with magic link
+- Keep email copy simple and operational, not marketing-heavy
+- Email should include:
+  - property
+  - issue summary
+  - urgency
+  - scheduled time if present
+  - action button / link
+
+==================================================
+FEATURE 2: REAL SCHEDULING CALENDAR
+==================================================
+
+GOAL:
+Turn “scheduled date” into a real scheduling experience for landlords/property managers.
+
+Build a practical calendar/scheduling layer for assigned jobs.
+
+CALENDAR MVP REQUIREMENTS:
+Create a scheduling page/view that supports:
+- Day view
+- Week view
+- List view for scheduled jobs
+
+Each scheduled job card/item should show:
+- request title / issue
+- property + unit
+- vendor
+- urgency
+- status
+- scheduled start
+- arrival window
+
+FILTERS:
+- vendor
+- property
+- status
+- trade/category
+- urgency
+
+SCHEDULING ACTIONS:
+- Schedule a job
+- Reschedule a job
+- Unschedule a job
+- Change arrival window
+- Reassign vendor from scheduling context if appropriate
+- Open full request detail from calendar item
+
+CONFLICT DETECTION:
+Implement MVP conflict detection:
+- Warn if same vendor is scheduled for overlapping jobs
+- Warn if same vendor has too many jobs stacked too tightly
+- Do not over-engineer travel routing yet
+- Show clear warning UI before saving conflicting schedule
+- Allow landlord to override conflict if needed
+
+DATA MODEL / BACKEND REQUIREMENTS:
+Support:
+- scheduledStartAt
+- scheduledEndAt or estimated duration
+- arrivalWindowStart
+- arrivalWindowEnd
+- scheduleStatus if helpful
+- rescheduledFrom
+- rescheduledTo
+- schedulingNotes
+
+If current code only has a simple scheduledDate string, migrate cleanly to proper date/time fields while preserving backward compatibility where possible.
+
+LANDLORD UX REQUIREMENTS:
+- Calendar should feel operational and fast
+- Allow clicking an unscheduled job and quickly assigning a date/time
+- Allow dragging between time slots only if easy and stable in current stack
+- If drag-and-drop is too risky, use modal-based scheduling with clean UX
+- Surface schedule conflicts clearly
+- Show unscheduled assigned jobs in a side panel or queue if helpful
+
+VENDOR PORTAL + CALENDAR INTEGRATION:
+- If landlord reschedules job, vendor portal should reflect new proposed/official time
+- If vendor proposes a new time, landlord should see it in scheduling UI
+- Keep “official schedule” and “vendor proposed schedule” distinct until landlord confirms
+
+==================================================
+TECHNICAL RULES
+==================================================
+
+- Preserve existing code style, architecture, and naming patterns
+- Reuse current schema, API, and frontend component conventions where possible
+- Add types everywhere
+- Avoid dead code and giant rewrites
+- Keep this as an MVP focused on operational usefulness
+- Build for real property managers, not a demo toy
+- Favor clean practical UX over flashy UI
+
+==================================================
+DELIVERABLES REQUIRED WHEN DONE
+==================================================
+
+When implementation is complete, provide:
+
+1. Summary of files changed
+2. Summary of all new database fields
+3. Summary of all new API routes/endpoints
+4. Summary of vendor portal flow
+5. Summary of scheduling/calendar flow
+6. Any new env vars needed
+7. Test checklist covering:
+   - assign vendor
+   - send magic link
+   - vendor accepts
+   - vendor declines
+   - vendor proposes new time
+   - landlord reschedules
+   - conflict warning appears
+   - vendor marks en route
+   - vendor marks started
+   - vendor marks completed
+
+==================================================
+IMPORTANT SCOPE CONTROL
+==================================================
+
+Do NOT add:
+- full vendor account system
+- route optimization
+- payments
+- invoicing overhaul
+- mobile app
+- giant redesigns
+- unrelated tenant features
+
+Stay tightly focused on:
+- vendor response workflow
+- secure magic-link access
+- scheduling calendar
+- conflict detection
+- landlord operational visibility

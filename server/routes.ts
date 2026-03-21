@@ -1773,6 +1773,10 @@ export async function registerRoutes(
       const assignment = await storage.getVendorAssignmentByToken(token);
       if (!assignment) return res.status(404).json({ message: "Invalid or expired link" });
 
+      if (assignment.magicTokenExpiresAt && new Date(assignment.magicTokenExpiresAt) < new Date()) {
+        return res.status(410).json({ message: "This link has expired. Please ask the landlord to resend." });
+      }
+
       const vendor = await storage.getVendor(assignment.vendorId);
       const request = await storage.getRequest(assignment.requestId);
       const property = request ? await storage.getProperty(request.propertyId) : null;
@@ -1787,6 +1791,10 @@ export async function registerRoutes(
           priority: assignment.priority,
           assignmentNotes: assignment.assignmentNotes,
           proposedTime: assignment.proposedTime,
+          vendorNotes: assignment.vendorNotes,
+          rescheduledFrom: assignment.rescheduledFrom,
+          rescheduledTo: assignment.rescheduledTo,
+          estimatedDuration: assignment.estimatedDuration,
         },
         request: request ? {
           id: request.id,
@@ -1819,9 +1827,15 @@ export async function registerRoutes(
       const assignment = await storage.getVendorAssignmentByToken(token);
       if (!assignment) return res.status(404).json({ message: "Invalid or expired link" });
 
-      const { action, proposedTime, completionNotes, invoiceNumber, materialsUsed, finalCost } = req.body;
+      if (assignment.magicTokenExpiresAt && new Date(assignment.magicTokenExpiresAt) < new Date()) {
+        return res.status(410).json({ message: "This link has expired" });
+      }
+
+      const { action, proposedTime, completionNotes, invoiceNumber, materialsUsed, finalCost, vendorNotes } = req.body;
 
       const updateData: Record<string, any> = {};
+      if (vendorNotes !== undefined) updateData.vendorNotes = vendorNotes;
+      updateData.vendorRespondedAt = new Date();
       let eventType = "";
       let eventLabel = "";
 
@@ -2111,10 +2125,13 @@ export async function registerRoutes(
 
       const magicToken = generateMagicToken();
       const responseDeadline = new Date(Date.now() + getSlaThreshold(req.body.urgency || "Medium"));
+      const magicTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
       const updated = await storage.updateVendorAssignment(requestId, {
         magicToken,
         responseDeadline,
+        magicTokenExpiresAt,
+        vendorLinkSentAt: new Date(),
         vendorResponseStatus: "pending-response",
       });
 
@@ -2145,6 +2162,76 @@ export async function registerRoutes(
       res.json({ magicToken, assignment: updated });
     } catch (err) {
       res.status(500).json({ message: "Failed to generate magic link" });
+    }
+  });
+
+  // ── Revoke Magic Link ──────────────────────────────────────────────────
+
+  app.post('/api/requests/:id/revoke-magic-link', isAuthenticated, async (req: any, res) => {
+    try {
+      const requestId = parseInt(req.params.id);
+      const assignment = await storage.getVendorAssignmentByRequest(requestId);
+      if (!assignment) return res.status(404).json({ message: "No vendor assigned" });
+
+      const updated = await storage.updateVendorAssignment(requestId, {
+        magicToken: null,
+        magicTokenExpiresAt: null,
+        vendorResponseStatus: "pending-response",
+      });
+
+      await storage.createActivityLog({
+        requestId,
+        landlordId: req.user.claims.sub,
+        eventType: "magic-link-revoked",
+        eventLabel: "Magic link revoked by landlord",
+      });
+
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to revoke link" });
+    }
+  });
+
+  // ── Schedule / Reschedule Job ─────────────────────────────────────────
+
+  app.patch('/api/requests/:id/schedule', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = parseInt(req.params.id);
+      const { scheduledDate, arrivalWindow, estimatedDuration, schedulingNotes } = req.body;
+
+      const assignment = await storage.getVendorAssignmentByRequest(requestId);
+      if (!assignment) return res.status(404).json({ message: "No vendor assigned" });
+
+      const updateData: Record<string, any> = {};
+
+      if (scheduledDate !== undefined) {
+        if (assignment.scheduledDate && scheduledDate) {
+          updateData.rescheduledFrom = assignment.scheduledDate;
+          updateData.rescheduledTo = new Date(scheduledDate);
+        }
+        updateData.scheduledDate = scheduledDate ? new Date(scheduledDate) : null;
+        updateData.jobStatus = scheduledDate ? "scheduled" : "assigned";
+      }
+      if (arrivalWindow !== undefined) updateData.arrivalWindow = arrivalWindow || null;
+      if (estimatedDuration !== undefined) updateData.estimatedDuration = estimatedDuration || null;
+      if (schedulingNotes !== undefined) updateData.schedulingNotes = schedulingNotes || null;
+
+      const updated = await storage.updateVendorAssignment(requestId, updateData);
+
+      const action = scheduledDate ? "rescheduled" : "unscheduled";
+      await storage.createActivityLog({
+        requestId,
+        landlordId: userId,
+        eventType: `job-${action}`,
+        eventLabel: scheduledDate
+          ? `Job ${assignment.scheduledDate ? 'rescheduled' : 'scheduled'} to ${new Date(scheduledDate).toLocaleString()}`
+          : "Job unscheduled",
+      });
+
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to update schedule" });
     }
   });
 

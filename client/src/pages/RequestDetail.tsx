@@ -143,6 +143,11 @@ export default function RequestDetail() {
   const [materialsUsed, setMaterialsUsed] = useState("");
   const [finalCost, setFinalCost] = useState("");
   const [magicLinkUrl, setMagicLinkUrl] = useState("");
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [schedModalDate, setSchedModalDate] = useState("");
+  const [schedModalWindow, setSchedModalWindow] = useState("");
+  const [schedModalDuration, setSchedModalDuration] = useState("2");
+  const [schedModalNotes, setSchedModalNotes] = useState("");
 
   const { data: recommendations = [] } = useQuery<any[]>({
     queryKey: ["/api/vendors/recommendations", request?.issueType],
@@ -206,6 +211,42 @@ export default function RequestDetail() {
       toast({ title: "Magic link generated" });
     },
     onError: () => toast({ title: "Failed to generate link", variant: "destructive" }),
+  });
+
+  const revokeMagicLink = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/requests/${requestId}/revoke-magic-link`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", requestId, "vendor-assignment"] });
+      setMagicLinkUrl("");
+      toast({ title: "Link revoked" });
+    },
+    onError: () => toast({ title: "Failed to revoke link", variant: "destructive" }),
+  });
+
+  const scheduleJob = useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch(`/api/requests/${requestId}/schedule`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data), credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", requestId, "vendor-assignment"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dispatch-board"] });
+      setShowScheduleModal(false);
+      toast({ title: "Schedule updated" });
+    },
+    onError: () => toast({ title: "Failed to update schedule", variant: "destructive" }),
   });
 
   const updateDispatch = useMutation({
@@ -459,23 +500,146 @@ export default function RequestDetail() {
                     </Button>
                     <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => generateMagicLink.mutate()} disabled={generateMagicLink.isPending} data-testid="button-magic-link">
                       {generateMagicLink.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
-                      Magic Link
+                      {assignment.magicToken ? "Regenerate Link" : "Magic Link"}
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => {
+                      setShowScheduleModal(true);
+                      setSchedModalDate(assignment.scheduledDate ? new Date(assignment.scheduledDate).toISOString().slice(0,16) : "");
+                      setSchedModalWindow(assignment.arrivalWindow || "");
+                      setSchedModalDuration(String(assignment.estimatedDuration || 2));
+                      setSchedModalNotes(assignment.schedulingNotes || "");
+                    }} data-testid="button-schedule-from-detail">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {assignment.scheduledDate ? "Reschedule" : "Schedule"}
                     </Button>
                   </div>
 
-                  {magicLinkUrl && (
-                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-                      <p className="text-xs font-medium text-primary mb-1 flex items-center gap-1"><Link2 className="h-3 w-3" />Vendor Portal Link</p>
-                      <div className="flex items-center gap-2">
-                        <input className="flex-1 bg-background border border-border rounded px-2 py-1 text-xs text-foreground" value={magicLinkUrl} readOnly data-testid="input-magic-link" />
-                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
-                          navigator.clipboard.writeText(magicLinkUrl);
-                          toast({ title: "Link copied!" });
-                        }} data-testid="button-copy-magic-link">
-                          <Copy className="h-3 w-3" />
+                  {/* Magic Link Status */}
+                  {(magicLinkUrl || assignment.magicToken) && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-primary flex items-center gap-1"><Link2 className="h-3 w-3" />Vendor Portal Link</p>
+                        {assignment.magicToken && (() => {
+                          const isExpired = assignment.magicTokenExpiresAt && new Date(assignment.magicTokenExpiresAt) < new Date();
+                          const isUsed = assignment.vendorResponseStatus && assignment.vendorResponseStatus !== "pending-response" && assignment.vendorResponseStatus !== "no-response";
+                          const statusLabel = isUsed ? "Used" : isExpired ? "Expired" : "Active";
+                          const statusColor = isUsed ? "text-green-400 bg-green-500/10 border-green-500/20" : isExpired ? "text-red-400 bg-red-500/10 border-red-500/20" : "text-blue-400 bg-blue-500/10 border-blue-500/20";
+                          return <Badge variant="outline" className={`text-[10px] ${statusColor}`} data-testid="badge-link-status">{statusLabel}</Badge>;
+                        })()}
+                      </div>
+                      {magicLinkUrl && (
+                        <div className="flex items-center gap-2">
+                          <input className="flex-1 bg-background border border-border rounded px-2 py-1 text-xs text-foreground" value={magicLinkUrl} readOnly data-testid="input-magic-link" />
+                          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
+                            navigator.clipboard.writeText(magicLinkUrl);
+                            toast({ title: "Link copied!" });
+                          }} data-testid="button-copy-magic-link">
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                        {assignment.vendorLinkSentAt && <span>Sent {formatDistanceToNow(new Date(assignment.vendorLinkSentAt), { addSuffix: true })}</span>}
+                        {assignment.magicTokenExpiresAt && <span>&middot; Expires {format(new Date(assignment.magicTokenExpiresAt), "MMM d, h:mm a")}</span>}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-red-400" onClick={() => revokeMagicLink.mutate()} disabled={revokeMagicLink.isPending} data-testid="button-revoke-link">
+                          {revokeMagicLink.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                          Revoke
                         </Button>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">Share this link with the vendor. They can accept, decline, or propose a new time.</p>
+                    </div>
+                  )}
+
+                  {/* Vendor Response Info */}
+                  {assignment.vendorResponseStatus && assignment.vendorResponseStatus !== "pending-response" && (
+                    <div className={`rounded-lg p-3 border ${
+                      assignment.vendorResponseStatus === "accepted" ? "bg-green-500/5 border-green-500/20" :
+                      assignment.vendorResponseStatus === "declined" ? "bg-red-500/5 border-red-500/20" :
+                      assignment.vendorResponseStatus === "proposed-new-time" ? "bg-blue-500/5 border-blue-500/20" :
+                      "bg-muted/30 border-border"
+                    }`}>
+                      <p className="text-xs font-medium mb-1 flex items-center gap-1">
+                        {assignment.vendorResponseStatus === "accepted" && <><CheckCircle2 className="h-3.5 w-3.5 text-green-400" /><span className="text-green-400">Vendor Accepted</span></>}
+                        {assignment.vendorResponseStatus === "declined" && <><X className="h-3.5 w-3.5 text-red-400" /><span className="text-red-400">Vendor Declined</span></>}
+                        {assignment.vendorResponseStatus === "proposed-new-time" && <><Clock className="h-3.5 w-3.5 text-blue-400" /><span className="text-blue-400">New Time Proposed</span></>}
+                      </p>
+                      {assignment.vendorRespondedAt && (
+                        <p className="text-[10px] text-muted-foreground">Responded {formatDistanceToNow(new Date(assignment.vendorRespondedAt), { addSuffix: true })}</p>
+                      )}
+                      {assignment.vendorNotes && (
+                        <div className="mt-2 bg-background/50 rounded p-2">
+                          <p className="text-[10px] text-muted-foreground mb-0.5">Vendor Notes:</p>
+                          <p className="text-xs text-foreground">{assignment.vendorNotes}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Proposed Time Approval */}
+                  {assignment.vendorResponseStatus === "proposed-new-time" && assignment.proposedTime && (
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 space-y-2">
+                      <p className="text-sm font-medium text-blue-400 flex items-center gap-1">
+                        <Clock className="h-4 w-4" />Vendor Proposed: {format(new Date(assignment.proposedTime), "MMM d, h:mm a")}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="h-8 text-xs flex-1" onClick={() => {
+                          scheduleJob.mutate({ scheduledDate: assignment.proposedTime });
+                        }} disabled={scheduleJob.isPending} data-testid="button-approve-proposed-time">
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" />Accept Time
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-8 text-xs flex-1" onClick={() => {
+                          setShowScheduleModal(true);
+                          setSchedModalDate("");
+                        }} data-testid="button-counter-propose">
+                          Counter-Propose
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick Schedule Modal */}
+                  {showScheduleModal && (
+                    <div className="bg-muted/30 rounded-xl p-3 space-y-3 border border-border">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-foreground flex items-center gap-1"><Calendar className="h-4 w-4 text-primary" />Schedule Job</p>
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setShowScheduleModal(false)}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground">Date & Time</label>
+                        <Input type="datetime-local" value={schedModalDate} onChange={e => setSchedModalDate(e.target.value)} className="h-9 text-sm" data-testid="input-schedule-date-detail" />
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="text-[10px] text-muted-foreground">Arrival Window</label>
+                          <Input value={schedModalWindow} onChange={e => setSchedModalWindow(e.target.value)} placeholder="e.g. 9-11 AM" className="h-9 text-sm" />
+                        </div>
+                        <div className="w-24">
+                          <label className="text-[10px] text-muted-foreground">Duration (hrs)</label>
+                          <Input type="number" value={schedModalDuration} onChange={e => setSchedModalDuration(e.target.value)} className="h-9 text-sm" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="h-8 text-xs flex-1" onClick={() => {
+                          scheduleJob.mutate({
+                            scheduledDate: schedModalDate || null,
+                            arrivalWindow: schedModalWindow || undefined,
+                            estimatedDuration: parseInt(schedModalDuration) || undefined,
+                            schedulingNotes: schedModalNotes || undefined,
+                          });
+                        }} disabled={scheduleJob.isPending} data-testid="button-save-schedule-detail">
+                          {scheduleJob.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save"}
+                        </Button>
+                        {assignment.scheduledDate && (
+                          <Button size="sm" variant="outline" className="h-8 text-xs text-red-400 border-red-500/30" onClick={() => {
+                            scheduleJob.mutate({ scheduledDate: null });
+                          }} disabled={scheduleJob.isPending} data-testid="button-unschedule-detail">
+                            Unschedule
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
 
