@@ -863,14 +863,12 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="flex-1 w-full max-w-2xl animate-in fade-in zoom-in duration-1000">
-            <div className="relative p-6 md:p-10 bg-gradient-to-tr from-primary/20 to-rose-400/10 rounded-[2.5rem] overflow-hidden flex items-center justify-center">
+          <div className="flex-1 w-full max-w-2xl animate-in fade-in zoom-in duration-1000 flex items-center justify-center">
               <img
                 src={logoPng}
                 alt="VendorTrust"
-                className="w-full max-w-md drop-shadow-2xl"
+                className="w-full max-w-sm drop-shadow-2xl rounded-3xl"
               />
-            </div>
           </div>
         </div>
       </section>
