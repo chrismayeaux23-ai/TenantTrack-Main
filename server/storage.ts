@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { db } from "./db";
 import {
   properties, maintenanceRequests, maintenanceStaff, requestNotes, repairCosts, recurringTasks, requestMessages,
-  vendors, vendorAssignments, vendorReviews, maintenanceActivityLog,
+  vendors, vendorAssignments, vendorReviews, maintenanceActivityLog, slaEscalations, vendorNotifications,
   type Property, type InsertProperty,
   type MaintenanceRequest, type InsertMaintenanceRequest,
   type MaintenanceStaff, type InsertMaintenanceStaff,
@@ -14,8 +14,10 @@ import {
   type VendorAssignment, type InsertVendorAssignment,
   type VendorReview, type InsertVendorReview,
   type ActivityLog, type InsertActivityLog,
+  type SlaEscalation, type InsertSlaEscalation,
+  type VendorNotification, type InsertVendorNotification,
 } from "@shared/schema";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lt, isNull } from "drizzle-orm";
 
 function generateTrackingCode(): string {
   return randomBytes(4).toString("hex").toUpperCase();
@@ -82,6 +84,21 @@ export interface IStorage {
   // Activity Log
   getActivityByRequest(requestId: number): Promise<ActivityLog[]>;
   createActivityLog(data: InsertActivityLog): Promise<ActivityLog>;
+
+  // Vendor Assignments - extended
+  getVendorAssignmentByToken(token: string): Promise<VendorAssignment | undefined>;
+  getAllAssignmentsByLandlord(landlordId: string): Promise<VendorAssignment[]>;
+  getActiveAssignmentsByVendor(vendorId: number): Promise<VendorAssignment[]>;
+  getScheduledAssignments(landlordId: string): Promise<VendorAssignment[]>;
+
+  // SLA Escalations
+  createSlaEscalation(data: InsertSlaEscalation): Promise<SlaEscalation>;
+  getEscalationsByRequest(requestId: number): Promise<SlaEscalation[]>;
+  getEscalationsByLandlord(landlordId: string): Promise<SlaEscalation[]>;
+
+  // Vendor Notifications
+  createVendorNotification(data: InsertVendorNotification): Promise<VendorNotification>;
+  getNotificationsByAssignment(assignmentId: number): Promise<VendorNotification[]>;
 
   // Analytics
   getVendorStats(vendorId: number, landlordId: string): Promise<{
@@ -378,6 +395,70 @@ export class DatabaseStorage implements IStorage {
   async createActivityLog(data: InsertActivityLog): Promise<ActivityLog> {
     const [entry] = await db.insert(maintenanceActivityLog).values(data).returning();
     return entry;
+  }
+
+  // ── Vendor Assignments – extended ─────────────────────────────────────────
+
+  async getVendorAssignmentByToken(token: string): Promise<VendorAssignment | undefined> {
+    const [assignment] = await db.select().from(vendorAssignments)
+      .where(eq(vendorAssignments.magicToken, token));
+    return assignment;
+  }
+
+  async getAllAssignmentsByLandlord(landlordId: string): Promise<VendorAssignment[]> {
+    return await db.select().from(vendorAssignments)
+      .where(eq(vendorAssignments.landlordId, landlordId))
+      .orderBy(desc(vendorAssignments.assignedAt));
+  }
+
+  async getActiveAssignmentsByVendor(vendorId: number): Promise<VendorAssignment[]> {
+    return await db.select().from(vendorAssignments)
+      .where(and(
+        eq(vendorAssignments.vendorId, vendorId),
+        sql`${vendorAssignments.jobStatus} NOT IN ('completed', 'cancelled')`
+      ));
+  }
+
+  async getScheduledAssignments(landlordId: string): Promise<VendorAssignment[]> {
+    return await db.select().from(vendorAssignments)
+      .where(and(
+        eq(vendorAssignments.landlordId, landlordId),
+        sql`${vendorAssignments.scheduledDate} IS NOT NULL`,
+        sql`${vendorAssignments.jobStatus} NOT IN ('completed', 'cancelled')`
+      ))
+      .orderBy(vendorAssignments.scheduledDate);
+  }
+
+  // ── SLA Escalations ─────────────────────────────────────────────────────
+
+  async createSlaEscalation(data: InsertSlaEscalation): Promise<SlaEscalation> {
+    const [esc] = await db.insert(slaEscalations).values(data).returning();
+    return esc;
+  }
+
+  async getEscalationsByRequest(requestId: number): Promise<SlaEscalation[]> {
+    return await db.select().from(slaEscalations)
+      .where(eq(slaEscalations.requestId, requestId))
+      .orderBy(desc(slaEscalations.createdAt));
+  }
+
+  async getEscalationsByLandlord(landlordId: string): Promise<SlaEscalation[]> {
+    return await db.select().from(slaEscalations)
+      .where(eq(slaEscalations.landlordId, landlordId))
+      .orderBy(desc(slaEscalations.createdAt));
+  }
+
+  // ── Vendor Notifications ────────────────────────────────────────────────
+
+  async createVendorNotification(data: InsertVendorNotification): Promise<VendorNotification> {
+    const [notif] = await db.insert(vendorNotifications).values(data).returning();
+    return notif;
+  }
+
+  async getNotificationsByAssignment(assignmentId: number): Promise<VendorNotification[]> {
+    return await db.select().from(vendorNotifications)
+      .where(eq(vendorNotifications.assignmentId, assignmentId))
+      .orderBy(desc(vendorNotifications.sentAt));
   }
 
   // ── Analytics ─────────────────────────────────────────────────────────────

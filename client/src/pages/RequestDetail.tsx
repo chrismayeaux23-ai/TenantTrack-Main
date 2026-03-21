@@ -15,7 +15,7 @@ import {
   ChevronLeft, ShieldCheck, Phone, Mail, MapPin, AlertTriangle,
   CheckCircle2, Clock, Zap, Calendar, DollarSign, MessageSquare,
   Star, Loader2, X, Briefcase, FileText, PenLine, CheckSquare,
-  Send, Circle, Hash
+  Send, Circle, Hash, Sparkles, Link2, Copy
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -142,6 +142,7 @@ export default function RequestDetail() {
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [materialsUsed, setMaterialsUsed] = useState("");
   const [finalCost, setFinalCost] = useState("");
+  const [magicLinkUrl, setMagicLinkUrl] = useState("");
 
   const { data: recommendations = [] } = useQuery<any[]>({
     queryKey: ["/api/vendors/recommendations", request?.issueType],
@@ -151,6 +152,60 @@ export default function RequestDetail() {
       return res.json();
     },
     enabled: showPicker && !!request?.issueType,
+  });
+
+  const autoDispatch = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/requests/${requestId}/auto-dispatch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "auto-assign" }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Auto-dispatch failed");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", requestId, "vendor-assignment"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dispatch-board"] });
+      const vendorName = data.assigned ? "vendor" : "vendor";
+      toast({ title: "Auto-dispatch completed" });
+    },
+    onError: () => toast({ title: "No eligible vendors found", variant: "destructive" }),
+  });
+
+  const { data: dispatchRec } = useQuery<any>({
+    queryKey: ["/api/requests", requestId, "dispatch-recommendation"],
+    queryFn: async () => {
+      const res = await fetch(`/api/requests/${requestId}/dispatch-recommendation`, { credentials: "include" });
+      if (!res.ok) return null;
+      const scores = await res.json();
+      if (Array.isArray(scores) && scores.length > 0) {
+        return { recommendation: scores[0] };
+      }
+      return null;
+    },
+    enabled: !assignmentData?.assignment,
+  });
+
+  const generateMagicLink = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/requests/${requestId}/generate-magic-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urgency: request?.urgency }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      const baseUrl = window.location.origin;
+      setMagicLinkUrl(`${baseUrl}/vendor-portal/${data.magicToken}`);
+      toast({ title: "Magic link generated" });
+    },
+    onError: () => toast({ title: "Failed to generate link", variant: "destructive" }),
   });
 
   const updateDispatch = useMutation({
@@ -164,8 +219,10 @@ export default function RequestDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/requests", requestId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/vendor-assignment", requestId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/requests", requestId, "vendor-assignment"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dispatch-board"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/schedule"] });
       setShowDispatchEdit(false);
       setShowProof(false);
     },
@@ -400,7 +457,27 @@ export default function RequestDetail() {
                     }}>
                       Reassign
                     </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => generateMagicLink.mutate()} disabled={generateMagicLink.isPending} data-testid="button-magic-link">
+                      {generateMagicLink.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Link2 className="h-3.5 w-3.5" />}
+                      Magic Link
+                    </Button>
                   </div>
+
+                  {magicLinkUrl && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                      <p className="text-xs font-medium text-primary mb-1 flex items-center gap-1"><Link2 className="h-3 w-3" />Vendor Portal Link</p>
+                      <div className="flex items-center gap-2">
+                        <input className="flex-1 bg-background border border-border rounded px-2 py-1 text-xs text-foreground" value={magicLinkUrl} readOnly data-testid="input-magic-link" />
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
+                          navigator.clipboard.writeText(magicLinkUrl);
+                          toast({ title: "Link copied!" });
+                        }} data-testid="button-copy-magic-link">
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">Share this link with the vendor. They can accept, decline, or propose a new time.</p>
+                    </div>
+                  )}
 
                   {/* Dispatch edit form */}
                   {showDispatchEdit && (
@@ -453,12 +530,39 @@ export default function RequestDetail() {
                   )}
                 </div>
               ) : !showPicker ? (
-                <div className="text-center py-4">
-                  <Briefcase className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-3">No vendor assigned yet.</p>
-                  <Button variant="outline" className="gap-2 text-sm" onClick={() => setShowPicker(true)}>
-                    <ShieldCheck className="h-4 w-4 text-primary" />Assign & Dispatch Vendor
-                  </Button>
+                <div className="space-y-4">
+                  <div className="text-center py-4">
+                    <Briefcase className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground mb-3">No vendor assigned yet.</p>
+                    <div className="flex flex-col gap-2 items-center">
+                      <Button className="gap-2 text-sm" onClick={() => autoDispatch.mutate()} disabled={autoDispatch.isPending} data-testid="button-auto-dispatch">
+                        {autoDispatch.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                        Auto-Dispatch Best Vendor
+                      </Button>
+                      <Button variant="outline" className="gap-2 text-sm" onClick={() => setShowPicker(true)} data-testid="button-manual-dispatch">
+                        <ShieldCheck className="h-4 w-4 text-primary" />Manual Assign
+                      </Button>
+                    </div>
+                  </div>
+
+                  {dispatchRec?.recommendation && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-primary mb-2 flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />AI Recommendation
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{dispatchRec.recommendation.vendor?.name}</p>
+                          <p className="text-xs text-muted-foreground">{dispatchRec.recommendation.vendor?.tradeCategory}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-primary">{dispatchRec.recommendation.score}</p>
+                          <p className="text-[10px] text-muted-foreground">dispatch score</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{dispatchRec.recommendation.reason}</p>
+                    </div>
+                  )}
                 </div>
               ) : null}
 

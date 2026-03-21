@@ -167,3 +167,153 @@ export async function sendStaffAssignmentEmail(opts: {
     console.error('Failed to send staff assignment email:', err);
   }
 }
+
+export async function sendVendorDispatchEmail(opts: {
+  vendorEmail: string;
+  vendorName: string;
+  propertyName: string;
+  unitNumber: string;
+  issueType: string;
+  urgency: string;
+  description: string;
+  magicToken: string;
+}) {
+  const resend = await getResendClient();
+  if (!resend) return;
+  const portalUrl = `${APP_URL}/vendor-portal/${opts.magicToken}`;
+  try {
+    await resend.client.emails.send({
+      from: resend.fromEmail,
+      to: opts.vendorEmail,
+      subject: `🔧 New Job Assignment: ${opts.issueType} at ${opts.propertyName} Unit ${opts.unitNumber}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0d1117;color:#e6edf3;padding:32px;border-radius:12px">
+          <h2 style="color:#f97316;margin-top:0">New Job Assignment</h2>
+          <p>Hi ${opts.vendorName},</p>
+          <p>You've been assigned a new maintenance job through VendorTrust.</p>
+          <table style="width:100%;border-collapse:collapse;margin:20px 0">
+            <tr><td style="padding:8px;color:#8b949e;width:140px">Property</td><td style="padding:8px;color:#e6edf3">${opts.propertyName}</td></tr>
+            <tr style="background:#161b22"><td style="padding:8px;color:#8b949e">Unit</td><td style="padding:8px;color:#e6edf3">${opts.unitNumber}</td></tr>
+            <tr><td style="padding:8px;color:#8b949e">Issue</td><td style="padding:8px;color:#e6edf3">${opts.issueType}</td></tr>
+            <tr style="background:#161b22"><td style="padding:8px;color:#8b949e">Urgency</td><td style="padding:8px;color:${opts.urgency === 'Emergency' ? '#f87171' : opts.urgency === 'High' ? '#fb923c' : '#4ade80'}">${opts.urgency}</td></tr>
+            <tr><td style="padding:8px;color:#8b949e;vertical-align:top">Description</td><td style="padding:8px;color:#e6edf3">${opts.description}</td></tr>
+          </table>
+          <p style="color:#8b949e;font-size:14px;margin-bottom:16px">Please respond to this job by clicking the button below:</p>
+          <a href="${portalUrl}" style="display:inline-block;background:#f97316;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600">View & Respond to Job →</a>
+          <p style="color:#484f58;font-size:12px;margin-top:24px">This link is unique to you. Do not share it.</p>
+        </div>
+      `,
+    });
+    console.log(`Vendor dispatch email sent to ${opts.vendorEmail}`);
+  } catch (err) {
+    console.error('Failed to send vendor dispatch email:', err);
+  }
+}
+
+export async function sendVendorReminderEmail(opts: {
+  vendorEmail: string;
+  vendorName: string;
+  propertyName: string;
+  unitNumber: string;
+  issueType: string;
+  scheduledDate: string;
+  magicToken: string;
+}) {
+  const resend = await getResendClient();
+  if (!resend) return;
+  const portalUrl = `${APP_URL}/vendor-portal/${opts.magicToken}`;
+  try {
+    await resend.client.emails.send({
+      from: resend.fromEmail,
+      to: opts.vendorEmail,
+      subject: `⏰ Reminder: ${opts.issueType} job at ${opts.propertyName} — ${opts.scheduledDate}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0d1117;color:#e6edf3;padding:32px;border-radius:12px">
+          <h2 style="color:#f97316;margin-top:0">Job Reminder</h2>
+          <p>Hi ${opts.vendorName},</p>
+          <p>This is a reminder about your upcoming maintenance job.</p>
+          <table style="width:100%;border-collapse:collapse;margin:20px 0">
+            <tr><td style="padding:8px;color:#8b949e;width:140px">Property</td><td style="padding:8px;color:#e6edf3">${opts.propertyName}</td></tr>
+            <tr style="background:#161b22"><td style="padding:8px;color:#8b949e">Unit</td><td style="padding:8px;color:#e6edf3">${opts.unitNumber}</td></tr>
+            <tr><td style="padding:8px;color:#8b949e">Issue</td><td style="padding:8px;color:#e6edf3">${opts.issueType}</td></tr>
+            <tr style="background:#161b22"><td style="padding:8px;color:#8b949e">Scheduled</td><td style="padding:8px;color:#f97316;font-weight:600">${opts.scheduledDate}</td></tr>
+          </table>
+          <a href="${portalUrl}" style="display:inline-block;background:#f97316;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600">View Job Details →</a>
+        </div>
+      `,
+    });
+    console.log(`Vendor reminder email sent to ${opts.vendorEmail}`);
+  } catch (err) {
+    console.error('Failed to send vendor reminder email:', err);
+  }
+}
+
+export async function sendTenantVendorScheduledEmail(opts: {
+  tenantEmail: string;
+  tenantName: string;
+  propertyName: string;
+  unitNumber: string;
+  issueType: string;
+  vendorName: string;
+  scheduledDate: string;
+  trackingCode: string;
+}) {
+  const resend = await getResendClient();
+  if (!resend) return;
+  try {
+    await resend.client.emails.send({
+      from: resend.fromEmail,
+      to: opts.tenantEmail,
+      subject: `✅ Vendor scheduled for your ${opts.issueType} request`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0d1117;color:#e6edf3;padding:32px;border-radius:12px">
+          <h2 style="color:#4ade80;margin-top:0">Vendor Scheduled</h2>
+          <p>Hi ${opts.tenantName},</p>
+          <p>A vendor has been scheduled for your maintenance request.</p>
+          <table style="width:100%;border-collapse:collapse;margin:20px 0">
+            <tr><td style="padding:8px;color:#8b949e;width:140px">Property</td><td style="padding:8px;color:#e6edf3">${opts.propertyName}</td></tr>
+            <tr style="background:#161b22"><td style="padding:8px;color:#8b949e">Unit</td><td style="padding:8px;color:#e6edf3">${opts.unitNumber}</td></tr>
+            <tr><td style="padding:8px;color:#8b949e">Issue</td><td style="padding:8px;color:#e6edf3">${opts.issueType}</td></tr>
+            <tr style="background:#161b22"><td style="padding:8px;color:#8b949e">Vendor</td><td style="padding:8px;color:#e6edf3">${opts.vendorName}</td></tr>
+            <tr><td style="padding:8px;color:#8b949e">Scheduled</td><td style="padding:8px;color:#4ade80;font-weight:600">${opts.scheduledDate}</td></tr>
+          </table>
+          <a href="${APP_URL}/track/${opts.trackingCode}" style="display:inline-block;background:#22c55e;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Track Your Request →</a>
+          <p style="color:#484f58;font-size:12px;margin-top:24px">No account needed — use your tracking code to view updates anytime.</p>
+        </div>
+      `,
+    });
+    console.log(`Tenant vendor scheduled email sent to ${opts.tenantEmail}`);
+  } catch (err) {
+    console.error('Failed to send tenant vendor scheduled email:', err);
+  }
+}
+
+export async function sendLandlordAlertEmail(opts: {
+  landlordEmail: string;
+  alertType: string;
+  requestId: number;
+  vendorName: string;
+  message: string;
+}) {
+  const resend = await getResendClient();
+  if (!resend) return;
+  const alertColor = opts.alertType.includes('decline') || opts.alertType.includes('no-response') ? '#f87171' : '#fb923c';
+  try {
+    await resend.client.emails.send({
+      from: resend.fromEmail,
+      to: opts.landlordEmail,
+      subject: `⚠️ Dispatch Alert: ${opts.vendorName} — ${opts.alertType.replace(/-/g, ' ')}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0d1117;color:#e6edf3;padding:32px;border-radius:12px">
+          <h2 style="color:${alertColor};margin-top:0">Dispatch Alert</h2>
+          <p>${opts.message}</p>
+          <p style="color:#8b949e;font-size:13px">Request #${opts.requestId}</p>
+          <a href="${APP_URL}" style="display:inline-block;background:#f97316;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:12px">View in Dashboard →</a>
+        </div>
+      `,
+    });
+    console.log(`Landlord alert email sent to ${opts.landlordEmail}`);
+  } catch (err) {
+    console.error('Failed to send landlord alert email:', err);
+  }
+}

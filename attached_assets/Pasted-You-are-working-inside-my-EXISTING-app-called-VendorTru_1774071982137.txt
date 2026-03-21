@@ -1,0 +1,159 @@
+You are working inside my EXISTING app called VendorTrust.
+
+VendorTrust already has:
+- landlord auth
+- properties
+- maintenance requests
+- vendor directory
+- vendor trust scores
+- vendor recommendations by trade
+- manual vendor assignment
+- dispatch status pipeline
+- scheduled date + arrival window
+- completion notes, invoice number, materials used, final cost
+- dashboard stats
+
+Your job is to upgrade VendorTrust from a manual dispatch tracker into a true contractor scheduling and automatic dispatch SaaS for landlords and property managers.
+
+PRIMARY GOAL
+Make VendorTrust solve the real pain point:
+“Who should get this job, can they take it, when are they coming, and what happens if they don’t respond?”
+
+DO NOT rebuild the app from scratch.
+DO NOT break existing auth, billing, or current request/vendor flows.
+Extend the current architecture cleanly.
+
+BUILD THESE FEATURES IN THIS ORDER:
+
+1. AUTO-DISPATCH RULES ENGINE
+- Add auto-dispatch logic for new maintenance requests.
+- Score vendors using:
+  - tradeCategory match
+  - urgency match
+  - serviceArea / city proximity
+  - emergencyAvailable
+  - trustScore
+  - noShowCount penalty
+  - active workload penalty
+  - preferredVendor boost
+- Allow landlord to choose:
+  - manual only
+  - recommend best vendor
+  - auto-assign best vendor
+- Save dispatch reasoning so the UI can show WHY a vendor was selected.
+
+2. VENDOR RESPONSE WORKFLOW
+- After assignment, vendor should have a response state:
+  - pending-response
+  - accepted
+  - declined
+  - proposed-new-time
+  - no-response
+- Create a secure vendor magic-link page where vendor can:
+  - view job summary
+  - accept
+  - decline
+  - propose another time
+  - mark en route
+  - mark started
+  - mark completed
+- Do not require vendor account creation for MVP.
+
+3. REAL SCHEDULING SYSTEM
+- Add a calendar/scheduling view for all assigned vendor jobs.
+- Prevent obvious double-booking conflicts for the same vendor.
+- Support:
+  - scheduled start
+  - arrival window
+  - reschedule
+  - unschedule
+- Show filters by:
+  - vendor
+  - property
+  - trade
+  - status
+  - day/week
+
+4. DISPATCH BOARD
+- Build a kanban dispatch board with columns:
+  - Needs Dispatch
+  - Awaiting Vendor Response
+  - Scheduled
+  - In Progress
+  - Waiting on Parts
+  - Completed
+- Cards should show:
+  - property
+  - unit
+  - issue type
+  - urgency
+  - tenant
+  - assigned vendor
+  - scheduled time
+  - trust score
+  - response state
+
+5. AUTOMATED COMMUNICATIONS
+- Add vendor dispatch notification email.
+- Add vendor reminder email before scheduled job.
+- Add tenant update email when vendor is scheduled.
+- Add landlord alert when:
+  - vendor declines
+  - vendor does not respond within SLA
+  - emergency request remains unassigned
+- Structure email service cleanly and reuse current patterns.
+
+6. SLA + ESCALATION
+- Add dispatch SLA rules:
+  - Emergency: alert/escalate fast
+  - High: medium threshold
+  - Medium/Low: slower threshold
+- If no vendor response in threshold:
+  - mark no-response
+  - recommend next vendor
+  - optionally auto-reassign
+- Log every escalation in activity log.
+
+7. DATA MODEL UPDATES
+Extend schema safely with:
+- dispatch mode
+- dispatch score breakdown
+- vendor response status
+- response deadline
+- acceptedAt
+- declinedAt
+- proposedTime
+- enRouteAt
+- rescheduledFrom / rescheduledTo
+- active workload count or derived workload query
+- notification history
+Create migrations cleanly.
+
+8. UX / PRODUCT POLISH
+- Keep UI premium, clean, SaaS-like.
+- Make dispatch actions extremely fast.
+- Every request detail page should clearly answer:
+  - who owns this job
+  - what status it is in
+  - when it is scheduled
+  - whether vendor has responded
+  - what happens next
+
+9. BUG FIX
+- Fix query invalidation mismatches related to vendor assignment updates so UI refreshes correctly after dispatch actions.
+
+IMPLEMENTATION RULES
+- Preserve existing code style and patterns.
+- Reuse current hooks, API style, and database approach where possible.
+- Add types everywhere.
+- Avoid dead code.
+- Keep MVP scope focused on dispatch + scheduling, not generic extras.
+- If a choice must be made, prioritize operational speed for property managers over tenant-facing polish.
+
+WHEN DONE
+Provide:
+1. summary of files changed
+2. summary of new database fields
+3. summary of new routes/endpoints
+4. test checklist for dispatch workflow
+5. any env vars needed

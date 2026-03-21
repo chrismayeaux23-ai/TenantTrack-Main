@@ -30,6 +30,9 @@ import VendorDetail from "@/pages/VendorDetail";
 import Analytics from "@/pages/Analytics";
 import RequestDetail from "@/pages/RequestDetail";
 import Onboarding from "@/pages/Onboarding";
+import VendorPortal from "@/pages/VendorPortal";
+import DispatchBoard from "@/pages/DispatchBoard";
+import Schedule from "@/pages/Schedule";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -93,6 +96,7 @@ function Router() {
       <Route path="/report/:propertyId" component={TenantReport} />
       <Route path="/track/:code" component={TrackRequest} />
       <Route path="/track" component={TrackRequest} />
+      <Route path="/vendor-portal/:token" component={VendorPortal} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/features" component={Features} />
       <Route path="/terms" component={Terms} />
@@ -148,6 +152,14 @@ function Router() {
 
       <Route path="/analytics">
         <OnboardingGuard component={Analytics} />
+      </Route>
+
+      <Route path="/dispatch">
+        <OnboardingGuard component={DispatchBoard} />
+      </Route>
+
+      <Route path="/schedule">
+        <OnboardingGuard component={Schedule} />
       </Route>
 
       <Route path="/requests/:id">

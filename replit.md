@@ -39,6 +39,12 @@ The application follows a mobile-first design philosophy.
     - Plan-based feature gating (e.g., property limits, staff assignment).
     - Public `/terms` and `/privacy` pages.
     - Demo account with pre-seeded data for demonstration purposes.
+    - **Auto-Dispatch Engine**: Scoring algorithm (trade match, urgency, service area, trust score, workload, no-show penalties) that recommends or auto-assigns the best vendor for a request. Supports manual, recommend, and auto-assign dispatch modes.
+    - **Vendor Response Workflow**: Magic link system where vendors receive a unique portal URL to accept, decline, or propose new times for job assignments. Portal supports en-route tracking and job completion with cost/invoice details.
+    - **Dispatch Board (Kanban)**: Visual board with columns for needs-dispatch, awaiting-response, scheduled, in-progress, waiting-on-parts, and completed. Click-through to request details.
+    - **Scheduling Calendar**: Week and day views with vendor/property/trade/status filters. Shows scheduled jobs on a calendar grid and lists unscheduled jobs below.
+    - **SLA Escalation Engine**: Background process (5-min interval) that monitors vendor response deadlines, auto-escalates no-responses, and alerts landlords about unassigned emergency requests.
+    - **Automated Communications**: Email notifications via Resend for vendor dispatch, reminders, tenant updates when vendor is scheduled, and landlord SLA alerts.
 - **API Endpoints**: Comprehensive set of RESTful APIs for managing properties, requests, tenants, staff, vendors, costs, recurring tasks, messages, and analytics.
 - **Stripe Integration**: Auto-seeding of subscription products on startup, webhook processing, and customer/subscription management.
 - **Email Service**: Resend-based email notifications for new requests, status updates, and staff assignments.

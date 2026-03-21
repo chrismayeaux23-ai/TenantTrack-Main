@@ -12,7 +12,8 @@ import { eq, sql, desc, and, gte, lte } from "drizzle-orm";
 import { properties, maintenanceRequests, repairCosts, recurringTasks, requestNotes, maintenanceStaff, vendors, vendorAssignments, vendorReviews } from "@shared/schema";
 import { authStorage } from "./replit_integrations/auth/storage";
 import bcrypt from "bcryptjs";
-import { sendNewRequestEmail, sendStatusUpdateEmail, sendStaffAssignmentEmail } from "./emailService";
+import { sendNewRequestEmail, sendStatusUpdateEmail, sendStaffAssignmentEmail, sendVendorDispatchEmail, sendVendorReminderEmail, sendTenantVendorScheduledEmail, sendLandlordAlertEmail } from "./emailService";
+import { autoDispatchRequest, scoreVendorsForRequest, generateMagicToken, getSlaThreshold } from "./dispatchEngine";
 import { setupGoogleAuth } from "./googleAuth";
 
 export async function registerRoutes(
@@ -1705,6 +1706,445 @@ export async function registerRoutes(
       });
     } catch (err) {
       res.status(500).json({ message: "Failed to fetch stats" });
+    }
+  });
+
+  // ── Auto-Dispatch Routes ──────────────────────────────────────────────────
+
+  app.get('/api/requests/:id/dispatch-recommendation', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = parseInt(req.params.id);
+      const request = await storage.getRequest(requestId);
+      if (!request) return res.status(404).json({ message: "Request not found" });
+      const scores = await scoreVendorsForRequest(request, userId);
+      res.json(scores);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to get recommendations" });
+    }
+  });
+
+  app.post('/api/requests/:id/auto-dispatch', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = parseInt(req.params.id);
+      const { mode } = req.body;
+      if (!mode || !["recommend", "auto-assign"].includes(mode)) {
+        return res.status(400).json({ message: "Invalid dispatch mode" });
+      }
+      const result = await autoDispatchRequest(requestId, userId, mode);
+
+      if (result.assigned) {
+        const vendor = await storage.getVendor(result.assigned.vendorId);
+        if (vendor?.email && result.assigned.magicToken) {
+          const request = await storage.getRequest(requestId);
+          const property = request ? await storage.getProperty(request.propertyId) : null;
+          sendVendorDispatchEmail({
+            vendorEmail: vendor.email,
+            vendorName: vendor.name,
+            propertyName: property?.name || "Property",
+            unitNumber: request?.unitNumber || "",
+            issueType: request?.issueType || "",
+            urgency: request?.urgency || "",
+            description: request?.description || "",
+            magicToken: result.assigned.magicToken,
+          }).catch(() => {});
+
+          await storage.createVendorNotification({
+            assignmentId: result.assigned.id,
+            vendorId: vendor.id,
+            landlordId: userId,
+            notificationType: "dispatch",
+            channel: "email",
+          });
+        }
+      }
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ message: err.message || "Auto-dispatch failed" });
+    }
+  });
+
+  // ── Vendor Portal (Magic Link - No Auth Required) ───────────────────────
+
+  app.get('/api/vendor-portal/:token', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const assignment = await storage.getVendorAssignmentByToken(token);
+      if (!assignment) return res.status(404).json({ message: "Invalid or expired link" });
+
+      const vendor = await storage.getVendor(assignment.vendorId);
+      const request = await storage.getRequest(assignment.requestId);
+      const property = request ? await storage.getProperty(request.propertyId) : null;
+
+      res.json({
+        assignment: {
+          id: assignment.id,
+          jobStatus: assignment.jobStatus,
+          scheduledDate: assignment.scheduledDate,
+          arrivalWindow: assignment.arrivalWindow,
+          vendorResponseStatus: assignment.vendorResponseStatus,
+          priority: assignment.priority,
+          assignmentNotes: assignment.assignmentNotes,
+          proposedTime: assignment.proposedTime,
+        },
+        request: request ? {
+          id: request.id,
+          unitNumber: request.unitNumber,
+          issueType: request.issueType,
+          description: request.description,
+          urgency: request.urgency,
+          tenantName: request.tenantName,
+          tenantPhone: request.tenantPhone,
+          photoUrls: request.photoUrls,
+          status: request.status,
+        } : null,
+        property: property ? {
+          name: property.name,
+          address: property.address,
+        } : null,
+        vendor: vendor ? {
+          name: vendor.name,
+          companyName: vendor.companyName,
+        } : null,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to load job details" });
+    }
+  });
+
+  app.post('/api/vendor-portal/:token/respond', async (req, res) => {
+    try {
+      const { token } = req.params;
+      const assignment = await storage.getVendorAssignmentByToken(token);
+      if (!assignment) return res.status(404).json({ message: "Invalid or expired link" });
+
+      const { action, proposedTime, completionNotes, invoiceNumber, materialsUsed, finalCost } = req.body;
+
+      const updateData: Record<string, any> = {};
+      let eventType = "";
+      let eventLabel = "";
+
+      switch (action) {
+        case "accept":
+          updateData.vendorResponseStatus = "accepted";
+          updateData.acceptedAt = new Date();
+          updateData.jobStatus = assignment.scheduledDate ? "scheduled" : "assigned";
+          eventType = "vendor-accepted";
+          eventLabel = "Vendor accepted the job";
+          break;
+        case "decline":
+          updateData.vendorResponseStatus = "declined";
+          updateData.declinedAt = new Date();
+          updateData.jobStatus = "needs-dispatch";
+          eventType = "vendor-declined";
+          eventLabel = "Vendor declined the job";
+          const landlordUser = await db.select().from(users).where(eq(users.id, assignment.landlordId)).then(r => r[0]);
+          if (landlordUser?.email) {
+            const vendor = await storage.getVendor(assignment.vendorId);
+            sendLandlordAlertEmail({
+              landlordEmail: landlordUser.email,
+              alertType: "vendor-declined",
+              requestId: assignment.requestId,
+              vendorName: vendor?.name || "Vendor",
+              message: `${vendor?.name} has declined the maintenance job.`,
+            }).catch(() => {});
+          }
+          break;
+        case "propose-time":
+          if (!proposedTime) return res.status(400).json({ message: "Proposed time required" });
+          updateData.vendorResponseStatus = "proposed-new-time";
+          updateData.proposedTime = new Date(proposedTime);
+          eventType = "vendor-proposed-time";
+          eventLabel = `Vendor proposed new time: ${new Date(proposedTime).toLocaleString()}`;
+          break;
+        case "en-route":
+          updateData.enRouteAt = new Date();
+          updateData.jobStatus = "in-progress";
+          eventType = "vendor-en-route";
+          eventLabel = "Vendor is en route";
+          break;
+        case "started":
+          updateData.startedAt = new Date();
+          updateData.jobStatus = "in-progress";
+          eventType = "vendor-started";
+          eventLabel = "Vendor started work";
+          break;
+        case "completed":
+          updateData.completedAt = new Date();
+          updateData.jobStatus = "completed";
+          if (completionNotes) updateData.completionNotes = completionNotes;
+          if (invoiceNumber) updateData.invoiceNumber = invoiceNumber;
+          if (materialsUsed) updateData.materialsUsed = materialsUsed;
+          if (finalCost !== undefined) updateData.finalCost = parseInt(finalCost);
+          eventType = "vendor-completed";
+          eventLabel = "Vendor completed the job";
+          await storage.updateRequestStatus(assignment.requestId, "Completed");
+          const vendorRecord = await storage.getVendor(assignment.vendorId);
+          if (vendorRecord) {
+            await storage.updateVendor(vendorRecord.id, { lastJobCompletedAt: new Date() } as any);
+          }
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid action" });
+      }
+
+      const updated = await storage.updateVendorAssignment(assignment.requestId, updateData);
+
+      if (eventType) {
+        await storage.createActivityLog({
+          requestId: assignment.requestId,
+          landlordId: assignment.landlordId,
+          eventType,
+          eventLabel,
+        });
+      }
+
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to process response" });
+    }
+  });
+
+  // ── Schedule Routes ─────────────────────────────────────────────────────
+
+  app.get('/api/schedule', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const allAssignments = await storage.getAllAssignmentsByLandlord(userId);
+      const requests = await storage.getRequestsByLandlord(userId);
+      const allVendors = await storage.getVendorsByLandlord(userId);
+      const allProperties = await storage.getProperties(userId);
+
+      const requestMap = new Map(requests.map(r => [r.id, r]));
+      const vendorMap = new Map(allVendors.map(v => [v.id, v]));
+      const propertyMap = new Map(allProperties.map(p => [p.id, p]));
+
+      const scheduleItems = allAssignments
+        .filter(a => a.jobStatus !== "cancelled")
+        .map(a => {
+          const request = requestMap.get(a.requestId);
+          const vendor = vendorMap.get(a.vendorId);
+          const property = request ? propertyMap.get(request.propertyId) : null;
+          return {
+            assignment: a,
+            request: request ? {
+              id: request.id,
+              unitNumber: request.unitNumber,
+              issueType: request.issueType,
+              description: request.description,
+              urgency: request.urgency,
+              tenantName: request.tenantName,
+              status: request.status,
+            } : null,
+            vendor: vendor ? {
+              id: vendor.id,
+              name: vendor.name,
+              companyName: vendor.companyName,
+              tradeCategory: vendor.tradeCategory,
+              phone: vendor.phone,
+            } : null,
+            property: property ? {
+              id: property.id,
+              name: property.name,
+              address: property.address,
+            } : null,
+          };
+        });
+
+      res.json(scheduleItems);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch schedule" });
+    }
+  });
+
+  app.post('/api/schedule/check-conflicts', isAuthenticated, async (req: any, res) => {
+    try {
+      const { vendorId, scheduledDate, duration } = req.body;
+      if (!vendorId || !scheduledDate) return res.status(400).json({ message: "Missing fields" });
+
+      const start = new Date(scheduledDate);
+      const durationMs = (duration || 2) * 60 * 60 * 1000;
+      const end = new Date(start.getTime() + durationMs);
+
+      const activeJobs = await storage.getActiveAssignmentsByVendor(vendorId);
+      const conflicts = activeJobs.filter(a => {
+        if (!a.scheduledDate) return false;
+        const jobStart = new Date(a.scheduledDate);
+        const jobEnd = new Date(jobStart.getTime() + durationMs);
+        return jobStart < end && jobEnd > start;
+      });
+
+      res.json({ hasConflict: conflicts.length > 0, conflicts });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to check conflicts" });
+    }
+  });
+
+  // ── Dispatch Board Route ────────────────────────────────────────────────
+
+  app.get('/api/dispatch-board', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requests = await storage.getRequestsByLandlord(userId);
+      const allAssignments = await storage.getAllAssignmentsByLandlord(userId);
+      const allVendors = await storage.getVendorsByLandlord(userId);
+      const allProperties = await storage.getProperties(userId);
+
+      const vendorMap = new Map(allVendors.map(v => [v.id, v]));
+      const propertyMap = new Map(allProperties.map(p => [p.id, p]));
+      const assignmentMap = new Map(allAssignments.map(a => [a.requestId, a]));
+
+      const cards = requests.map(r => {
+        const assignment = assignmentMap.get(r.id);
+        const vendor = assignment ? vendorMap.get(assignment.vendorId) : null;
+        const property = propertyMap.get(r.propertyId);
+
+        let column = "needs-dispatch";
+        if (assignment) {
+          if (assignment.jobStatus === "completed") column = "completed";
+          else if (assignment.jobStatus === "waiting-on-parts") column = "waiting-on-parts";
+          else if (assignment.jobStatus === "in-progress") column = "in-progress";
+          else if (assignment.jobStatus === "scheduled" || assignment.scheduledDate) column = "scheduled";
+          else if (assignment.vendorResponseStatus === "pending-response" || assignment.vendorResponseStatus === "proposed-new-time") column = "awaiting-response";
+          else column = assignment.jobStatus || "needs-dispatch";
+        } else if (r.status === "Completed") {
+          column = "completed";
+        }
+
+        return {
+          requestId: r.id,
+          column,
+          property: property ? { id: property.id, name: property.name } : null,
+          unitNumber: r.unitNumber,
+          issueType: r.issueType,
+          urgency: r.urgency,
+          tenantName: r.tenantName,
+          status: r.status,
+          createdAt: r.createdAt,
+          vendor: vendor ? {
+            id: vendor.id,
+            name: vendor.name,
+            companyName: vendor.companyName,
+          } : null,
+          assignment: assignment ? {
+            id: assignment.id,
+            jobStatus: assignment.jobStatus,
+            scheduledDate: assignment.scheduledDate,
+            vendorResponseStatus: assignment.vendorResponseStatus,
+            arrivalWindow: assignment.arrivalWindow,
+            dispatchScore: assignment.dispatchScore,
+          } : null,
+        };
+      });
+
+      res.json(cards);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch dispatch board" });
+    }
+  });
+
+  app.patch('/api/dispatch-board/:requestId/move', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = parseInt(req.params.requestId);
+      const { column } = req.body;
+
+      const statusMap: Record<string, string> = {
+        "needs-dispatch": "needs-dispatch",
+        "awaiting-response": "assigned",
+        "scheduled": "scheduled",
+        "in-progress": "in-progress",
+        "waiting-on-parts": "waiting-on-parts",
+        "completed": "completed",
+      };
+
+      const jobStatus = statusMap[column];
+      if (!jobStatus) return res.status(400).json({ message: "Invalid column" });
+
+      const assignment = await storage.getVendorAssignmentByRequest(requestId);
+      if (assignment) {
+        const updateData: any = { jobStatus };
+        if (column === "completed") {
+          updateData.completedAt = new Date();
+          await storage.updateRequestStatus(requestId, "Completed");
+        } else if (column === "in-progress") {
+          updateData.startedAt = updateData.startedAt || new Date();
+          await storage.updateRequestStatus(requestId, "In-Progress");
+        }
+        await storage.updateVendorAssignment(requestId, updateData);
+      }
+
+      await storage.createActivityLog({
+        requestId,
+        landlordId: userId,
+        eventType: "status-change",
+        eventLabel: `Moved to ${column}`,
+      });
+
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to move card" });
+    }
+  });
+
+  // ── SLA Escalations ────────────────────────────────────────────────────
+
+  app.get('/api/escalations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const escalations = await storage.getEscalationsByLandlord(userId);
+      res.json(escalations);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch escalations" });
+    }
+  });
+
+  // ── Generate magic link for existing assignment ─────────────────────────
+
+  app.post('/api/requests/:id/generate-magic-link', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestId = parseInt(req.params.id);
+      const assignment = await storage.getVendorAssignmentByRequest(requestId);
+      if (!assignment) return res.status(404).json({ message: "No vendor assigned" });
+
+      const magicToken = generateMagicToken();
+      const responseDeadline = new Date(Date.now() + getSlaThreshold(req.body.urgency || "Medium"));
+
+      const updated = await storage.updateVendorAssignment(requestId, {
+        magicToken,
+        responseDeadline,
+        vendorResponseStatus: "pending-response",
+      });
+
+      const vendor = await storage.getVendor(assignment.vendorId);
+      if (vendor?.email) {
+        const request = await storage.getRequest(requestId);
+        const property = request ? await storage.getProperty(request.propertyId) : null;
+        sendVendorDispatchEmail({
+          vendorEmail: vendor.email,
+          vendorName: vendor.name,
+          propertyName: property?.name || "Property",
+          unitNumber: request?.unitNumber || "",
+          issueType: request?.issueType || "",
+          urgency: request?.urgency || "",
+          description: request?.description || "",
+          magicToken,
+        }).catch(() => {});
+
+        await storage.createVendorNotification({
+          assignmentId: assignment.id,
+          vendorId: vendor.id,
+          landlordId: userId,
+          notificationType: "dispatch",
+          channel: "email",
+        });
+      }
+
+      res.json({ magicToken, assignment: updated });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to generate magic link" });
     }
   });
 

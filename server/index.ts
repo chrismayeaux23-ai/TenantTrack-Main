@@ -8,6 +8,7 @@ import { WebhookHandlers } from './webhookHandlers';
 import { db } from "./db";
 import { users } from "@shared/models/auth";
 import { eq } from "drizzle-orm";
+import { startSlaEngine } from "./slaEngine";
 
 const app = express();
 const httpServer = createServer(app);
@@ -224,6 +225,7 @@ app.use((req, res, next) => {
       log(`serving on port ${port}`);
       runColumnMigrations();
       ensureOwnerProTier();
+      startSlaEngine();
       initStripe().catch((err) => {
         console.error('Stripe initialization failed (non-fatal):', err);
       });

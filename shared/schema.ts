@@ -10,6 +10,14 @@ export const properties = pgTable("properties", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const DISPATCH_MODES = ["manual", "recommend", "auto-assign"] as const;
+export type DispatchMode = typeof DISPATCH_MODES[number];
+
+export const VENDOR_RESPONSE_STATUSES = [
+  "pending-response", "accepted", "declined", "proposed-new-time", "no-response",
+] as const;
+export type VendorResponseStatus = typeof VENDOR_RESPONSE_STATUSES[number];
+
 export const maintenanceRequests = pgTable("maintenance_requests", {
   id: serial("id").primaryKey(),
   propertyId: integer("property_id").notNull(),
@@ -24,6 +32,7 @@ export const maintenanceRequests = pgTable("maintenance_requests", {
   photoUrls: text("photo_urls").array(),
   assignedTo: integer("assigned_to"),
   trackingCode: text("tracking_code").unique(),
+  dispatchMode: text("dispatch_mode").default("manual"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -113,7 +122,6 @@ export const vendorAssignments = pgTable("vendor_assignments", {
   priority: text("priority").default("Normal"),
   targetCompletionDate: timestamp("target_completion_date"),
   scheduledDate: timestamp("scheduled_date"),
-  // VendorTrust dispatch workflow additions
   jobStatus: text("job_status").default("assigned"),
   arrivalWindow: text("arrival_window"),
   startedAt: timestamp("started_at"),
@@ -124,6 +132,43 @@ export const vendorAssignments = pgTable("vendor_assignments", {
   materialsUsed: text("materials_used"),
   assignmentNotes: text("assignment_notes"),
   finalCost: integer("final_cost"),
+  dispatchMode: text("dispatch_mode").default("manual"),
+  dispatchScore: integer("dispatch_score"),
+  dispatchReason: text("dispatch_reason"),
+  vendorResponseStatus: text("vendor_response_status").default("pending-response"),
+  responseDeadline: timestamp("response_deadline"),
+  acceptedAt: timestamp("accepted_at"),
+  declinedAt: timestamp("declined_at"),
+  proposedTime: timestamp("proposed_time"),
+  enRouteAt: timestamp("en_route_at"),
+  rescheduledFrom: timestamp("rescheduled_from"),
+  rescheduledTo: timestamp("rescheduled_to"),
+  magicToken: text("magic_token").unique(),
+});
+
+export const slaEscalations = pgTable("sla_escalations", {
+  id: serial("id").primaryKey(),
+  requestId: integer("request_id").notNull(),
+  landlordId: varchar("landlord_id").notNull(),
+  escalationType: text("escalation_type").notNull(),
+  urgency: text("urgency").notNull(),
+  previousVendorId: integer("previous_vendor_id"),
+  newVendorId: integer("new_vendor_id"),
+  reason: text("reason").notNull(),
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const vendorNotifications = pgTable("vendor_notifications", {
+  id: serial("id").primaryKey(),
+  assignmentId: integer("assignment_id").notNull(),
+  vendorId: integer("vendor_id").notNull(),
+  landlordId: varchar("landlord_id").notNull(),
+  notificationType: text("notification_type").notNull(),
+  channel: text("channel").default("email"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  deliveredAt: timestamp("delivered_at"),
+  metadata: text("metadata"),
 });
 
 export const vendorReviews = pgTable("vendor_reviews", {
@@ -164,6 +209,8 @@ export const insertVendorSchema = createInsertSchema(vendors).omit({ id: true, c
 export const insertVendorAssignmentSchema = createInsertSchema(vendorAssignments).omit({ id: true, assignedAt: true });
 export const insertVendorReviewSchema = createInsertSchema(vendorReviews).omit({ id: true, createdAt: true });
 export const insertActivityLogSchema = createInsertSchema(maintenanceActivityLog).omit({ id: true, createdAt: true });
+export const insertSlaEscalationSchema = createInsertSchema(slaEscalations).omit({ id: true, createdAt: true });
+export const insertVendorNotificationSchema = createInsertSchema(vendorNotifications).omit({ id: true, sentAt: true });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -199,6 +246,12 @@ export type InsertVendorReview = z.infer<typeof insertVendorReviewSchema>;
 
 export type ActivityLog = typeof maintenanceActivityLog.$inferSelect;
 export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+
+export type SlaEscalation = typeof slaEscalations.$inferSelect;
+export type InsertSlaEscalation = z.infer<typeof insertSlaEscalationSchema>;
+
+export type VendorNotification = typeof vendorNotifications.$inferSelect;
+export type InsertVendorNotification = z.infer<typeof insertVendorNotificationSchema>;
 
 export type CreatePropertyRequest = Omit<InsertProperty, "landlordId">;
 export type CreateMaintenanceRequest = Omit<InsertMaintenanceRequest, "status">;

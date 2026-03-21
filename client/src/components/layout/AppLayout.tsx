@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   Building2, ClipboardList, LogOut, Menu, X, Users, UserCircle,
   Receipt, DollarSign, CalendarClock, Briefcase, ShieldCheck, BarChart2,
-  ChevronRight
+  ChevronRight, Columns3, Calendar
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { TrialBanner } from "@/components/TrialBanner";
@@ -13,6 +13,13 @@ const NAV_GROUPS = [
   {
     items: [
       { name: "Work Orders", href: "/", icon: ClipboardList },
+    ],
+  },
+  {
+    label: "Dispatch",
+    items: [
+      { name: "Dispatch Board", href: "/dispatch", icon: Columns3 },
+      { name: "Schedule", href: "/schedule", icon: Calendar },
     ],
   },
   {
@@ -42,8 +49,8 @@ const NAV_GROUPS = [
 
 const BOTTOM_NAV = [
   { name: "Orders", href: "/", icon: ClipboardList },
-  { name: "Vendors", href: "/vendors", icon: Briefcase },
-  { name: "Analytics", href: "/analytics", icon: BarChart2 },
+  { name: "Dispatch", href: "/dispatch", icon: Columns3 },
+  { name: "Schedule", href: "/schedule", icon: Calendar },
   { name: "More", href: "__menu__", icon: Menu },
 ];
 
