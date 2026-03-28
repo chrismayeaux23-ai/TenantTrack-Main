@@ -239,14 +239,14 @@ export default function Login() {
 
         <div className="text-center mt-6 space-y-2">
           <p className="text-sm text-muted-foreground">
-            Want to explore first?{" "}
-            <button
-              onClick={() => window.location.href = "/?demo=1"}
+            New to TenantTrack?{" "}
+            <a
+              href="/guide"
               className="text-primary hover:underline font-medium"
-              data-testid="link-try-demo"
+              data-testid="link-guide"
             >
-              Try the demo
-            </button>
+              Read the guide
+            </a>
           </p>
           <p className="text-xs text-muted-foreground">
             <a href="/" className="hover:text-foreground">← Back to home</a>

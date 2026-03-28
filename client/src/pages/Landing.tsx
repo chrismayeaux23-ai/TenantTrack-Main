@@ -3,12 +3,12 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { 
-  QrCode, Smartphone, ShieldCheck, Mail, Phone, 
+  QrCode, ShieldCheck, Mail, Phone, 
   ArrowRight, Check, DollarSign, CalendarClock, 
   Users, ClipboardList, Building2, Zap, Crown,
-  ChevronDown, Star, BarChart3, FileDown, X, MessageSquare,
+  Star, FileDown, X,
   LogIn, ChevronLeft, ChevronRight,
-  Camera, Bell, Wrench, BarChart2, MapPin, Printer,
+  Camera, Bell, Wrench, BarChart2, Printer,
   Sparkles, Link2, Calendar, Columns3, Globe, Send
 } from "lucide-react";
 import logoPng from "@assets/tenanttrack-final-logo.png";
@@ -937,10 +937,6 @@ function SlideVisual({ type }: { type: string }) {
 }
 
 export default function Landing() {
-  const [showDemoLogin, setShowDemoLogin] = useState(() => window.location.search.includes("demo=1"));
-  const [demoLoading, setDemoLoading] = useState(false);
-  const [demoError, setDemoError] = useState("");
-
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   const [animating, setAnimating] = useState(false);
@@ -967,70 +963,8 @@ export default function Landing() {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleDemoLogin = async () => {
-    setDemoLoading(true);
-    setDemoError("");
-    try {
-      const res = await fetch("/api/demo-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setDemoError(data.message || "Login failed");
-        return;
-      }
-      window.location.href = "/dashboard";
-    } catch {
-      setDemoError("Connection failed. Please try again.");
-    } finally {
-      setDemoLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background selection:bg-primary/20">
-      {showDemoLogin && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={() => setShowDemoLogin(false)}>
-          <div className="bg-card border border-border rounded-2xl p-8 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-foreground">Try TenantTrack</h3>
-                  <p className="text-sm text-muted-foreground">Instant access — no signup needed</p>
-                </div>
-              </div>
-              <button onClick={() => setShowDemoLogin(false)} className="text-muted-foreground hover:text-foreground p-1" data-testid="button-close-demo">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="bg-muted/40 rounded-xl p-4 mb-5 space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground"><Check className="h-4 w-4 text-primary" /> 6 vendors with live trust scores</div>
-              <div className="flex items-center gap-2 text-muted-foreground"><Check className="h-4 w-4 text-primary" /> 7 maintenance requests to dispatch</div>
-              <div className="flex items-center gap-2 text-muted-foreground"><Check className="h-4 w-4 text-primary" /> Pro plan features unlocked</div>
-            </div>
-            {demoError && (
-              <p className="text-sm text-red-400 mb-3" data-testid="text-demo-error">{demoError}</p>
-            )}
-            <Button
-              className="w-full h-12 rounded-xl text-base gap-2"
-              onClick={handleDemoLogin}
-              disabled={demoLoading}
-              data-testid="button-demo-login"
-            >
-              {demoLoading ? "Loading demo..." : <>Enter Demo Dashboard <ArrowRight className="h-4 w-4" /></>}
-            </Button>
-            <p className="text-xs text-center text-muted-foreground mt-3">
-              Uses a shared demo account · Changes reset periodically
-            </p>
-          </div>
-        </div>
-      )}
-
       <nav className="fixed top-0 w-full z-50 glass-panel border-b-0">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -1043,12 +977,17 @@ export default function Landing() {
             <button onClick={() => scrollTo("pricing")} className="hover:text-foreground transition-colors" data-testid="nav-pricing">Pricing</button>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setShowDemoLogin(true)} className="rounded-full border-primary/30 text-primary hover:bg-primary/10" data-testid="button-nav-demo">
+            <Link href="/guide" className="hidden md:inline-flex">
+              <Button variant="ghost" className="rounded-full text-muted-foreground hover:text-foreground" data-testid="button-nav-guide">
+                Guide
+              </Button>
+            </Link>
+            <Button onClick={() => window.location.href = '/login'} variant="outline" className="rounded-full border-primary/30 text-primary hover:bg-primary/10" data-testid="button-nav-login">
               <LogIn className="h-4 w-4 mr-1.5" />
-              Try Demo
+              Log In
             </Button>
-            <Button onClick={() => window.location.href = '/login'} className="rounded-full shadow-lg shadow-primary/20" data-testid="button-nav-login">
-              Landlord Login
+            <Button onClick={() => window.location.href = '/login?signup=1'} className="rounded-full shadow-lg shadow-primary/20" data-testid="button-nav-signup">
+              Start Free Trial
             </Button>
           </div>
         </div>
@@ -1076,8 +1015,8 @@ export default function Landing() {
                 Start Free Trial
                 <ArrowRight className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="lg" className="w-full sm:w-auto rounded-full text-lg text-muted-foreground hover:text-foreground" onClick={() => setShowDemoLogin(true)} data-testid="button-see-demo">
-                View Live Demo
+              <Button variant="ghost" size="lg" className="w-full sm:w-auto rounded-full text-lg text-muted-foreground hover:text-foreground" onClick={() => window.location.href = '/guide'} data-testid="button-see-guide">
+                See How It Works
               </Button>
             </div>
             <div className="flex items-center gap-6 mt-8 text-sm text-muted-foreground">
@@ -1503,8 +1442,8 @@ export default function Landing() {
               Start Free Trial
               <ArrowRight className="h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="rounded-full text-lg border-border" onClick={() => setShowDemoLogin(true)} data-testid="button-cta-demo">
-              View Demo
+            <Button size="lg" variant="outline" className="rounded-full text-lg border-border" onClick={() => window.location.href = '/guide'} data-testid="button-cta-guide">
+              Read the Guide
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-4">14-day free trial &middot; No credit card &middot; Cancel anytime</p>
@@ -1530,6 +1469,7 @@ export default function Landing() {
                 <li><Link href="/features" className="hover:text-primary transition-colors">All Features</Link></li>
                 <li><button onClick={() => scrollTo("pricing")} className="hover:text-primary transition-colors">Pricing</button></li>
                 <li><button onClick={() => scrollTo("how-it-works")} className="hover:text-primary transition-colors">How It Works</button></li>
+                <li><Link href="/guide" className="hover:text-primary transition-colors">Step-by-Step Guide</Link></li>
               </ul>
             </div>
 

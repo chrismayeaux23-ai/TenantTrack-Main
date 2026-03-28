@@ -33,6 +33,8 @@ import Onboarding from "@/pages/Onboarding";
 import VendorPortal from "@/pages/VendorPortal";
 import DispatchBoard from "@/pages/DispatchBoard";
 import Schedule from "@/pages/Schedule";
+import Guide from "@/pages/Guide";
+import { HelpChatbot } from "@/components/HelpChatbot";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -101,6 +103,7 @@ function Router() {
       <Route path="/features" component={Features} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
+      <Route path="/guide" component={Guide} />
 
       <Route path="/flyer/:propertyId">
         <ProtectedRoute component={PrintFlyer} />
@@ -181,6 +184,7 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <Router />
+        <HelpChatbot />
       </TooltipProvider>
     </QueryClientProvider>
   );
