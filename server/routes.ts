@@ -1525,17 +1525,20 @@ export async function registerRoutes(
         arrivalWindow: z.string().optional().nullable(),
       }).parse(req.body);
 
+      const selectedVendor = await storage.getVendor(input.vendorId);
+      if (!selectedVendor || selectedVendor.landlordId !== userId) {
+        return res.status(403).json({ message: "Vendor not found or does not belong to your account" });
+      }
+
       const existing = await storage.getVendorAssignmentByRequest(requestId);
       let assignment: any;
 
       if (existing) {
         assignment = await storage.updateVendorAssignment(requestId, input);
-        const vendor = await storage.getVendor(input.vendorId);
-        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_reassigned", eventLabel: "Vendor Reassigned", details: vendor ? `Reassigned to ${vendor.name}` : undefined });
+        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_reassigned", eventLabel: "Vendor Reassigned", details: `Reassigned to ${selectedVendor.name}` });
       } else {
         assignment = await storage.assignVendorToRequest({ requestId, landlordId: userId, assignedBy: userId, ...input });
-        const vendor = await storage.getVendor(input.vendorId);
-        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: vendor ? `${vendor.name}${vendor.companyName ? ` (${vendor.companyName})` : ''} assigned` : undefined });
+        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_assigned", eventLabel: "Vendor Assigned", details: `${selectedVendor.name}${selectedVendor.companyName ? ` (${selectedVendor.companyName})` : ''} assigned` });
       }
       if (request.status === "New") {
         await storage.updateRequestStatus(requestId, "In-Progress");
@@ -1554,12 +1557,11 @@ export async function registerRoutes(
       });
       assignment = await storage.getVendorAssignmentByRequest(requestId);
 
-      const vendor = await storage.getVendor(assignment.vendorId);
-      if (vendor?.email && magicToken) {
+      if (selectedVendor.email && magicToken) {
         const property = await storage.getProperty(request.propertyId);
         sendVendorDispatchEmail({
-          vendorEmail: vendor.email,
-          vendorName: vendor.name,
+          vendorEmail: selectedVendor.email,
+          vendorName: selectedVendor.name,
           propertyName: property?.name || "Property",
           unitNumber: request.unitNumber || "",
           issueType: request.issueType || "",
@@ -1576,10 +1578,10 @@ export async function registerRoutes(
           channel: "email",
         });
 
-        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_notified", eventLabel: "Vendor Notified", details: `Magic link email sent to ${vendor.email}` });
+        await storage.createActivityLog({ requestId, landlordId: userId, eventType: "vendor_notified", eventLabel: "Vendor Notified", details: `Magic link email sent to ${selectedVendor.email}` });
       }
 
-      res.json({ assignment, vendor });
+      res.json({ assignment, vendor: selectedVendor });
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       res.status(500).json({ message: "Failed to assign vendor" });
