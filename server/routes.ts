@@ -53,6 +53,12 @@ export async function registerRoutes(
         await db.update(users).set(updates).where(eq(users.id, existing.id));
         console.log("Owner account updated to Pro");
       }
+
+      const [demoUser] = await db.select().from(users).where(eq(users.id, DEMO_USER_ID)).limit(1);
+      if (demoUser && demoUser.email !== DEMO_EMAIL) {
+        await db.update(users).set({ email: DEMO_EMAIL }).where(eq(users.id, DEMO_USER_ID));
+        console.log(`Demo landlord email updated to ${DEMO_EMAIL}`);
+      }
     } catch (err) {
       console.error("Failed to ensure owner account:", err);
     }
