@@ -109,6 +109,8 @@ function DispatchPanel({ requestId, issueType }: { requestId: number; issueType:
     mutationFn: async () => {
       const res = await fetch(`/api/requests/${requestId}/auto-dispatch`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "auto-assign" }),
         credentials: "include",
       });
       if (!res.ok) {
