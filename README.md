@@ -20,6 +20,18 @@ Maintenance coordination is one of the most frustrating parts of property manage
 - Follow-ups waste hours every week
 - No system of record when disputes arise
 
+## Why This Matters
+
+Maintenance coordination is one of the highest-friction, most time-consuming tasks for landlords.
+
+TenantTrack reduces:
+- Missed jobs
+- Vendor delays
+- Manual coordination
+- Operational overhead
+
+**Result:** Faster repairs, better vendor decisions, and less time spent managing maintenance.
+
 ## The Solution
 
 TenantTrack replaces the chaos with a structured, automated workflow:
@@ -188,6 +200,34 @@ The development server starts Express (backend) and Vite (frontend) on the same 
 | **Pro** | $99/mo | Professional managers (25+ units) |
 
 All plans include a 14-day free trial. No credit card required to start.
+
+---
+
+## Key Differentiator
+
+Unlike traditional property management tools, TenantTrack focuses specifically on:
+
+- Vendor performance tracking tied to real jobs
+- Automated dispatch and escalation workflows
+- Vendor trust scoring based on actual outcomes
+
+This creates a system that improves decision-making over time — not just task tracking.
+
+---
+
+## Roadmap
+
+- Advanced vendor trust scoring
+- Vendor availability tracking
+- Automated scheduling optimization
+- Mobile-friendly vendor workflows
+- Deeper analytics and reporting
+
+---
+
+## Screenshots
+
+*(Dashboard, dispatch board, and vendor view coming soon)*
 
 ---
 
