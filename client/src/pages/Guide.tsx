@@ -248,10 +248,11 @@ function AccordionSection({ section, isOpen, onToggle, searchQuery }: {
   const Icon = section.icon;
   const highlightText = (text: string) => {
     if (!searchQuery) return text;
-    const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const escaped = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${escaped})`, "gi");
     const parts = text.split(regex);
     return parts.map((part, i) =>
-      regex.test(part)
+      part.toLowerCase() === searchQuery.toLowerCase()
         ? <mark key={i} className="bg-primary/30 text-foreground rounded px-0.5">{part}</mark>
         : part
     );
