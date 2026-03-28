@@ -1572,7 +1572,7 @@ export async function registerRoutes(
 
         await storage.createVendorNotification({
           assignmentId: assignment.id,
-          vendorId: vendor.id,
+          vendorId: selectedVendor.id,
           landlordId: userId,
           notificationType: "dispatch",
           channel: "email",
