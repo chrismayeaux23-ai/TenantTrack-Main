@@ -16,7 +16,7 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
       if (!apiKey) return null;
       return {
         client: new Resend(apiKey),
-        fromEmail: process.env.EMAIL_FROM || 'TenantTrack <notifications@tenant-track.com>',
+        fromEmail: process.env.EMAIL_FROM || 'TenantTrack Dispatch <dispatch@tenant-track.com>',
       };
     }
 
