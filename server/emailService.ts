@@ -288,6 +288,64 @@ export async function sendTenantVendorScheduledEmail(opts: {
   }
 }
 
+export async function sendPasswordResetEmail(opts: {
+  email: string;
+  resetUrl: string;
+}) {
+  const resend = await getResendClient();
+  if (!resend) return;
+  try {
+    await resend.client.emails.send({
+      from: resend.fromEmail,
+      to: opts.email,
+      subject: 'Reset your TenantTrack password',
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0d1117;color:#e6edf3;padding:32px;border-radius:12px">
+          <h2 style="color:#3b82f6;margin-top:0">Password Reset</h2>
+          <p>We received a request to reset your TenantTrack password.</p>
+          <p>Click the button below to set a new password. This link expires in 1 hour.</p>
+          <a href="${opts.resetUrl}" style="display:inline-block;background:#3b82f6;color:#fff;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0">Reset Password</a>
+          <p style="color:#484f58;font-size:12px;margin-top:24px">If you didn't request this, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+    console.log(`Password reset email sent to ${opts.email}`);
+  } catch (err) {
+    console.error('Failed to send password reset email:', err);
+  }
+}
+
+export async function sendVerificationCodeEmail(opts: {
+  email: string;
+  code: string;
+  firstName: string;
+}) {
+  const resend = await getResendClient();
+  if (!resend) return;
+  try {
+    await resend.client.emails.send({
+      from: resend.fromEmail,
+      to: opts.email,
+      subject: `Your TenantTrack verification code: ${opts.code}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#0d1117;color:#e6edf3;padding:32px;border-radius:12px">
+          <h2 style="color:#3b82f6;margin-top:0">Verify Your Email</h2>
+          <p>Hi ${opts.firstName},</p>
+          <p>Welcome to TenantTrack! Enter this code to verify your email address:</p>
+          <div style="background:#161b22;border:2px solid #3b82f6;border-radius:12px;padding:24px;text-align:center;margin:20px 0">
+            <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#3b82f6">${opts.code}</span>
+          </div>
+          <p style="color:#8b949e;font-size:14px">This code expires in 15 minutes.</p>
+          <p style="color:#484f58;font-size:12px;margin-top:24px">If you didn't create a TenantTrack account, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+    console.log(`Verification code email sent to ${opts.email}`);
+  } catch (err) {
+    console.error('Failed to send verification code email:', err);
+  }
+}
+
 export async function sendLandlordAlertEmail(opts: {
   landlordEmail: string;
   alertType: string;

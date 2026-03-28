@@ -34,6 +34,8 @@ import VendorPortal from "@/pages/VendorPortal";
 import DispatchBoard from "@/pages/DispatchBoard";
 import Schedule from "@/pages/Schedule";
 import Guide from "@/pages/Guide";
+import VerifyEmail from "@/pages/VerifyEmail";
+import ResetPassword from "@/pages/ResetPassword";
 import { HelpChatbot } from "@/components/HelpChatbot";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -104,6 +106,8 @@ function Router() {
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/guide" component={Guide} />
+      <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/reset-password" component={ResetPassword} />
 
       <Route path="/flyer/:propertyId">
         <ProtectedRoute component={PrintFlyer} />

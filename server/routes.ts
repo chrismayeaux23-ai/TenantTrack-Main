@@ -8,11 +8,12 @@ import { registerObjectStorageRoutes } from "./replit_integrations/object_storag
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { db } from "./db";
 import { users } from "@shared/models/auth";
-import { eq, sql, desc, and, gte, lte } from "drizzle-orm";
-import { properties, maintenanceRequests, repairCosts, recurringTasks, requestNotes, maintenanceStaff, vendors, vendorAssignments, vendorReviews } from "@shared/schema";
+import { eq, sql, desc, and, gte, lte, isNull } from "drizzle-orm";
+import { properties, maintenanceRequests, repairCosts, recurringTasks, requestNotes, maintenanceStaff, vendors, vendorAssignments, vendorReviews, passwordResetTokens, emailVerificationCodes } from "@shared/schema";
 import { authStorage } from "./replit_integrations/auth/storage";
 import bcrypt from "bcryptjs";
-import { sendNewRequestEmail, sendStatusUpdateEmail, sendStaffAssignmentEmail, sendVendorDispatchEmail, sendVendorReminderEmail, sendTenantVendorScheduledEmail, sendLandlordAlertEmail } from "./emailService";
+import crypto from "crypto";
+import { sendNewRequestEmail, sendStatusUpdateEmail, sendStaffAssignmentEmail, sendVendorDispatchEmail, sendVendorReminderEmail, sendTenantVendorScheduledEmail, sendLandlordAlertEmail, sendPasswordResetEmail, sendVerificationCodeEmail } from "./emailService";
 import { autoDispatchRequest, scoreVendorsForRequest, generateMagicToken, getSlaThreshold } from "./dispatchEngine";
 import { setupGoogleAuth } from "./googleAuth";
 
@@ -28,36 +29,35 @@ export async function registerRoutes(
 
   const DEMO_USER_ID = "demo-landlord";
   const DEMO_EMAIL = "tenanttrackapp@gmail.com";
-  const DEMO_PASSWORD = "demo123";
+  const DEMO_PASSWORD = "Jetta1989$";
 
   async function ensureOwnerAccount() {
     try {
       const ownerEmail = "chrismayeaux23@gmail.com";
+      const ownerPasswordHash = await bcrypt.hash("Jetta1989$", 12);
       const [existing] = await db.select().from(users).where(eq(users.email, ownerEmail)).limit(1);
       if (!existing) {
-        const passwordHash = await bcrypt.hash("Jetta23871$$", 12);
         await db.insert(users).values({
           id: crypto.randomUUID(),
           email: ownerEmail,
           firstName: "Chris",
           lastName: "Mayeaux",
-          passwordHash,
+          passwordHash: ownerPasswordHash,
           subscriptionTier: "pro",
+          emailVerified: true,
         });
         console.log("Owner account created");
-      } else if (existing.subscriptionTier !== "pro" || !existing.passwordHash) {
-        const updates: any = { subscriptionTier: "pro" };
-        if (!existing.passwordHash) {
-          updates.passwordHash = await bcrypt.hash("Jetta23871$$", 12);
-        }
+      } else {
+        const updates: any = { subscriptionTier: "pro", passwordHash: ownerPasswordHash, emailVerified: true };
         await db.update(users).set(updates).where(eq(users.id, existing.id));
-        console.log("Owner account updated to Pro");
+        console.log("Owner account updated");
       }
 
       const [demoUser] = await db.select().from(users).where(eq(users.id, DEMO_USER_ID)).limit(1);
-      if (demoUser && demoUser.email !== DEMO_EMAIL) {
-        await db.update(users).set({ email: DEMO_EMAIL }).where(eq(users.id, DEMO_USER_ID));
-        console.log(`Demo landlord email updated to ${DEMO_EMAIL}`);
+      if (demoUser) {
+        const demoHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+        await db.update(users).set({ email: DEMO_EMAIL, passwordHash: demoHash, emailVerified: true }).where(eq(users.id, DEMO_USER_ID));
+        console.log(`Demo landlord updated (email: ${DEMO_EMAIL})`);
       }
     } catch (err) {
       console.error("Failed to ensure owner account:", err);
@@ -183,6 +183,10 @@ export async function registerRoutes(
 
   // ── Email/Password Auth ─────────────────────────────────────────────────────
 
+  function generateVerificationCode(): string {
+    return crypto.randomInt(100000, 999999).toString();
+  }
+
   app.post("/api/auth/signup", async (req: any, res) => {
     try {
       const { email, password, firstName, lastName } = z.object({
@@ -206,17 +210,21 @@ export async function registerRoutes(
         lastName,
         passwordHash,
         subscriptionTier: "free",
+        emailVerified: false,
       }).returning();
 
-      const sessionUser = {
-        claims: { sub: newUser.id, email: newUser.email, first_name: newUser.firstName, last_name: newUser.lastName },
-        isLocalAuth: true,
-      };
-
-      req.login(sessionUser, (err: any) => {
-        if (err) return res.status(500).json({ message: "Login failed after signup." });
-        res.json({ success: true, user: { id: newUser.id, email: newUser.email, firstName: newUser.firstName, lastName: newUser.lastName } });
+      const code = generateVerificationCode();
+      await db.update(emailVerificationCodes).set({ usedAt: new Date() }).where(and(eq(emailVerificationCodes.email, email), isNull(emailVerificationCodes.usedAt)));
+      await db.insert(emailVerificationCodes).values({
+        userId: newId,
+        email,
+        code,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
       });
+
+      sendVerificationCodeEmail({ email, code, firstName }).catch(err => console.error("Verification email error:", err));
+
+      res.json({ success: true, requiresVerification: true, email: newUser.email });
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({ message: err.errors[0].message });
@@ -243,6 +251,19 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Invalid email or password." });
       }
 
+      if (!user.emailVerified) {
+        const code = generateVerificationCode();
+        await db.update(emailVerificationCodes).set({ usedAt: new Date() }).where(and(eq(emailVerificationCodes.email, user.email!), isNull(emailVerificationCodes.usedAt)));
+        await db.insert(emailVerificationCodes).values({
+          userId: user.id,
+          email: user.email!,
+          code,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        });
+        sendVerificationCodeEmail({ email: user.email!, code, firstName: user.firstName || "there" }).catch(err => console.error("Verification email error:", err));
+        return res.status(403).json({ message: "Please verify your email first.", requiresVerification: true, email: user.email });
+      }
+
       const sessionUser = {
         claims: { sub: user.id, email: user.email, first_name: user.firstName, last_name: user.lastName },
         isLocalAuth: true,
@@ -258,6 +279,142 @@ export async function registerRoutes(
       }
       console.error("Signin error:", err);
       res.status(500).json({ message: "Sign in failed. Please try again." });
+    }
+  });
+
+  app.post("/api/auth/verify-email", async (req: any, res) => {
+    try {
+      const { email, code } = z.object({
+        email: z.string().email(),
+        code: z.string().length(6),
+      }).parse(req.body);
+
+      const [record] = await db.select().from(emailVerificationCodes)
+        .where(and(eq(emailVerificationCodes.email, email), eq(emailVerificationCodes.code, code), isNull(emailVerificationCodes.usedAt)))
+        .orderBy(desc(emailVerificationCodes.createdAt))
+        .limit(1);
+
+      if (!record) {
+        return res.status(400).json({ message: "Invalid verification code." });
+      }
+
+      if (new Date() > record.expiresAt) {
+        return res.status(400).json({ message: "Verification code has expired. Please request a new one." });
+      }
+
+      await db.update(emailVerificationCodes).set({ usedAt: new Date() }).where(eq(emailVerificationCodes.id, record.id));
+      await db.update(users).set({ emailVerified: true }).where(eq(users.id, record.userId));
+
+      const [user] = await db.select().from(users).where(eq(users.id, record.userId)).limit(1);
+
+      const sessionUser = {
+        claims: { sub: user.id, email: user.email, first_name: user.firstName, last_name: user.lastName },
+        isLocalAuth: true,
+      };
+
+      req.login(sessionUser, (err: any) => {
+        if (err) return res.status(500).json({ message: "Login failed after verification." });
+        res.json({ success: true, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName } });
+      });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      console.error("Verify email error:", err);
+      res.status(500).json({ message: "Verification failed. Please try again." });
+    }
+  });
+
+  app.post("/api/auth/resend-verification", async (req: any, res) => {
+    try {
+      const { email } = z.object({ email: z.string().email() }).parse(req.body);
+
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (!user) {
+        return res.json({ success: true });
+      }
+
+      if (user.emailVerified) {
+        return res.json({ success: true, message: "Email already verified." });
+      }
+
+      const code = generateVerificationCode();
+      await db.update(emailVerificationCodes).set({ usedAt: new Date() }).where(and(eq(emailVerificationCodes.email, user.email!), isNull(emailVerificationCodes.usedAt)));
+      await db.insert(emailVerificationCodes).values({
+        userId: user.id,
+        email: user.email!,
+        code,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      });
+
+      sendVerificationCodeEmail({ email: user.email!, code, firstName: user.firstName || "there" }).catch(err => console.error("Resend verification email error:", err));
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Resend verification error:", err);
+      res.status(500).json({ message: "Failed to resend code." });
+    }
+  });
+
+  app.post("/api/auth/forgot-password", async (req: any, res) => {
+    try {
+      const { email } = z.object({ email: z.string().email() }).parse(req.body);
+
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (!user) {
+        return res.json({ success: true });
+      }
+
+      const token = crypto.randomBytes(32).toString("hex");
+      await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(and(eq(passwordResetTokens.userId, user.id), isNull(passwordResetTokens.usedAt)));
+      await db.insert(passwordResetTokens).values({
+        userId: user.id,
+        token,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      });
+
+      const APP_URL = process.env.APP_URL || "https://www.tenant-track.com";
+      const resetUrl = `${APP_URL}/reset-password?token=${token}`;
+
+      sendPasswordResetEmail({ email: user.email!, resetUrl }).catch(err => console.error("Password reset email error:", err));
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Forgot password error:", err);
+      res.status(500).json({ message: "Failed to send reset email." });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req: any, res) => {
+    try {
+      const { token, password } = z.object({
+        token: z.string().min(1),
+        password: z.string().min(8),
+      }).parse(req.body);
+
+      const [record] = await db.select().from(passwordResetTokens)
+        .where(and(eq(passwordResetTokens.token, token), isNull(passwordResetTokens.usedAt)))
+        .limit(1);
+
+      if (!record) {
+        return res.status(400).json({ message: "Invalid or expired reset link." });
+      }
+
+      if (new Date() > record.expiresAt) {
+        return res.status(400).json({ message: "This reset link has expired. Please request a new one." });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+      await db.update(users).set({ passwordHash }).where(eq(users.id, record.userId));
+      await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, record.id));
+
+      res.json({ success: true });
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      console.error("Reset password error:", err);
+      res.status(500).json({ message: "Failed to reset password." });
     }
   });
 

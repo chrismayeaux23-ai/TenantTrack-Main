@@ -205,6 +205,27 @@ export const maintenanceActivityLog = pgTable("maintenance_activity_log", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// ── Auth Tables ───────────────────────────────────────────────────────────────
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const emailVerificationCodes = pgTable("email_verification_codes", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  email: text("email").notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // ── Insert Schemas ─────────────────────────────────────────────────────────────
 
 export const insertPropertySchema = createInsertSchema(properties).omit({ id: true, createdAt: true });
