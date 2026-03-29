@@ -71,7 +71,8 @@ export async function registerRoutes(
 
   async function seedOwnerDemoData(ownerId: string) {
     const existing = await storage.getProperties(ownerId);
-    if (existing.length > 0) return;
+    const hasWalkthroughData = existing.some(p => p.name === "Hawthorne Heights");
+    if (hasWalkthroughData) return;
 
     const now = new Date();
     const daysAgo = (n: number) => new Date(now.getTime() - n * 86400000);
