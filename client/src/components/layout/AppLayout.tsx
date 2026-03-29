@@ -7,6 +7,7 @@ import {
   ChevronRight, Columns3, Calendar
 } from "lucide-react";
 import logoIcon from "@assets/tenanttrack-final-logo.png";
+import bgSaas from "@assets/A_dark,_high-end_SaaS_background_with_a_deep_navy_blue_to_blac_1774750600093.jpg";
 import { Button } from "../ui/Button";
 import { TrialBanner } from "@/components/TrialBanner";
 
@@ -177,7 +178,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Content area (right of sidebar) */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col relative">
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <img src={bgSaas} alt="" className="absolute inset-0 w-full h-full object-cover opacity-[0.04]" />
+        </div>
         <TrialBanner />
         <main className="p-4 md:p-7 lg:p-9 pb-24 md:pb-9 max-w-7xl mx-auto w-full">
           {children}

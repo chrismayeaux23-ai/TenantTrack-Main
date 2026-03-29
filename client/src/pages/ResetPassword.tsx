@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 import logoPng from "@assets/tenanttrack-final-logo.png";
+import bgMain1 from "@assets/main1_1774750600097.jpg";
 
 export default function ResetPassword() {
   const params = new URLSearchParams(window.location.search);
@@ -50,7 +51,11 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <img src={bgMain1} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/70 to-background/90" />
+        </div>
         <div className="w-full max-w-sm text-center">
           <img src={logoPng} alt="TenantTrack" className="h-16 w-16 rounded-xl object-contain mb-4 mx-auto" />
           <h1 className="text-2xl font-bold text-foreground mb-2">Invalid Link</h1>
@@ -62,7 +67,11 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
+      <div className="absolute inset-0 -z-10">
+        <img src={bgMain1} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/70 to-background/90" />
+      </div>
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
           <img src={logoPng} alt="TenantTrack" className="h-16 w-16 rounded-xl object-contain mb-4" />
