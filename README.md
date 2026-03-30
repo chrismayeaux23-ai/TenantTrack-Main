@@ -227,7 +227,29 @@ This creates a system that improves decision-making over time — not just task 
 
 ## Screenshots
 
-*(Dashboard, dispatch board, and vendor view coming soon)*
+### Landing Page
+![Landing Page](screenshots/landing-page.png)
+
+### The Problem We Solve
+![Problem We Solve](screenshots/problem-we-solve.png)
+
+### Work Orders
+![Work Order Expanded](screenshots/work-order-expanded.png)
+
+### Dispatch Board
+![Dispatch Board](screenshots/dispatch-board.png)
+
+### Request Detail — Vendor Dispatched
+![Vendor Dispatch Detail](screenshots/vendor-dispatch-detail.png)
+
+### Auto-Dispatch in Action
+![Request Auto-Dispatched](screenshots/request-auto-dispatched.png)
+
+### Vendor Analytics & Trust Leaderboard
+![Vendor Analytics](screenshots/vendor-analytics.png)
+
+### Vendor Magic-Link Portal
+![Vendor Job Proposal](screenshots/vendor-job-proposal.png)
 
 ---
 
