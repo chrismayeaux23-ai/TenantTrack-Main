@@ -855,7 +855,7 @@ export default function Vendors() {
   const archiveVendor = useArchiveVendor();
   const deleteVendor = useDeleteVendor();
   const { toast } = useToast();
-  const { can, tier } = useSubscription();
+  const { can } = useSubscription();
 
   const [search, setSearch] = useState("");
   const [tradeFilter, setTradeFilter] = useState("all");
