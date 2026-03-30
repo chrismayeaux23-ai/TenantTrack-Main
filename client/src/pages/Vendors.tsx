@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/hooks/use-toast";
+import { useSubscription } from "@/hooks/use-subscription";
 import {
   useVendors, useCreateVendor, useUpdateVendor,
   useArchiveVendor, useDeleteVendor, useVendorStats, useVendorReviews,
@@ -17,8 +18,10 @@ import {
   Briefcase, Plus, Search, Star, Phone, Mail, MapPin,
   Edit2, Trash2, Archive, CheckCircle2, Loader2, ChevronDown,
   ChevronUp, Shield, FileText, X, ShieldCheck, Zap, AlertTriangle, Clock,
+  Upload, Download, AlertCircle, Check, Lock, ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
 
 function TrustScore({ score }: { score: number }) {
   const color = score >= 80 ? "text-green-400 bg-green-400/10 border-green-400/20"
@@ -431,6 +434,411 @@ function VendorCard({
   );
 }
 
+// ── Vendor Import Dialog ──────────────────────────────────────────────────────
+type ParsedRow = {
+  name: string;
+  companyName: string;
+  tradeCategory: string;
+  phone: string;
+  email: string;
+  city: string;
+  serviceArea: string;
+  notes: string;
+  preferredVendor: boolean;
+  emergencyAvailable: boolean;
+  licenseInfo: string;
+  insuranceInfo: string;
+  status: "valid" | "invalid" | "duplicate";
+  errors: string[];
+  selected: boolean;
+};
+
+const TEMPLATE_HEADERS = [
+  "Name", "Company Name", "Trade Category", "Phone", "Email", "City",
+  "Service Area", "Notes", "Preferred (yes/no)", "Emergency Available (yes/no)",
+  "License Info", "Insurance Info",
+];
+
+const HEADER_MAP: Record<string, keyof ParsedRow> = {
+  "name": "name",
+  "contact name": "name",
+  "company name": "companyName",
+  "company": "companyName",
+  "trade category": "tradeCategory",
+  "trade": "tradeCategory",
+  "category": "tradeCategory",
+  "phone": "phone",
+  "phone number": "phone",
+  "email": "email",
+  "email address": "email",
+  "city": "city",
+  "service area": "serviceArea",
+  "notes": "notes",
+  "preferred (yes/no)": "preferredVendor",
+  "preferred": "preferredVendor",
+  "emergency available (yes/no)": "emergencyAvailable",
+  "emergency available": "emergencyAvailable",
+  "emergency": "emergencyAvailable",
+  "license info": "licenseInfo",
+  "license": "licenseInfo",
+  "insurance info": "insuranceInfo",
+  "insurance": "insuranceInfo",
+};
+
+function parseBoolean(val: any): boolean {
+  if (typeof val === "boolean") return val;
+  const s = String(val).toLowerCase().trim();
+  return s === "yes" || s === "true" || s === "1" || s === "y";
+}
+
+function VendorImportDialog({ open, onOpenChange, existingVendors }: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  existingVendors: Vendor[];
+}) {
+  const { toast } = useToast();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [step, setStep] = useState<"upload" | "preview">("upload");
+  const [importing, setImporting] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  function downloadTemplate() {
+    const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS, [
+      "Carlos Ruiz", "Ruiz Plumbing LLC", "Plumbing", "503-555-0001",
+      "carlos@example.com", "Portland", "Metro Portland",
+      "Reliable, always on time", "yes", "no", "OR #PL-44821", "Fully insured",
+    ]]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Vendors");
+    XLSX.writeFile(wb, "vendor-import-template.csv");
+  }
+
+  function parseFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const wb = XLSX.read(data, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const jsonRows = XLSX.utils.sheet_to_json<Record<string, any>>(ws, { defval: "" });
+
+        if (jsonRows.length === 0) {
+          toast({ title: "Empty file", description: "No data rows found in the file.", variant: "destructive" });
+          return;
+        }
+
+        const headers = Object.keys(jsonRows[0]);
+        const colMap: Record<string, keyof ParsedRow> = {};
+        for (const h of headers) {
+          const normalized = h.toLowerCase().trim();
+          if (HEADER_MAP[normalized]) colMap[h] = HEADER_MAP[normalized];
+        }
+
+        if (!Object.values(colMap).includes("name")) {
+          toast({ title: "Missing column", description: "Could not find a 'Name' column. Please use the template.", variant: "destructive" });
+          return;
+        }
+
+        const existingSet = new Set(
+          existingVendors.map(v => `${v.name.toLowerCase()}|${v.tradeCategory.toLowerCase()}`)
+        );
+        const fileSet = new Set<string>();
+
+        const parsed: ParsedRow[] = jsonRows.map(row => {
+          const r: ParsedRow = {
+            name: "", companyName: "", tradeCategory: "", phone: "", email: "",
+            city: "", serviceArea: "", notes: "", preferredVendor: false,
+            emergencyAvailable: false, licenseInfo: "", insuranceInfo: "",
+            status: "valid", errors: [], selected: true,
+          };
+
+          for (const [col, field] of Object.entries(colMap)) {
+            const val = row[col];
+            if (field === "preferredVendor" || field === "emergencyAvailable") {
+              r[field] = parseBoolean(val);
+            } else if (field !== "status" && field !== "errors" && field !== "selected") {
+              (r as any)[field] = String(val || "").trim();
+            }
+          }
+
+          if (!r.name) {
+            r.status = "invalid";
+            r.errors.push("Name is required");
+          }
+          if (!r.tradeCategory) {
+            r.status = "invalid";
+            r.errors.push("Trade Category is required");
+          } else if (!TRADE_CATEGORIES.includes(r.tradeCategory as any)) {
+            const match = TRADE_CATEGORIES.find(t => t.toLowerCase() === r.tradeCategory.toLowerCase());
+            if (match) {
+              r.tradeCategory = match;
+            } else {
+              r.status = "invalid";
+              r.errors.push(`Invalid trade category "${r.tradeCategory}". Valid: ${TRADE_CATEGORIES.join(", ")}`);
+            }
+          }
+
+          if (r.status === "valid") {
+            const key = `${r.name.toLowerCase()}|${r.tradeCategory.toLowerCase()}`;
+            if (existingSet.has(key)) {
+              r.status = "duplicate";
+              r.errors.push("Vendor with same name and trade already exists");
+              r.selected = false;
+            } else if (fileSet.has(key)) {
+              r.status = "duplicate";
+              r.errors.push("Duplicate row within this file");
+              r.selected = false;
+            }
+            fileSet.add(key);
+          }
+
+          return r;
+        });
+
+        setRows(parsed);
+        setStep("preview");
+      } catch {
+        toast({ title: "Parse error", description: "Could not read the file. Please check the format.", variant: "destructive" });
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext !== "csv" && ext !== "xlsx" && ext !== "xls") {
+      toast({ title: "Invalid file type", description: "Please upload a .csv or .xlsx file.", variant: "destructive" });
+      return;
+    }
+    parseFile(file);
+  }
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    handleFiles(e.dataTransfer.files);
+  }, [existingVendors]);
+
+  async function handleImport() {
+    const toImport = rows.filter(r => r.selected && r.status !== "invalid");
+    if (toImport.length === 0) return;
+
+    setImporting(true);
+    try {
+      const vendorData = toImport.map(({ status, errors, selected, ...v }) => v);
+      const res = await fetch("/api/vendors/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ vendors: vendorData }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Import failed");
+      }
+      const result = await res.json();
+      const { queryClient } = await import("@/lib/queryClient");
+      queryClient.invalidateQueries({ queryKey: ["/api/vendors"] });
+
+      const parts = [`${result.imported} vendor${result.imported !== 1 ? "s" : ""} imported`];
+      if (result.failed > 0) parts.push(`${result.failed} skipped`);
+      if (result.errors?.length > 0) {
+        parts.push("\n" + result.errors.slice(0, 5).join("\n"));
+        if (result.errors.length > 5) parts.push(`...and ${result.errors.length - 5} more`);
+      }
+      toast({
+        title: result.failed > 0 ? "Import complete with issues" : "Import complete",
+        description: parts.join(", "),
+        variant: result.failed > 0 ? "destructive" : "default",
+      });
+
+      onOpenChange(false);
+      setRows([]);
+      setStep("upload");
+    } catch (err: any) {
+      toast({ title: "Import failed", description: err.message, variant: "destructive" });
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  function toggleRow(idx: number) {
+    setRows(prev => prev.map((r, i) => i === idx ? { ...r, selected: !r.selected } : r));
+  }
+
+  function toggleAll(selected: boolean) {
+    setRows(prev => prev.map(r => r.status !== "invalid" ? { ...r, selected } : r));
+  }
+
+  const validCount = rows.filter(r => r.status === "valid" && r.selected).length;
+  const dupCount = rows.filter(r => r.status === "duplicate" && r.selected).length;
+  const invalidCount = rows.filter(r => r.status === "invalid").length;
+  const selectedCount = rows.filter(r => r.selected && r.status !== "invalid").length;
+
+  function reset() {
+    setRows([]);
+    setStep("upload");
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
+      <div className="max-w-3xl">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-display font-bold flex items-center gap-2">
+            <Upload className="h-5 w-5 text-primary" /> Import Vendors
+          </h2>
+          <button onClick={() => { reset(); onOpenChange(false); }} className="p-1 rounded-lg hover:bg-muted">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {step === "upload" && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Upload a CSV or Excel file to bulk-import your vendor network. Use our template to make sure your columns match.
+            </p>
+
+            <button
+              onClick={downloadTemplate}
+              className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium"
+              data-testid="button-download-template"
+            >
+              <Download className="h-4 w-4" /> Download CSV Template
+            </button>
+
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => fileRef.current?.click()}
+              className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-colors
+                ${dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+              data-testid="dropzone-vendor-import"
+            >
+              <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="font-medium text-foreground">Drop your file here or click to browse</p>
+              <p className="text-sm text-muted-foreground mt-1">Supports .csv and .xlsx files</p>
+            </div>
+
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              className="hidden"
+              onChange={(e) => handleFiles(e.target.files)}
+              data-testid="input-vendor-file"
+            />
+
+            <div className="bg-card border border-border rounded-xl p-4 text-xs text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground text-sm mb-2">Column Guide</p>
+              <p><span className="text-primary font-medium">Required:</span> Name, Trade Category</p>
+              <p><span className="text-foreground font-medium">Optional:</span> Company Name, Phone, Email, City, Service Area, Notes, Preferred (yes/no), Emergency Available (yes/no), License Info, Insurance Info</p>
+              <p className="mt-2">Valid trade categories: {TRADE_CATEGORIES.join(", ")}</p>
+            </div>
+          </div>
+        )}
+
+        {step === "preview" && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Badge className="bg-green-500/10 text-green-400 border-green-400/20">{validCount} valid</Badge>
+              {dupCount > 0 && <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-400/20">{dupCount + rows.filter(r => r.status === "duplicate" && !r.selected).length} duplicate{dupCount !== 1 ? "s" : ""}</Badge>}
+              {invalidCount > 0 && <Badge className="bg-red-500/10 text-red-400 border-red-400/20">{invalidCount} invalid</Badge>}
+              <span className="text-sm text-muted-foreground ml-auto">{selectedCount} selected for import</span>
+            </div>
+
+            <div className="max-h-72 overflow-y-auto border border-border rounded-xl">
+              <table className="w-full text-sm" data-testid="table-vendor-preview">
+                <thead className="sticky top-0 bg-card border-b border-border">
+                  <tr>
+                    <th className="p-2 text-left w-8">
+                      <input
+                        type="checkbox"
+                        checked={rows.filter(r => r.status !== "invalid").every(r => r.selected)}
+                        onChange={(e) => toggleAll(e.target.checked)}
+                        className="accent-primary"
+                        data-testid="checkbox-select-all"
+                      />
+                    </th>
+                    <th className="p-2 text-left text-muted-foreground font-medium">Status</th>
+                    <th className="p-2 text-left text-muted-foreground font-medium">Name</th>
+                    <th className="p-2 text-left text-muted-foreground font-medium">Trade</th>
+                    <th className="p-2 text-left text-muted-foreground font-medium hidden sm:table-cell">Company</th>
+                    <th className="p-2 text-left text-muted-foreground font-medium hidden md:table-cell">Phone</th>
+                    <th className="p-2 text-left text-muted-foreground font-medium hidden md:table-cell">Email</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r, i) => (
+                    <tr
+                      key={i}
+                      className={`border-b border-border/50 ${r.status === "invalid" ? "opacity-50" : ""}`}
+                      data-testid={`row-vendor-import-${i}`}
+                    >
+                      <td className="p-2">
+                        <input
+                          type="checkbox"
+                          checked={r.selected}
+                          disabled={r.status === "invalid"}
+                          onChange={() => toggleRow(i)}
+                          className="accent-primary"
+                        />
+                      </td>
+                      <td className="p-2">
+                        {r.status === "valid" && <Check className="h-4 w-4 text-green-400" />}
+                        {r.status === "invalid" && (
+                          <div className="group relative">
+                            <AlertCircle className="h-4 w-4 text-red-400" />
+                            <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block z-50 bg-card border border-border rounded-lg p-2 text-xs text-red-400 whitespace-nowrap shadow-lg">
+                              {r.errors.join("; ")}
+                            </div>
+                          </div>
+                        )}
+                        {r.status === "duplicate" && (
+                          <div className="group relative">
+                            <AlertTriangle className="h-4 w-4 text-yellow-400" />
+                            <div className="absolute bottom-full left-0 mb-1 hidden group-hover:block z-50 bg-card border border-border rounded-lg p-2 text-xs text-yellow-400 whitespace-nowrap shadow-lg">
+                              {r.errors.join("; ")}
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-2 font-medium text-foreground">{r.name || "—"}</td>
+                      <td className="p-2 text-muted-foreground">{r.tradeCategory || "—"}</td>
+                      <td className="p-2 text-muted-foreground hidden sm:table-cell">{r.companyName || "—"}</td>
+                      <td className="p-2 text-muted-foreground hidden md:table-cell">{r.phone || "—"}</td>
+                      <td className="p-2 text-muted-foreground hidden md:table-cell">{r.email || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex gap-2">
+              <Button onClick={reset} variant="outline" className="gap-2" data-testid="button-import-back">
+                <ArrowLeft className="h-4 w-4" /> Choose Different File
+              </Button>
+              <Button
+                onClick={handleImport}
+                disabled={selectedCount === 0 || importing}
+                className="flex-1 gap-2"
+                data-testid="button-confirm-import"
+              >
+                {importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {importing ? "Importing..." : `Import ${selectedCount} Vendor${selectedCount !== 1 ? "s" : ""}`}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function Vendors() {
   const { data: vendors = [], isLoading } = useVendors();
@@ -439,12 +847,14 @@ export default function Vendors() {
   const archiveVendor = useArchiveVendor();
   const deleteVendor = useDeleteVendor();
   const { toast } = useToast();
+  const { can, tier } = useSubscription();
 
   const [search, setSearch] = useState("");
   const [tradeFilter, setTradeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("active");
   const [preferredOnly, setPreferredOnly] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const [detailVendor, setDetailVendor] = useState<Vendor | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
@@ -514,9 +924,20 @@ export default function Vendors() {
             </h1>
             <p className="text-muted-foreground mt-1">Trusted contractors, scored by performance. Smart dispatch starts here.</p>
           </div>
-          <Button onClick={() => setShowAddModal(true)} className="shrink-0 gap-2" data-testid="button-add-vendor">
-            <Plus className="h-4 w-4" /> Add Vendor
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            {can("vendorImport") ? (
+              <Button variant="outline" onClick={() => setShowImportModal(true)} className="gap-2" data-testid="button-import-vendors">
+                <Upload className="h-4 w-4" /> Import
+              </Button>
+            ) : (
+              <Button variant="outline" onClick={() => toast({ title: "Upgrade Required", description: "Vendor import is available on Growth and Pro plans." })} className="gap-2 opacity-70" data-testid="button-import-vendors-locked">
+                <Lock className="h-4 w-4" /> Import
+              </Button>
+            )}
+            <Button onClick={() => setShowAddModal(true)} className="gap-2" data-testid="button-add-vendor">
+              <Plus className="h-4 w-4" /> Add Vendor
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -700,6 +1121,13 @@ export default function Vendors() {
           </div>
         </div>
       </Dialog>
+
+      {/* Import Vendors Modal */}
+      <VendorImportDialog
+        open={showImportModal}
+        onOpenChange={setShowImportModal}
+        existingVendors={vendors}
+      />
     </AppLayout>
   );
 }

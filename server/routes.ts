@@ -9,7 +9,7 @@ import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClie
 import { db } from "./db";
 import { users } from "@shared/models/auth";
 import { eq, sql, desc, and, gte, lte, isNull } from "drizzle-orm";
-import { properties, maintenanceRequests, repairCosts, recurringTasks, requestNotes, maintenanceStaff, vendors, vendorAssignments, vendorReviews, passwordResetTokens, emailVerificationCodes } from "@shared/schema";
+import { properties, maintenanceRequests, repairCosts, recurringTasks, requestNotes, maintenanceStaff, vendors, vendorAssignments, vendorReviews, passwordResetTokens, emailVerificationCodes, TRADE_CATEGORIES } from "@shared/schema";
 import { authStorage } from "./replit_integrations/auth/storage";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -1718,6 +1718,84 @@ export async function registerRoutes(
     } catch (err) {
       if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
       res.status(500).json({ message: "Failed to create vendor" });
+    }
+  });
+
+  app.post('/api/vendors/import', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      const tier = user?.subscriptionTier || "trial";
+      if (tier !== "growth" && tier !== "pro") {
+        return res.status(403).json({ message: "Vendor import requires Growth or Pro plan" });
+      }
+
+      const vendorSchema = z.object({
+        name: z.string().min(1).max(200),
+        companyName: z.string().max(200).optional().default(""),
+        tradeCategory: z.string().min(1),
+        phone: z.string().max(50).optional().default(""),
+        email: z.string().max(200).optional().default("").refine(
+          (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+          { message: "Invalid email format" }
+        ),
+        city: z.string().max(100).optional().default(""),
+        serviceArea: z.string().max(200).optional().default(""),
+        notes: z.string().max(2000).optional().default(""),
+        preferredVendor: z.boolean().optional().default(false),
+        emergencyAvailable: z.boolean().optional().default(false),
+        licenseInfo: z.string().max(500).optional().default(""),
+        insuranceInfo: z.string().max(500).optional().default(""),
+      });
+
+      const body = z.object({ vendors: z.array(z.any()).min(1).max(500) }).parse(req.body);
+      const results: { imported: number; failed: number; errors: string[] } = { imported: 0, failed: 0, errors: [] };
+
+      const existingVendors = await storage.getVendorsByLandlord(userId);
+      const existingSet = new Set(existingVendors.map((v: any) => `${v.name.toLowerCase()}|${v.tradeCategory.toLowerCase()}`));
+      const batchSet = new Set<string>();
+
+      for (let i = 0; i < body.vendors.length; i++) {
+        try {
+          const parsed = vendorSchema.parse(body.vendors[i]);
+          if (!TRADE_CATEGORIES.includes(parsed.tradeCategory as any)) {
+            results.failed++;
+            results.errors.push(`Row ${i + 1}: Invalid trade category "${parsed.tradeCategory}"`);
+            continue;
+          }
+          const key = `${parsed.name.toLowerCase()}|${parsed.tradeCategory.toLowerCase()}`;
+          if (existingSet.has(key)) {
+            results.failed++;
+            results.errors.push(`Row ${i + 1}: Duplicate — vendor "${parsed.name}" (${parsed.tradeCategory}) already exists`);
+            continue;
+          }
+          if (batchSet.has(key)) {
+            results.failed++;
+            results.errors.push(`Row ${i + 1}: Duplicate within file — "${parsed.name}" (${parsed.tradeCategory})`);
+            continue;
+          }
+          batchSet.add(key);
+          await storage.createVendor({
+            ...parsed,
+            landlordId: userId,
+            status: "active",
+          });
+          existingSet.add(key);
+          results.imported++;
+        } catch (err) {
+          results.failed++;
+          if (err instanceof z.ZodError) {
+            results.errors.push(`Row ${i + 1}: ${err.errors[0].message}`);
+          } else {
+            results.errors.push(`Row ${i + 1}: Failed to import`);
+          }
+        }
+      }
+
+      res.json(results);
+    } catch (err) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: "Failed to import vendors" });
     }
   });
 

@@ -18,6 +18,7 @@ export const PLAN_CONFIG = {
     staffAssignment: false,
     photoUploads: false,
     exportLogs: false,
+    vendorImport: false,
   },
   starter: {
     label: "Starter",
@@ -34,6 +35,7 @@ export const PLAN_CONFIG = {
     staffAssignment: false,
     photoUploads: true,
     exportLogs: false,
+    vendorImport: false,
   },
   growth: {
     label: "Growth",
@@ -50,6 +52,7 @@ export const PLAN_CONFIG = {
     staffAssignment: true,
     photoUploads: true,
     exportLogs: true,
+    vendorImport: true,
   },
   pro: {
     label: "Pro",
@@ -66,6 +69,7 @@ export const PLAN_CONFIG = {
     staffAssignment: true,
     photoUploads: true,
     exportLogs: true,
+    vendorImport: true,
   },
 } as const;
 
