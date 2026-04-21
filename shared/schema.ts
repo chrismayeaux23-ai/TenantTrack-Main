@@ -107,6 +107,12 @@ export const vendors = pgTable("vendors", {
   emergencyAvailable: boolean("emergency_available").default(false),
   noShowCount: integer("no_show_count").default(0),
   lastJobCompletedAt: timestamp("last_job_completed_at"),
+  source: text("source").default("manual"),
+  externalRating: integer("external_rating"),
+  externalReviewCount: integer("external_review_count"),
+  externalSourceId: text("external_source_id"),
+  externalSourceUrl: text("external_source_url"),
+  seedTrustScore: integer("seed_trust_score"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
