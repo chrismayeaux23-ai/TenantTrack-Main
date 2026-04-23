@@ -1830,6 +1830,60 @@ export async function registerRoutes(
     }
   });
 
+  app.post('/api/vendors/import-photos', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      const tier = user?.subscriptionTier || "trial";
+      if (tier !== "growth" && tier !== "pro") {
+        return res.status(403).json({ message: "Photo import requires Growth or Pro plan" });
+      }
+
+      const input = z.object({
+        images: z.array(z.object({
+          base64: z.string().min(1),
+          mimeType: z.string().regex(/^image\/(png|jpeg|jpg|webp|gif|heic|heif)$/i),
+        })).min(1).max(5),
+      }).parse(req.body);
+
+      const { extractVendorsFromImages } = await import("./vendorPhotoExtraction");
+      const extracted = await extractVendorsFromImages(input.images);
+
+      const existingVendors = await storage.getVendorsByLandlord(userId);
+      const existingSet = new Set(
+        existingVendors.map(v => `${v.name.toLowerCase()}|${v.tradeCategory.toLowerCase()}`)
+      );
+
+      const rows = extracted.map(v => {
+        const errors: string[] = [];
+        let status: "valid" | "invalid" | "duplicate" = "valid";
+        if (!v.name) {
+          status = "invalid";
+          errors.push("Name is required");
+        }
+        if (!v.tradeCategory || !(TRADE_CATEGORIES as readonly string[]).includes(v.tradeCategory)) {
+          status = "invalid";
+          errors.push("Invalid trade category");
+        }
+        if (status === "valid") {
+          const key = `${v.name.toLowerCase()}|${v.tradeCategory.toLowerCase()}`;
+          if (existingSet.has(key)) {
+            status = "duplicate";
+            errors.push("Vendor with same name and trade already exists");
+          }
+        }
+        return { ...v, status, errors, selected: status === "valid" };
+      });
+
+      res.json({ rows, processed: input.images.length });
+    } catch (err: any) {
+      if (err instanceof z.ZodError) return res.status(400).json({ message: err.errors[0].message });
+      const msg = err?.message || "Failed to read photos";
+      console.error("Photo extraction error:", msg);
+      res.status(500).json({ message: msg });
+    }
+  });
+
   app.post('/api/vendors/import', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
@@ -1857,7 +1911,10 @@ export async function registerRoutes(
         insuranceInfo: z.string().max(500).optional().default(""),
       });
 
-      const body = z.object({ vendors: z.array(z.record(z.unknown())).min(1).max(500) }).parse(req.body);
+      const body = z.object({
+        vendors: z.array(z.record(z.unknown())).min(1).max(500),
+        source: z.enum(["manual", "csv", "phonebook_photo"]).optional().default("csv"),
+      }).parse(req.body);
       const results: { imported: number; failed: number; errors: string[] } = { imported: 0, failed: 0, errors: [] };
 
       const existingVendors = await storage.getVendorsByLandlord(userId);
@@ -1888,6 +1945,7 @@ export async function registerRoutes(
             ...parsed,
             landlordId: userId,
             status: "active",
+            source: body.source,
           });
           existingSet.add(key);
           results.imported++;

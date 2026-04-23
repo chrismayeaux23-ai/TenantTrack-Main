@@ -4,8 +4,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { Dialog } from "@/components/ui/Dialog";
-import { Select } from "@/components/ui/Select";
+import { Dialog } from "@/components/ui/SimpleDialog";
+import { Select } from "@/components/ui/NativeSelect";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/use-subscription";
 import {
@@ -20,7 +20,7 @@ import {
   Edit2, Trash2, Archive, CheckCircle2, Loader2, ChevronDown,
   ChevronUp, Shield, FileText, X, ShieldCheck, Zap, AlertTriangle, Clock,
   Upload, Download, AlertCircle, Check, Lock, ArrowLeft, Globe, Sparkles,
-  ExternalLink,
+  ExternalLink, Camera, Image as ImageIcon, FileSpreadsheet,
 } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
@@ -507,10 +507,16 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
 }) {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
+  const photoFileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [step, setStep] = useState<"upload" | "preview">("upload");
   const [importing, setImporting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [mode, setMode] = useState<"csv" | "photo">("csv");
+  const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
+  const [extracting, setExtracting] = useState(false);
+  const [importSource, setImportSource] = useState<"csv" | "phonebook_photo">("csv");
 
   function downloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS, [
@@ -606,12 +612,105 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
         });
 
         setRows(parsed);
+        setImportSource("csv");
         setStep("preview");
       } catch {
         toast({ title: "Parse error", description: "Could not read the file. Please check the format.", variant: "destructive" });
       }
     };
     reader.readAsArrayBuffer(file);
+  }
+
+  function handlePhotoFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const arr = Array.from(files).slice(0, 5 - photos.length);
+    const newOnes = arr
+      .filter(f => f.type.startsWith("image/"))
+      .map(file => ({ file, preview: URL.createObjectURL(file) }));
+    if (newOnes.length === 0) {
+      toast({ title: "No images", description: "Please select image files.", variant: "destructive" });
+      return;
+    }
+    setPhotos(prev => [...prev, ...newOnes].slice(0, 5));
+  }
+
+  function removePhoto(idx: number) {
+    setPhotos(prev => {
+      URL.revokeObjectURL(prev[idx].preview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  }
+
+  async function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        const comma = result.indexOf(",");
+        resolve(comma >= 0 ? result.slice(comma + 1) : result);
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function extractPhotos() {
+    if (photos.length === 0) return;
+    setExtracting(true);
+    try {
+      const images = await Promise.all(
+        photos.map(async p => ({
+          base64: await fileToBase64(p.file),
+          mimeType: p.file.type || "image/jpeg",
+        }))
+      );
+
+      const res = await fetch("/api/vendors/import-photos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ images }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Photo extraction failed");
+      }
+      const data = await res.json();
+      const extractedRows: ParsedRow[] = (data.rows || []).map((r: any) => ({
+        name: r.name || "",
+        companyName: r.companyName || "",
+        tradeCategory: r.tradeCategory || "",
+        phone: r.phone || "",
+        email: r.email || "",
+        city: r.city || "",
+        serviceArea: r.serviceArea || "",
+        notes: r.notes || "",
+        preferredVendor: !!r.preferredVendor,
+        emergencyAvailable: !!r.emergencyAvailable,
+        licenseInfo: r.licenseInfo || "",
+        insuranceInfo: r.insuranceInfo || "",
+        status: r.status || "valid",
+        errors: r.errors || [],
+        selected: r.selected ?? (r.status === "valid"),
+      }));
+
+      if (extractedRows.length === 0) {
+        toast({
+          title: "No vendors found",
+          description: "We couldn't read any vendor contacts from those photos. Try a clearer shot or better lighting.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setRows(extractedRows);
+      setImportSource("phonebook_photo");
+      setStep("preview");
+    } catch (err: any) {
+      toast({ title: "Couldn't read your phonebook", description: err.message, variant: "destructive" });
+    } finally {
+      setExtracting(false);
+    }
   }
 
   function handleFiles(files: FileList | null) {
@@ -642,7 +741,7 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ vendors: vendorData }),
+        body: JSON.stringify({ vendors: vendorData, source: importSource }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -691,7 +790,13 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
   function reset() {
     setRows([]);
     setStep("upload");
+    setMode("csv");
+    setImportSource("csv");
+    photos.forEach(p => URL.revokeObjectURL(p.preview));
+    setPhotos([]);
     if (fileRef.current) fileRef.current.value = "";
+    if (photoFileRef.current) photoFileRef.current.value = "";
+    if (cameraRef.current) cameraRef.current.value = "";
   }
 
   return (
@@ -708,47 +813,174 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
 
         {step === "upload" && (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Upload a CSV or Excel file to bulk-import your vendor network. Use our template to make sure your columns match.
-            </p>
-
-            <button
-              onClick={downloadTemplate}
-              className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium"
-              data-testid="button-download-template"
-            >
-              <Download className="h-4 w-4" /> Download CSV Template
-            </button>
-
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => fileRef.current?.click()}
-              className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-colors
-                ${dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
-              data-testid="dropzone-vendor-import"
-            >
-              <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="font-medium text-foreground">Drop your file here or click to browse</p>
-              <p className="text-sm text-muted-foreground mt-1">Supports .csv and .xlsx files</p>
+            <div className="flex border-b border-border" role="tablist">
+              <button
+                role="tab"
+                aria-selected={mode === "csv"}
+                onClick={() => setMode("csv")}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                  mode === "csv"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                data-testid="tab-import-csv"
+              >
+                <FileSpreadsheet className="h-4 w-4" /> From Spreadsheet
+              </button>
+              <button
+                role="tab"
+                aria-selected={mode === "photo"}
+                onClick={() => setMode("photo")}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                  mode === "photo"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+                data-testid="tab-import-photo"
+              >
+                <Camera className="h-4 w-4" /> From Phonebook Photo
+              </button>
             </div>
 
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv,.xlsx,.xls"
-              className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-              data-testid="input-vendor-file"
-            />
+            {mode === "csv" && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Upload a CSV or Excel file to bulk-import your vendor network. Use our template to make sure your columns match.
+                </p>
 
-            <div className="bg-card border border-border rounded-xl p-4 text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground text-sm mb-2">Column Guide</p>
-              <p><span className="text-primary font-medium">Required:</span> Name, Trade Category</p>
-              <p><span className="text-foreground font-medium">Optional:</span> Company Name, Phone, Email, City, Service Area, Notes, Preferred (yes/no), Emergency Available (yes/no), License Info, Insurance Info</p>
-              <p className="mt-2">Valid trade categories: {TRADE_CATEGORIES.join(", ")}</p>
-            </div>
+                <button
+                  onClick={downloadTemplate}
+                  className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium"
+                  data-testid="button-download-template"
+                >
+                  <Download className="h-4 w-4" /> Download CSV Template
+                </button>
+
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileRef.current?.click()}
+                  className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-colors
+                    ${dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}
+                  data-testid="dropzone-vendor-import"
+                >
+                  <Upload className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                  <p className="font-medium text-foreground">Drop your file here or click to browse</p>
+                  <p className="text-sm text-muted-foreground mt-1">Supports .csv and .xlsx files</p>
+                </div>
+
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  className="hidden"
+                  onChange={(e) => handleFiles(e.target.files)}
+                  data-testid="input-vendor-file"
+                />
+
+                <div className="bg-card border border-border rounded-xl p-4 text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground text-sm mb-2">Column Guide</p>
+                  <p><span className="text-primary font-medium">Required:</span> Name, Trade Category</p>
+                  <p><span className="text-foreground font-medium">Optional:</span> Company Name, Phone, Email, City, Service Area, Notes, Preferred (yes/no), Emergency Available (yes/no), License Info, Insurance Info</p>
+                  <p className="mt-2">Valid trade categories: {TRADE_CATEGORIES.join(", ")}</p>
+                </div>
+              </div>
+            )}
+
+            {mode === "photo" && (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Snap or upload up to 5 photos of a paper phonebook, address book, or handwritten contact list. We'll read the contacts and let you confirm before importing.
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => cameraRef.current?.click()}
+                    disabled={photos.length >= 5 || extracting}
+                    className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid="button-take-photo"
+                  >
+                    <Camera className="h-8 w-8 text-primary" />
+                    <span className="font-medium text-sm">Take a photo</span>
+                    <span className="text-xs text-muted-foreground">Use your camera</span>
+                  </button>
+                  <button
+                    onClick={() => photoFileRef.current?.click()}
+                    disabled={photos.length >= 5 || extracting}
+                    className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid="button-upload-photos"
+                  >
+                    <ImageIcon className="h-8 w-8 text-primary" />
+                    <span className="font-medium text-sm">Upload photos</span>
+                    <span className="text-xs text-muted-foreground">Pick from device</span>
+                  </button>
+                </div>
+
+                <input
+                  ref={cameraRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => handlePhotoFiles(e.target.files)}
+                  data-testid="input-camera-photo"
+                />
+                <input
+                  ref={photoFileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handlePhotoFiles(e.target.files)}
+                  data-testid="input-vendor-photos"
+                />
+
+                {photos.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      {photos.length} of 5 photos selected
+                    </p>
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                      {photos.map((p, idx) => (
+                        <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border" data-testid={`preview-photo-${idx}`}>
+                          <img src={p.preview} alt={`Phonebook page ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            onClick={() => removePhoto(idx)}
+                            disabled={extracting}
+                            className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                            data-testid={`button-remove-photo-${idx}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="bg-card border border-border rounded-xl p-4 text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground text-sm mb-1">Tips for better results</p>
+                  <p>• Good lighting, page laid flat, one page per photo when possible</p>
+                  <p>• Printed and handwritten lists both work, English or Spanish</p>
+                  <p>• You'll review and edit every contact before anything is saved</p>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    onClick={extractPhotos}
+                    disabled={photos.length === 0 || extracting}
+                    data-testid="button-extract-photos"
+                  >
+                    {extracting ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Reading photos...</>
+                    ) : (
+                      <><Sparkles className="h-4 w-4 mr-2" /> Read {photos.length || ""} Photo{photos.length === 1 ? "" : "s"}</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

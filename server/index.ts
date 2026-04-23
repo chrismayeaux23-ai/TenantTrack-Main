@@ -144,7 +144,7 @@ app.post(
   }
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "30mb" }));
 app.use(express.urlencoded({ extended: false }));
 
 export function log(message: string, source = "express") {

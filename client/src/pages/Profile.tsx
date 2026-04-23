@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Label } from "@/components/ui/Label";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/Badge";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, User, Mail, Phone, Building2, Crown, Zap, ArrowRight } from "lucide-react";

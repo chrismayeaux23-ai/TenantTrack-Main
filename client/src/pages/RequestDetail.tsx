@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { Select } from "@/components/ui/NativeSelect";
 import { apiRequest } from "@/lib/queryClient";
 import {
   ChevronLeft, ShieldCheck, Phone, Mail, MapPin, AlertTriangle,

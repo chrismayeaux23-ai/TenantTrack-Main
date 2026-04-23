@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useProperties } from "@/hooks/use-properties";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { Select } from "@/components/ui/NativeSelect";
 import { Badge } from "@/components/ui/Badge";
 import { Loader2, DollarSign, TrendingUp, Wrench, Download, Building2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
