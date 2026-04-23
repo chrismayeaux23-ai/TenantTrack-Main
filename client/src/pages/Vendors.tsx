@@ -11,7 +11,6 @@ import { useSubscription } from "@/hooks/use-subscription";
 import {
   useVendors, useCreateVendor, useUpdateVendor,
   useArchiveVendor, useDeleteVendor, useVendorStats, useVendorReviews,
-  useDiscoverVendors, useAddDiscoveredVendor, type DiscoveryResult,
 } from "@/hooks/use-vendors";
 import type { Vendor } from "@shared/schema";
 import { TRADE_CATEGORIES } from "@shared/schema";
@@ -19,8 +18,8 @@ import {
   Briefcase, Plus, Search, Star, Phone, Mail, MapPin,
   Edit2, Trash2, Archive, CheckCircle2, Loader2, ChevronDown,
   ChevronUp, Shield, FileText, X, ShieldCheck, Zap, AlertTriangle, Clock,
-  Upload, Download, AlertCircle, Check, Lock, ArrowLeft, Globe, Sparkles,
-  ExternalLink, Camera, Image as ImageIcon, FileSpreadsheet,
+  Upload, Download, AlertCircle, Check, Lock, ArrowLeft, Sparkles,
+  Camera, Image as ImageIcon, FileSpreadsheet,
 } from "lucide-react";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
@@ -1081,190 +1080,6 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
   );
 }
 
-// ── Find Vendors Dialog ────────────────────────────────────────────────────────
-function FindVendorsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
-  const { toast } = useToast();
-  const [tradeCategory, setTradeCategory] = useState("Plumbing");
-  const [location, setLocation] = useState("");
-  const [results, setResults] = useState<DiscoveryResult[]>([]);
-  const [searched, setSearched] = useState(false);
-  const [addingId, setAddingId] = useState<string | null>(null);
-  const discover = useDiscoverVendors();
-  const addVendor = useAddDiscoveredVendor();
-
-  function reset() {
-    setResults([]);
-    setSearched(false);
-    setLocation("");
-    setTradeCategory("Plumbing");
-  }
-
-  async function handleSearch(e?: React.FormEvent) {
-    e?.preventDefault();
-    if (!location.trim()) {
-      toast({ title: "Location required", description: "Enter a city or ZIP code to search.", variant: "destructive" });
-      return;
-    }
-    try {
-      const found = await discover.mutateAsync({ tradeCategory, location: location.trim() });
-      setResults(found);
-      setSearched(true);
-    } catch (err: any) {
-      toast({ title: "Search failed", description: err.message, variant: "destructive" });
-    }
-  }
-
-  async function handleAdd(r: DiscoveryResult) {
-    setAddingId(r.externalSourceId);
-    try {
-      await addVendor.mutateAsync({
-        externalSourceId: r.externalSourceId,
-        name: r.name,
-        companyName: r.companyName,
-        tradeCategory: r.tradeCategory,
-        phone: r.phone,
-        city: r.city,
-        serviceArea: r.serviceArea,
-        externalRating: r.externalRating,
-        externalReviewCount: r.externalReviewCount,
-        externalSourceUrl: r.externalSourceUrl,
-        seedTrustScore: r.seedTrustScore,
-        address: r.address,
-      });
-      setResults(prev => prev.map(x => x.externalSourceId === r.externalSourceId ? { ...x, alreadyInNetwork: true } : x));
-      toast({ title: "Added to network", description: `${r.name} is now in your vendor network.` });
-    } catch (err: any) {
-      toast({ title: "Could not add", description: err.message, variant: "destructive" });
-    } finally {
-      setAddingId(null);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
-      <div className="max-w-3xl">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-display font-bold flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" /> Find Vendors
-          </h2>
-          <button onClick={() => { reset(); onOpenChange(false); }} className="p-1 rounded-lg hover:bg-muted" data-testid="button-close-find-vendors">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <p className="text-sm text-muted-foreground mb-4">
-          Search public business directories for licensed contractors near your properties. Trust scores are pre-seeded from real public reviews.
-        </p>
-
-        <form onSubmit={handleSearch} className="grid grid-cols-1 sm:grid-cols-[180px_1fr_auto] gap-2 mb-5">
-          <Select
-            value={tradeCategory}
-            onChange={(e) => setTradeCategory(e.target.value)}
-            options={TRADE_CATEGORIES.map(t => ({ label: t, value: t }))}
-            data-testid="select-discover-trade"
-          />
-          <Input
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="City or ZIP (e.g. Portland, OR or 97214)"
-            data-testid="input-discover-location"
-          />
-          <Button type="submit" disabled={discover.isPending} className="gap-2" data-testid="button-discover-search">
-            {discover.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            {discover.isPending ? "Searching..." : "Search"}
-          </Button>
-        </form>
-
-        {!searched && !discover.isPending && (
-          <div className="bg-card border border-dashed border-border rounded-2xl p-10 text-center">
-            <div className="h-14 w-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <Globe className="h-7 w-7 text-primary" />
-            </div>
-            <p className="font-medium text-foreground mb-1">Pick a trade and a location</p>
-            <p className="text-sm text-muted-foreground">We'll show top-rated local contractors with trust scores already calculated.</p>
-          </div>
-        )}
-
-        {searched && results.length === 0 && !discover.isPending && (
-          <div className="bg-card border border-dashed border-border rounded-2xl p-10 text-center">
-            <AlertCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-            <p className="font-medium text-foreground mb-1">No results found</p>
-            <p className="text-sm text-muted-foreground">Try a broader location or a different trade.</p>
-          </div>
-        )}
-
-        {results.length > 0 && (
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1" data-testid="list-discovery-results">
-            {results.map((r) => (
-              <div
-                key={r.externalSourceId}
-                className="bg-card border border-border rounded-2xl p-4 flex flex-col sm:flex-row gap-3 sm:items-center"
-                data-testid={`card-discovery-${r.externalSourceId}`}
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2 mb-1 flex-wrap">
-                    <p className="font-semibold text-foreground truncate">{r.name}</p>
-                    <TrustScore score={r.seedTrustScore} />
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5 flex-wrap">
-                    {r.externalRating !== null && r.externalReviewCount !== null && r.externalReviewCount > 0 ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
-                        <span className="text-foreground font-medium">{(r.externalRating / 10).toFixed(1)}</span>
-                        <span>· {r.externalReviewCount} review{r.externalReviewCount !== 1 ? "s" : ""}</span>
-                      </span>
-                    ) : (
-                      <span>No public reviews yet</span>
-                    )}
-                    {r.externalSourceUrl && (
-                      <a
-                        href={r.externalSourceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                        data-testid={`link-discovery-source-${r.externalSourceId}`}
-                      >
-                        <ExternalLink className="h-3 w-3" /> View on Google
-                      </a>
-                    )}
-                  </div>
-                  {r.address && (
-                    <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                      <MapPin className="h-3 w-3 shrink-0" /> {r.address}
-                    </p>
-                  )}
-                  {r.phone && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Phone className="h-3 w-3 shrink-0" /> {r.phone}
-                    </p>
-                  )}
-                </div>
-                <div className="shrink-0">
-                  {r.alreadyInNetwork ? (
-                    <Badge className="bg-green-500/10 text-green-400 border-green-400/20 gap-1">
-                      <Check className="h-3 w-3" /> In your network
-                    </Badge>
-                  ) : (
-                    <Button
-                      onClick={() => handleAdd(r)}
-                      disabled={addingId === r.externalSourceId}
-                      className="gap-2"
-                      data-testid={`button-add-discovered-${r.externalSourceId}`}
-                    >
-                      {addingId === r.externalSourceId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      Add to network
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </Dialog>
-  );
-}
-
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function Vendors() {
   const { data: vendors = [], isLoading } = useVendors();
@@ -1281,7 +1096,6 @@ export default function Vendors() {
   const [preferredOnly, setPreferredOnly] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [showFindModal, setShowFindModal] = useState(false);
   const [editVendor, setEditVendor] = useState<Vendor | null>(null);
   const [detailVendor, setDetailVendor] = useState<Vendor | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
@@ -1352,15 +1166,6 @@ export default function Vendors() {
             <p className="text-muted-foreground mt-1">Trusted contractors, scored by performance. Smart dispatch starts here.</p>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-            {can("vendorImport") ? (
-              <Button variant="outline" onClick={() => setShowFindModal(true)} className="gap-2" data-testid="button-find-vendors">
-                <Sparkles className="h-4 w-4" /> Find Vendors
-              </Button>
-            ) : (
-              <Button variant="outline" onClick={() => toast({ title: "Upgrade Required", description: "Vendor discovery is available on Growth and Pro plans." })} className="gap-2 opacity-70" data-testid="button-find-vendors-locked">
-                <Lock className="h-4 w-4" /> Find Vendors
-              </Button>
-            )}
             {can("vendorImport") ? (
               <Button variant="outline" onClick={() => setShowImportModal(true)} className="gap-2" data-testid="button-import-vendors">
                 <Upload className="h-4 w-4" /> Import Vendors
@@ -1564,9 +1369,6 @@ export default function Vendors() {
         onOpenChange={setShowImportModal}
         existingVendors={vendors}
       />
-
-      {/* Find Vendors Modal */}
-      <FindVendorsDialog open={showFindModal} onOpenChange={setShowFindModal} />
     </AppLayout>
   );
 }

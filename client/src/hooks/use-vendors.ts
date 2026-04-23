@@ -229,63 +229,6 @@ export function useSubmitVendorReview(requestId: number) {
   });
 }
 
-export interface DiscoveryResult {
-  externalSourceId: string;
-  name: string;
-  companyName: string | null;
-  tradeCategory: string;
-  phone: string | null;
-  email: string | null;
-  city: string | null;
-  serviceArea: string | null;
-  externalRating: number | null;
-  externalReviewCount: number | null;
-  externalSourceUrl: string | null;
-  seedTrustScore: number;
-  address: string | null;
-  website: string | null;
-  alreadyInNetwork: boolean;
-}
-
-export function useDiscoverVendors() {
-  return useMutation({
-    mutationFn: async (data: { tradeCategory: string; location: string }) => {
-      const res = await fetch("/api/vendors/discover", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to search for vendors");
-      }
-      const json = await res.json() as { results: DiscoveryResult[] };
-      return json.results;
-    },
-  });
-}
-
-export function useAddDiscoveredVendor() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (data: Omit<DiscoveryResult, "alreadyInNetwork" | "email" | "website">) => {
-      const res = await fetch("/api/vendors/discover/add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to add vendor");
-      }
-      return res.json() as Promise<Vendor>;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [VENDORS_KEY] }),
-  });
-}
-
 export function useVendorActivity(requestId: number) {
   return useQuery<Array<{ id: number; eventType: string; eventLabel: string; details: string | null; createdAt: string }>>({
     queryKey: ["/api/requests", requestId, "activity"],
