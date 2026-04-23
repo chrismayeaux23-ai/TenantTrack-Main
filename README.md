@@ -2,274 +2,215 @@
 
 **The smart maintenance platform for landlords.**
 
-TenantTrack is a mobile-first SaaS application that streamlines property maintenance from request to completion. Tenants scan a QR code to report issues, landlords dispatch trusted vendors with one click, and vendors respond through secure magic links — no apps, no accounts, no chaos.
+TenantTrack is a mobile-first SaaS for independent landlords and small property managers who are tired of chasing vendors, losing maintenance requests in text threads, and rebuilding the same paper trail every month. Tenants scan a QR code to report an issue, the platform recommends or auto-assigns the best vendor based on a 0–100 trust score, and vendors respond through a secure magic link — no app, no account, no chaos.
 
-**Website:** [tenant-track.com](https://tenant-track.com)
-
-**Design:** Dark navy UI with royal blue accents. Mobile-first, always dark mode.
-
----
-
-## The Problem
-
-Maintenance coordination is one of the most frustrating parts of property management:
-
-- Vendors don't respond — and there's no paper trail
-- Jobs get lost in a chain of texts and voicemails
-- Scheduling is inconsistent and double-bookings happen
-- Follow-ups waste hours every week
-- No system of record when disputes arise
-
-## Why This Matters
-
-Maintenance coordination is one of the highest-friction, most time-consuming tasks for landlords.
-
-TenantTrack reduces:
-- Missed jobs
-- Vendor delays
-- Manual coordination
-- Operational overhead
-
-**Result:** Faster repairs, better vendor decisions, and less time spent managing maintenance.
-
-## The Solution
-
-TenantTrack replaces the chaos with a structured, automated workflow:
-
-1. A tenant scans a QR code and submits a maintenance request
-2. You're notified instantly with full details and photos
-3. The best vendor is recommended (or auto-assigned) based on trust scores
-4. The vendor receives a secure magic link — no account needed
-5. The vendor accepts, schedules, and completes the job
-6. Everyone stays in sync with automated email notifications
-7. If a vendor doesn't respond, the system escalates automatically
+- **Live site:** [tenant-track.com](https://tenant-track.com)
+- **Replit-hosted:** [tenant-management-hub.replit.app](https://tenant-management-hub.replit.app)
+- **Design language:** dark navy background, neon orange accents, Space Grotesk headings + Inter body, mobile-first, always dark mode.
 
 ---
 
-## Core Features
+## The problem
 
-### QR-Powered Tenant Requests
-- Every property gets a unique, scannable QR code
-- Tenants submit requests in under 60 seconds — no app download required
-- Supports photo uploads (up to 3), urgency levels, and issue categories
-- Bilingual interface (English and Spanish)
-- Tenants receive a tracking code to check request status anytime
-- Print-ready flyer generation for posting in common areas
+Maintenance coordination is the highest-friction, most time-consuming part of property management:
 
-### Smart Vendor Dispatch
-- **Three dispatch modes:** Manual, Recommend, or Auto-Assign
-- Scoring algorithm considers trade match, trust score, emergency availability, workload, service area, and no-show history
-- Full scoring breakdown shows exactly why each vendor was recommended
-- Preferred vendor prioritization with fallback suggestions
+- Vendors don't respond and there's no paper trail.
+- Jobs get lost in a chain of texts and voicemails.
+- Scheduling is inconsistent and double-bookings happen.
+- Follow-ups eat hours every week.
+- When a dispute comes up, there's no system of record.
 
-### Vendor Magic-Link Portal
-- Vendors receive a secure one-click link via email — no login or account required
-- Accept, decline, or propose a new time
-- Mark status updates: en route, started, completed
-- Add job notes, cost details, invoice numbers, and materials used
-- Links expire after 7 days; landlords can revoke or regenerate anytime
+## The solution
 
-### Trust Scores (0–100)
-- Every vendor gets a performance score based on reviews, completion rate, response time, and no-show history
-- Scores feed directly into the dispatch algorithm
-- Higher-scoring vendors get prioritized automatically
-- Detailed vendor profiles with job history, performance stats, and review breakdowns
+TenantTrack replaces all of that with a structured, automated workflow:
 
-### Scheduling Calendar
-- Week, day, and list views with full filtering (vendor, property, trade, status, urgency)
-- Automatic conflict detection prevents double-booking
-- Reschedule or unschedule jobs with one click
-- Accept vendor-proposed times directly from the calendar
+1. A tenant scans a QR code and submits a request in under a minute.
+2. The landlord is notified instantly with full details and photos.
+3. The best vendor is recommended (or auto-assigned) using a trust-based scoring algorithm.
+4. The vendor accepts, schedules, and completes the job through a secure magic link.
+5. Everyone stays in sync via automated email notifications.
+6. If a vendor doesn't respond in time, the system escalates and suggests the next best vendor automatically.
 
-### Dispatch Board (Kanban)
-- Visual pipeline: Needs Dispatch → Awaiting Response → Scheduled → In Progress → Completed
-- Drag-and-drop between columns
-- Quick action buttons for auto-dispatch, scheduling, and detail views
-- Urgency sorting and SLA overdue indicators on every card
+---
 
-### SLA Engine & Escalation
-- Background monitoring checks vendor response deadlines every 5 minutes
-- Auto-escalates non-responsive vendors and suggests the next best alternative
-- Sends 24-hour reminder emails to vendors before scheduled jobs
-- Alerts landlords about unassigned emergency requests
-- Full escalation history visible on each request
+## Features
 
-### Automated Email Notifications
+### Tenant experience
+- One QR code per property, linking to a public maintenance request form (no login).
+- Bilingual interface (English + Spanish).
+- Photo uploads (up to 3 images per request).
+- Tracking page accessed via a unique 8-character code.
+- Two-way messaging with the landlord per request — no tenant account required.
+- Print-ready property flyer for posting in common areas.
+
+### Landlord workspace
+- Properties, units, tenants, and a directory built automatically from submitted requests.
+- Dashboard with real-time analytics, status badges, and interactive stat cards that filter the request list.
+- Internal landlord-only notes per request.
+- Activity log with a timestamped audit trail on every request.
+- Repair cost tracking per request (description, amount, vendor, invoice number, materials) with CSV export.
+- Recurring maintenance scheduling (weekly, biweekly, monthly, quarterly, biannually, annually) with auto-calculated next-due dates and overdue alerts.
+
+### Vendor network
+- Private network of contractors with preferred-vendor flagging, contact info, license/insurance tracking, and internal ratings.
+- Trust score (0–100) per vendor, derived from review quality, completion rate, response time, and no-show history.
+- Vendor reviews per job (quality, speed, communication, price, overall).
+- Detailed vendor profiles with job history and performance stats.
+- **CSV / Excel import** for bulk-loading an existing vendor list.
+- **Phonebook-photo OCR import** — landlords snap photos of a paper Rolodex or address book and the platform extracts name, phone, trade, and notes via OpenAI vision, then drops the rows into the same review-and-confirm flow used for CSV.
+- Every vendor is tagged by source (`manual`, `csv_import`, `phonebook_photo`) and surfaced on the vendor card.
+
+### Dispatch & scheduling
+- **Auto-Dispatch Engine** with three modes — Manual, Recommend, Auto-Assign — and a transparent scoring breakdown (trade match, urgency, service area, trust score, workload, no-show penalties).
+- **Dispatch Board (Kanban)** with columns for Needs Dispatch → Awaiting Response → Scheduled → In Progress → Waiting on Parts → Completed. Drag-and-drop, urgency sorting, and SLA-overdue indicators on every card.
+- **Scheduling Calendar** with week, day, and list views, full filtering (vendor, property, trade, status, urgency), conflict detection, reschedule/unschedule, and one-click acceptance of vendor-proposed times.
+- **SLA Escalation Engine** — a background process that checks vendor response deadlines every five minutes, auto-escalates non-responses, suggests the next best vendor, sends 24-hour reminder emails before scheduled jobs, and alerts landlords about unassigned emergencies.
+- SLA & Dispatch panel on each request with response-deadline countdown, escalation history, suggested reassignment, and the full notification log.
+
+### Vendor magic-link portal
+- Vendors receive a secure one-click email link — no login, no account.
+- Accept, decline, or propose a new time.
+- Mark status: en route, started, completed.
+- Add job notes, cost details, invoice numbers, and materials used.
+- Links expire after 7 days; landlords can revoke or regenerate at any time.
+
+### Communications
+Automated transactional email via Resend for:
 - New request alerts to landlords
-- Vendor dispatch confirmations
-- Vendor response notifications (accept, decline, propose time, en route, complete)
+- Vendor dispatch notifications
+- Vendor responses (accept, decline, propose-time, en-route, complete)
+- 24-hour reminder to vendors before scheduled jobs
 - Tenant updates when a vendor is scheduled
-- 24-hour vendor reminders before scheduled jobs
-- SLA violation alerts
+- SLA violation alerts to landlords
 
-### Cost Tracking & Reporting
-- Log repair costs per request with vendor details, invoice numbers, and materials
-- Export full cost history to CSV
-- Analytics dashboard with spending trends, response times, and vendor performance charts
+### Plans & billing
+- Stripe-backed subscriptions with auto-seeded products on startup, webhook processing, and a customer billing portal.
+- Plan-based feature gating across property limits, staff assignment, vendor import (Growth + Pro), analytics, and more.
+- Public `/terms` and `/privacy` pages.
+- Demo account with pre-seeded data for showing the product without dirtying real data.
 
-### Recurring Maintenance
-- Schedule preventive tasks (HVAC filters, smoke detectors, pest control, etc.)
-- Configurable frequency: weekly, biweekly, monthly, quarterly, biannually, annually
-- Overdue task alerts ensure nothing slips through the cracks
-
-### Additional Features
-- **Dashboard** with real-time analytics, status badges, and interactive filtering
-- **Tenant directory** auto-built from submitted requests
-- **Staff management** with request assignment capabilities
-- **Internal notes** system for landlord-only comments per request
-- **Two-way messaging** between tenants and landlords (no tenant login required)
-- **Activity logs** with full timestamped audit trail on every request
-- **Plan-based feature gating** (property limits, staff assignment, analytics access)
-- **Demo mode** with pre-seeded data for demonstrations
+### Authentication
+- Email + password with email verification (6-digit code via Resend, 15-minute expiry).
+- Google OAuth.
+- Forgot-password flow (secure token link via Resend, 1-hour expiry).
+- Unverified accounts are blocked at signin until verified.
 
 ---
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | React, TypeScript, Vite, Tailwind CSS, Shadcn UI |
-| **Backend** | Node.js, Express.js, TypeScript |
-| **Database** | PostgreSQL, Drizzle ORM |
-| **Authentication** | Passport.js (email/password + Google OAuth) |
-| **Payments** | Stripe (subscriptions, checkout, billing portal) |
-| **Email** | Resend (transactional notifications) |
-| **Storage** | Replit Object Storage (tenant photo uploads) |
-| **Routing** | Wouter (client-side) |
-| **State** | TanStack Query (server state management) |
+| Frontend | React, TypeScript, Vite, Tailwind CSS, Shadcn UI, Wouter (routing), TanStack Query (server state) |
+| Backend | Node.js, Express, TypeScript |
+| Database | PostgreSQL with Drizzle ORM |
+| Auth | Passport.js (email/password + Google OAuth), Bcrypt for hashing |
+| Payments | Stripe (subscriptions, checkout, billing portal), `stripe-replit-sync` |
+| Email | Resend (transactional notifications) |
+| File storage | Replit Object Storage (tenant photo uploads) |
+| AI | OpenAI vision (GPT-4o) for phonebook-photo OCR extraction |
 
 ---
 
-## Environment Variables
-
-### Required
-
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `SESSION_SECRET` | Express session secret |
-
-### Email (Resend)
-
-| Variable | Description |
-|----------|-------------|
-| `RESEND_API_KEY` | Resend API key for sending emails |
-
-### Payments (Stripe)
-
-| Variable | Description |
-|----------|-------------|
-| `STRIPE_SECRET_KEY` | Stripe secret key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
-
-### Authentication (Google OAuth)
-
-| Variable | Description |
-|----------|-------------|
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
-
-### Optional
-
-| Variable | Description |
-|----------|-------------|
-| `EMAIL_FROM` | Sender email address for notifications |
-| `APP_URL` | Public application URL (defaults to Replit domain) |
-
----
-
-## Getting Started
+## Getting started
 
 ```bash
 git clone https://github.com/your-username/tenanttrack.git
 cd tenanttrack
 npm install
-npm run dev
+npm run db:push     # sync the Drizzle schema to your PostgreSQL instance
+npm run dev         # starts Express + Vite on the same port
 ```
 
-The development server starts Express (backend) and Vite (frontend) on the same port.
+Build and run a production bundle:
+
+```bash
+npm run build
+node dist/index.cjs
+```
+
+### Environment variables
+
+Required:
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SESSION_SECRET` | Express session signing secret |
+
+Email (Resend):
+
+| Variable | Purpose |
+|----------|---------|
+| `RESEND_API_KEY` | API key for sending transactional email |
+| `EMAIL_FROM` | Sender address used in notifications (optional) |
+
+Payments (Stripe):
+
+| Variable | Purpose |
+|----------|---------|
+| `STRIPE_SECRET_KEY` | Stripe secret key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+
+Google OAuth:
+
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+
+Object storage (provided automatically when running on Replit):
+
+| Variable | Purpose |
+|----------|---------|
+| `DEFAULT_OBJECT_STORAGE_BUCKET_ID` | Bucket id |
+| `PUBLIC_OBJECT_SEARCH_PATHS` | Public asset search paths |
+| `PRIVATE_OBJECT_DIR` | Directory for private uploads (tenant photos) |
+
+AI (OpenAI vision, used by phonebook-photo OCR import):
+
+| Variable | Purpose |
+|----------|---------|
+| `AI_INTEGRATIONS_OPENAI_API_KEY` | OpenAI API key |
+| `AI_INTEGRATIONS_OPENAI_BASE_URL` | OpenAI base URL (optional, defaults to upstream) |
+
+Optional:
+
+| Variable | Purpose |
+|----------|---------|
+| `APP_URL` | Public application URL (defaults to the Replit-hosted domain) |
 
 ---
 
-## Subscription Plans
+## Subscription plans
 
-| Plan | Price | Best For |
+| Plan | Price | Best for |
 |------|:-----:|----------|
-| **Starter** | $29/mo | Small landlords (1–5 units) |
-| **Growth** | $59/mo | Growing portfolios (6–25 units) |
-| **Pro** | $99/mo | Professional managers (25+ units) |
+| Starter | $29/mo | Small landlords (1–5 units) |
+| Growth | $59/mo | Growing portfolios (6–25 units) |
+| Pro | $99/mo | Professional managers (25+ units) |
 
 All plans include a 14-day free trial. No credit card required to start.
 
 ---
 
-## Key Differentiator
+## Project status
 
-Unlike traditional property management tools, TenantTrack focuses specifically on:
-
-- Vendor performance tracking tied to real jobs
-- Automated dispatch and escalation workflows
-- Vendor trust scoring based on actual outcomes
-
-This creates a system that improves decision-making over time — not just task tracking.
-
----
-
-## Roadmap
-
-- Advanced vendor trust scoring
-- Vendor availability tracking
-- Automated scheduling optimization
-- Mobile-friendly vendor workflows
-- Deeper analytics and reporting
-
----
-
-## Screenshots
-
-### Landing Page
-![Landing Page](screenshots/landing-page.png)
-
-### The Problem We Solve
-![Problem We Solve](screenshots/problem-we-solve.png)
-
-### Work Orders
-![Work Order Expanded](screenshots/work-order-expanded.png)
-
-### Dispatch Board
-![Dispatch Board](screenshots/dispatch-board.png)
-
-### Request Detail — Vendor Dispatched
-![Vendor Dispatch Detail](screenshots/vendor-dispatch-detail.png)
-
-### Auto-Dispatch in Action
-![Request Auto-Dispatched](screenshots/request-auto-dispatched.png)
-
-### Vendor Analytics & Trust Leaderboard
-![Vendor Analytics](screenshots/vendor-analytics.png)
-
-### Vendor Magic-Link Portal
-![Vendor Job Proposal](screenshots/vendor-job-proposal.png)
-
----
-
-## Project Status
-
-TenantTrack is live and actively used in production. Core dispatch, scheduling, vendor coordination, and billing workflows are fully implemented.
+TenantTrack is live and used in production. Core dispatch, scheduling, vendor coordination, magic-link workflow, SLA escalation, vendor import (CSV + phonebook photo), and Stripe billing are all shipped.
 
 ---
 
 ## Contact
 
-- **Email:** support@tenant-track.com
-- **Phone:** (503) 380-6482
-- **Website:** [tenant-track.com](https://tenant-track.com)
+- Email: support@tenant-track.com
+- Phone: (503) 380-6482
+- Website: [tenant-track.com](https://tenant-track.com)
 
 ---
 
 ## License
 
-MIT License
+MIT — see [License.md](./License.md).
 
 ## Author
 
