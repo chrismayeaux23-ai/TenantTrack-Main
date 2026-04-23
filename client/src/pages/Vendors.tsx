@@ -498,6 +498,14 @@ const HEADER_MAP: Record<string, MappableField> = {
   "insurance": "insuranceInfo",
 };
 
+type PhotoItem = {
+  file: File;
+  preview: string;
+  status: "queued" | "reading" | "done" | "failed";
+  errorMessage?: string;
+  rows?: ParsedRow[];
+};
+
 function parseBoolean(val: unknown): boolean {
   if (typeof val === "boolean") return val;
   const s = String(val).toLowerCase().trim();
@@ -518,9 +526,13 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
   const [importing, setImporting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [mode, setMode] = useState<"csv" | "photo">("csv");
-  const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
-  const [extracting, setExtracting] = useState(false);
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [importSource, setImportSource] = useState<"csv" | "phonebook_photo">("csv");
+
+  const isProcessing = photos.some(p => p.status === "reading");
+  const processedCount = photos.filter(p => p.status === "done" || p.status === "failed").length;
+  const allUnprocessed = photos.length > 0 && photos.every(p => p.status === "queued" && !p.rows);
+  const totalContacts = photos.reduce((sum, p) => sum + (p.rows?.length || 0), 0);
 
   function downloadTemplate() {
     const ws = XLSX.utils.aoa_to_sheet([TEMPLATE_HEADERS, [
@@ -628,9 +640,9 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
   function handlePhotoFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     const arr = Array.from(files).slice(0, 5 - photos.length);
-    const newOnes = arr
+    const newOnes: PhotoItem[] = arr
       .filter(f => f.type.startsWith("image/"))
-      .map(file => ({ file, preview: URL.createObjectURL(file) }));
+      .map(file => ({ file, preview: URL.createObjectURL(file), status: "queued" as const }));
     if (newOnes.length === 0) {
       toast({ title: "No images", description: "Please select image files.", variant: "destructive" });
       return;
@@ -696,60 +708,90 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
     return { base64: await fileToBase64(blob), mimeType: "image/jpeg" };
   }
 
-  async function extractPhotos() {
-    if (photos.length === 0) return;
-    setExtracting(true);
-    try {
-      const images = await Promise.all(
-        photos.map(p => downscaleImage(p.file)),
-      );
+  function mapResponseRows(data: any): ParsedRow[] {
+    return (data.rows || []).map((r: any) => ({
+      name: r.name || "",
+      companyName: r.companyName || "",
+      tradeCategory: r.tradeCategory || "",
+      phone: r.phone || "",
+      email: r.email || "",
+      city: r.city || "",
+      serviceArea: r.serviceArea || "",
+      notes: r.notes || "",
+      preferredVendor: !!r.preferredVendor,
+      emergencyAvailable: !!r.emergencyAvailable,
+      licenseInfo: r.licenseInfo || "",
+      insuranceInfo: r.insuranceInfo || "",
+      status: r.status || "valid",
+      errors: r.errors || [],
+      selected: r.selected ?? (r.status === "valid"),
+    }));
+  }
 
+  async function readOnePhoto(file: File) {
+    setPhotos(prev => prev.map(p => p.file === file ? { ...p, status: "reading", errorMessage: undefined } : p));
+    try {
+      const image = await downscaleImage(file);
       const res = await fetch("/api/vendors/import-photos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ images }),
+        body: JSON.stringify({ images: [image] }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Photo extraction failed");
+        throw new Error(err.message || "Couldn't read this photo");
       }
       const data = await res.json();
-      const extractedRows: ParsedRow[] = (data.rows || []).map((r: any) => ({
-        name: r.name || "",
-        companyName: r.companyName || "",
-        tradeCategory: r.tradeCategory || "",
-        phone: r.phone || "",
-        email: r.email || "",
-        city: r.city || "",
-        serviceArea: r.serviceArea || "",
-        notes: r.notes || "",
-        preferredVendor: !!r.preferredVendor,
-        emergencyAvailable: !!r.emergencyAvailable,
-        licenseInfo: r.licenseInfo || "",
-        insuranceInfo: r.insuranceInfo || "",
-        status: r.status || "valid",
-        errors: r.errors || [],
-        selected: r.selected ?? (r.status === "valid"),
-      }));
-
-      if (extractedRows.length === 0) {
-        toast({
-          title: "No vendors found",
-          description: "We couldn't read any vendor contacts from those photos. Try a clearer shot or better lighting.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setRows(extractedRows);
-      setImportSource("phonebook_photo");
-      setStep("preview");
+      const extractedRows = mapResponseRows(data);
+      setPhotos(prev => prev.map(p => p.file === file ? { ...p, status: "done", rows: extractedRows, errorMessage: undefined } : p));
     } catch (err: any) {
-      toast({ title: "Couldn't read your phonebook", description: err.message, variant: "destructive" });
-    } finally {
-      setExtracting(false);
+      setPhotos(prev => prev.map(p => p.file === file ? { ...p, status: "failed", errorMessage: err.message || "Couldn't read this photo", rows: undefined } : p));
     }
+  }
+
+  async function extractPhotos() {
+    const targets = photos.filter(p => p.status === "queued" || p.status === "failed");
+    if (targets.length === 0) {
+      proceedToReview();
+      return;
+    }
+    setPhotos(prev => prev.map(p =>
+      (p.status === "queued" || p.status === "failed")
+        ? { ...p, status: "queued", errorMessage: undefined }
+        : p
+    ));
+    await Promise.all(targets.map(t => readOnePhoto(t.file)));
+  }
+
+  async function retryPhoto(file: File) {
+    await readOnePhoto(file);
+  }
+
+  function proceedToReview() {
+    const allRows: ParsedRow[] = [];
+    for (const p of photos) {
+      if (p.rows) allRows.push(...p.rows);
+    }
+    if (allRows.length === 0) {
+      toast({
+        title: "No vendors found",
+        description: "We couldn't read any vendor contacts from those photos. Try a clearer shot or better lighting.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const seen = new Set<string>();
+    const deduped: ParsedRow[] = [];
+    for (const r of allRows) {
+      const key = `${r.name.toLowerCase()}|${r.tradeCategory.toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(r);
+    }
+    setRows(deduped);
+    setImportSource("phonebook_photo");
+    setStep("preview");
   }
 
   function handleFiles(files: FileList | null) {
@@ -936,7 +978,7 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => cameraRef.current?.click()}
-                    disabled={photos.length >= 5 || extracting}
+                    disabled={photos.length >= 5 || isProcessing}
                     className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid="button-take-photo"
                   >
@@ -946,7 +988,7 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
                   </button>
                   <button
                     onClick={() => photoFileRef.current?.click()}
-                    disabled={photos.length >= 5 || extracting}
+                    disabled={photos.length >= 5 || isProcessing}
                     className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border rounded-2xl hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid="button-upload-photos"
                   >
@@ -981,19 +1023,76 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
                       {photos.length} of 5 photos selected
                     </p>
                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                      {photos.map((p, idx) => (
-                        <div key={idx} className="relative group aspect-square rounded-lg overflow-hidden border border-border" data-testid={`preview-photo-${idx}`}>
-                          <img src={p.preview} alt={`Phonebook page ${idx + 1}`} className="w-full h-full object-cover" />
-                          <button
-                            onClick={() => removePhoto(idx)}
-                            disabled={extracting}
-                            className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                            data-testid={`button-remove-photo-${idx}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
+                      {photos.map((p, idx) => {
+                        const statusBadge = (() => {
+                          if (p.status === "reading") {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-500/20 text-blue-300 text-[10px] font-medium" data-testid={`badge-photo-status-reading-${idx}`}>
+                                <Loader2 className="h-2.5 w-2.5 animate-spin" /> Reading
+                              </span>
+                            );
+                          }
+                          if (p.status === "done") {
+                            const count = p.rows?.length ?? 0;
+                            return (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-green-500/20 text-green-300 text-[10px] font-medium" data-testid={`badge-photo-status-done-${idx}`}>
+                                <Check className="h-2.5 w-2.5" /> {count} found
+                              </span>
+                            );
+                          }
+                          if (p.status === "failed") {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-300 text-[10px] font-medium" data-testid={`badge-photo-status-failed-${idx}`}>
+                                <AlertCircle className="h-2.5 w-2.5" /> Failed
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-muted text-muted-foreground text-[10px] font-medium" data-testid={`badge-photo-status-queued-${idx}`}>
+                              <Clock className="h-2.5 w-2.5" /> Queued
+                            </span>
+                          );
+                        })();
+
+                        return (
+                          <div key={idx} className="relative group" data-testid={`preview-photo-${idx}`}>
+                            <div className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                              <img src={p.preview} alt={`Phonebook page ${idx + 1}`} className="w-full h-full object-cover" />
+                              {p.status === "reading" && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                  <Loader2 className="h-6 w-6 text-white animate-spin" />
+                                </div>
+                              )}
+                              <div className="absolute bottom-1 left-1 right-1 flex justify-start">
+                                {statusBadge}
+                              </div>
+                              <button
+                                onClick={() => removePhoto(idx)}
+                                disabled={isProcessing}
+                                className="absolute top-1 right-1 p-1 rounded-full bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                                data-testid={`button-remove-photo-${idx}`}
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                            {p.status === "failed" && (
+                              <button
+                                onClick={() => retryPhoto(p.file)}
+                                disabled={isProcessing}
+                                className="mt-1 w-full text-[10px] font-medium text-primary hover:text-primary/80 flex items-center justify-center gap-1 disabled:opacity-50"
+                                data-testid={`button-retry-photo-${idx}`}
+                              >
+                                <Sparkles className="h-2.5 w-2.5" /> Retry
+                              </button>
+                            )}
+                            {p.status === "failed" && p.errorMessage && (
+                              <p className="mt-0.5 text-[10px] text-red-400 line-clamp-2" data-testid={`text-photo-error-${idx}`}>
+                                {p.errorMessage}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -1008,13 +1107,17 @@ function VendorImportDialog({ open, onOpenChange, existingVendors }: {
                 <div className="flex justify-end gap-2">
                   <Button
                     onClick={extractPhotos}
-                    disabled={photos.length === 0 || extracting}
+                    disabled={photos.length === 0 || isProcessing}
                     data-testid="button-extract-photos"
                   >
-                    {extracting ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Reading photos...</>
-                    ) : (
+                    {isProcessing ? (
+                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Reading {processedCount} of {photos.length}...</>
+                    ) : allUnprocessed ? (
                       <><Sparkles className="h-4 w-4 mr-2" /> Read {photos.length || ""} Photo{photos.length === 1 ? "" : "s"}</>
+                    ) : photos.some(p => p.status === "queued" || p.status === "failed") ? (
+                      <><Sparkles className="h-4 w-4 mr-2" /> Read {photos.filter(p => p.status === "queued" || p.status === "failed").length} more</>
+                    ) : (
+                      <><Check className="h-4 w-4 mr-2" /> Continue to review ({totalContacts} contact{totalContacts === 1 ? "" : "s"})</>
                     )}
                   </Button>
                 </div>
