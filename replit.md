@@ -53,7 +53,7 @@ The application follows a mobile-first design philosophy.
 - **Stripe Integration**: Auto-seeding of subscription products on startup, webhook processing, and customer/subscription management.
 - **Email Service**: Resend-based email notifications for new requests, status updates, and staff assignments.
 - **File Structure**: Organized with clear separation for shared schemas, server-side logic, client-side components, and integration specific files (e.g., `replit_integrations`).
-- **Deployment**: Configured for autoscale deployment with `npm run build` and `node dist/index.mjs`.
+- **Deployment**: Configured for autoscale deployment with `npm run build` and `node dist/index.cjs` (matches the `start` script in `package.json`).
 
 ## External Dependencies
 - **Stripe**: For subscription management, payments, checkout, and billing portal. Uses `stripe-replit-sync`.
