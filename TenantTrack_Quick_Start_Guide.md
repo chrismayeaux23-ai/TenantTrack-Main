@@ -12,7 +12,7 @@ Website: [tenant-track.com](https://tenant-track.com)
 
 - Go to **tenant-track.com** and click **"Start Free Trial"**
 - Sign up with your email and password, or use Google sign-in
-- You get a full 14-day free trial — no credit card needed
+- You get a full 30-day free trial — no credit card needed
 
 ### 2. Complete Onboarding
 
@@ -160,7 +160,7 @@ Website: [tenant-track.com](https://tenant-track.com)
 | **Growth** | $59/mo | 6–25 units | Unlimited | Everything in Starter + auto-dispatch, scheduling, trust scores, staff assignment |
 | **Pro** | $99/mo | 25+ units | Unlimited | Everything in Growth + analytics, cost tracking, CSV export, dispatch board, bilingual UI, priority support |
 
-All plans include a **14-day free trial** — no credit card required. No setup fees, no contracts, cancel anytime.
+All plans include a **30-day free trial** — no credit card required. No setup fees, no contracts, cancel anytime.
 
 ---
 

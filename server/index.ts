@@ -84,7 +84,7 @@ async function seedStripeProducts() {
         for (const oldPrice of prices.data) {
           await stripe.prices.update(oldPrice.id, { active: false });
         }
-        await stripe.prices.create({ product: productId, unit_amount: plan.priceAmount, currency: 'usd', recurring: { interval: 'month', trial_period_days: 14 } });
+        await stripe.prices.create({ product: productId, unit_amount: plan.priceAmount, currency: 'usd', recurring: { interval: 'month', trial_period_days: 30 } });
         console.log(`Created new price for ${plan.name}: $${plan.priceAmount / 100}/mo`);
       }
     }

@@ -175,12 +175,12 @@ export default function Billing() {
               <div className="mt-4">
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                   <span>Trial progress</span>
-                  <span>{14 - trialDaysRemaining} of 14 days used</span>
+                  <span>{30 - trialDaysRemaining} of 30 days used</span>
                 </div>
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${Math.min(100, ((14 - trialDaysRemaining) / 14) * 100)}%` }}
+                    style={{ width: `${Math.min(100, ((30 - trialDaysRemaining) / 30) * 100)}%` }}
                   />
                 </div>
               </div>

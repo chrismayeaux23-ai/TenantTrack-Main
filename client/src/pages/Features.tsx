@@ -675,7 +675,7 @@ export default function Features() {
               },
               {
                 title: "Transparent Pricing",
-                desc: "No per-unit fees that punish growth. No hidden charges. Three simple tiers based on portfolio size. You always know what you're paying, and every plan includes a 14-day free trial.",
+                desc: "No per-unit fees that punish growth. No hidden charges. Three simple tiers based on portfolio size. You always know what you're paying, and every plan includes a 30-day free trial.",
                 icon: DollarSign,
               },
               {
@@ -745,7 +745,7 @@ export default function Features() {
           <h2 className="text-3xl md:text-4xl font-display font-extrabold text-foreground mb-4">
             Simple, Transparent Pricing
           </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">All plans include a 14-day free trial. No credit card required. No per-unit fees. No hidden charges.</p>
+          <p className="text-muted-foreground max-w-xl mx-auto">All plans include a 30-day free trial. No credit card required. No per-unit fees. No hidden charges.</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
@@ -828,7 +828,7 @@ export default function Features() {
                 onClick={() => window.location.href = '/api/login'}
                 data-testid={`button-plan-${plan.name.toLowerCase()}`}
               >
-                Start 14-Day Free Trial
+                Start 30-Day Free Trial
               </Button>
             </div>
           ))}
@@ -850,7 +850,7 @@ export default function Features() {
             Get Started Free
             <ArrowRight className="h-5 w-5" />
           </Button>
-          <p className="text-sm text-muted-foreground mt-4">14-day free trial &middot; No credit card &middot; Cancel anytime</p>
+          <p className="text-sm text-muted-foreground mt-4">30-day free trial &middot; No credit card &middot; Cancel anytime</p>
         </div>
       </section>
 
