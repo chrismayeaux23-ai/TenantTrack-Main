@@ -222,7 +222,7 @@ const SLIDES = [
       "Set up in under 5 minutes, no IT help needed",
       "Tenants love it — scan, report, track",
       "Vendor scorecards protect your time and money",
-      "30-day free trial, cancel anytime",
+      "14-day free trial, cancel anytime",
     ],
     accent: "from-violet-500/15 to-primary/10",
     visual: "why-results",
@@ -233,7 +233,7 @@ const SLIDES = [
     stepLabel: "Choose a Plan",
     tabLabel: "Pricing",
     title: "Simple Pricing, No Surprises",
-    description: "All plans include a 30-day free trial — no credit card required to start. Pick the plan that fits your portfolio size, and upgrade anytime as you grow.",
+    description: "All plans include a 14-day free trial — no credit card required to start. Pick the plan that fits your portfolio size, and upgrade anytime as you grow.",
     bullets: [
       "No setup fees, no contracts, cancel anytime",
       "Upgrade or downgrade at any time",
@@ -888,7 +888,7 @@ function SlideVisual({ type }: { type: string }) {
         <div className="h-7 w-7 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
           <Check className="h-3.5 w-3.5 text-green-400" />
         </div>
-        <p className="text-[10px] text-muted-foreground"><span className="font-bold text-foreground">30-day free trial</span> · No credit card required · Cancel anytime</p>
+        <p className="text-[10px] text-muted-foreground"><span className="font-bold text-foreground">14-day free trial</span> · No credit card required · Cancel anytime</p>
       </div>
     </div>
   );
@@ -937,7 +937,7 @@ function SlideVisual({ type }: { type: string }) {
         </div>
       ))}
       <div className="bg-card border border-border rounded-xl p-3 text-center">
-        <p className="text-xs text-muted-foreground">30-day free trial · No credit card · <span className="text-primary font-medium">Get started in 5 minutes</span></p>
+        <p className="text-xs text-muted-foreground">14-day free trial · No credit card · <span className="text-primary font-medium">Get started in 5 minutes</span></p>
       </div>
     </div>
   );
@@ -1014,7 +1014,7 @@ export default function Landing() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              30-day free trial &middot; No credit card required
+              14-day free trial &middot; No credit card required
             </div>
             <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
               Vendor Dispatch <br className="hidden md:block" />
@@ -1035,7 +1035,7 @@ export default function Landing() {
             <div className="flex items-center gap-6 mt-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Check className="h-4 w-4 text-primary" />
-                <span>Free 30-day trial</span>
+                <span>Free 14-day trial</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Check className="h-4 w-4 text-primary" />
@@ -1354,7 +1354,7 @@ export default function Landing() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            All plans include a 30-day free trial. No credit card required to start.
+            All plans include a 14-day free trial. No credit card required to start.
           </p>
         </div>
 
@@ -1452,7 +1452,7 @@ export default function Landing() {
                 a: "No. When you dispatch a vendor, they receive an email with a secure magic link. One tap and they see the job details, can accept or decline, and mark the job complete — all from their phone browser. The link expires after 7 days.",
               },
               {
-                q: "What happens after the 30-day trial?",
+                q: "What happens after the 14-day trial?",
                 a: "You'll be prompted to choose a plan. If you don't subscribe, your account is paused — your data is never deleted. No credit card is required to start the trial.",
               },
               {
@@ -1523,7 +1523,7 @@ export default function Landing() {
               Read the Guide
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-4">30-day free trial &middot; No credit card &middot; Cancel anytime</p>
+          <p className="text-sm text-muted-foreground mt-4">14-day free trial &middot; No credit card &middot; Cancel anytime</p>
         </div>
       </section>
 

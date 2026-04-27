@@ -42,7 +42,7 @@ export default function Terms() {
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">4. Subscription Plans and Billing</h2>
-            <p className="text-sm leading-relaxed">TenantTrack offers subscription plans with varying features and property limits. All plans include a 30-day free trial. After the trial period, you will be billed according to your selected plan. You may cancel your subscription at any time through the billing portal. Refunds are handled on a case-by-case basis.</p>
+            <p className="text-sm leading-relaxed">TenantTrack offers subscription plans with varying features and property limits. All plans include a 14-day free trial. After the trial period, you will be billed according to your selected plan. You may cancel your subscription at any time through the billing portal. Refunds are handled on a case-by-case basis.</p>
           </section>
 
           <section>

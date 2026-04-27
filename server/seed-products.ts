@@ -41,7 +41,7 @@ async function createProducts() {
       product: product.id,
       unit_amount: plan.priceAmount,
       currency: 'usd',
-      recurring: { interval: 'month', trial_period_days: 30 },
+      recurring: { interval: 'month', trial_period_days: 14 },
     });
 
     console.log(`Created ${plan.name}: product=${product.id}, price=${price.id}`);

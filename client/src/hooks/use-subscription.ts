@@ -82,7 +82,7 @@ interface SubscriptionData {
   stripeCustomerId: string | null;
 }
 
-const TRIAL_DAYS = 30;
+const TRIAL_DAYS = 14;
 
 export function useSubscription() {
   const { user } = useAuth();

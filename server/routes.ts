@@ -1079,7 +1079,7 @@ export async function registerRoutes(
         line_items: [{ price: priceId, quantity: 1 }],
         mode: 'subscription',
         subscription_data: {
-          trial_period_days: 30,
+          trial_period_days: 14,
           metadata: { userId, tier },
         },
         success_url: `${req.protocol}://${req.get('host')}/?checkout=success`,

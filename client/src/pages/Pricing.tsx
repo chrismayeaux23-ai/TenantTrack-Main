@@ -187,7 +187,7 @@ export default function Pricing() {
             Simple, honest pricing
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Try any plan free for 30 days. No credit card required. Cancel anytime.
+            Try any plan free for 14 days. No credit card required. Cancel anytime.
           </p>
           {hasSubscription && (
             <div className="mt-6">
@@ -248,7 +248,7 @@ export default function Pricing() {
                       <span className="text-5xl font-display font-extrabold text-foreground">${plan.price}</span>
                       <span className="text-muted-foreground mb-1.5">/month</span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">after 30-day free trial</p>
+                    <p className="text-xs text-muted-foreground mt-1">after 14-day free trial</p>
                   </div>
 
                   <ul className="space-y-2.5 mb-8 flex-1">
@@ -306,7 +306,7 @@ export default function Pricing() {
             {[
               {
                 q: "What happens after the trial ends?",
-                a: "After 30 days, you'll be prompted to subscribe. If you don't, your account is paused — your data stays safe and nothing is deleted.",
+                a: "After 14 days, you'll be prompted to subscribe. If you don't, your account is paused — your data stays safe and nothing is deleted.",
               },
               {
                 q: "Can I switch plans?",
@@ -338,7 +338,7 @@ export default function Pricing() {
             <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-3">
               Ready to bring order to your maintenance chaos?
             </h2>
-            <p className="text-muted-foreground mb-6">Start your free 30-day trial — no credit card, no setup fees.</p>
+            <p className="text-muted-foreground mb-6">Start your free 14-day trial — no credit card, no setup fees.</p>
             <Button
               size="lg"
               className="rounded-full px-10 gap-2 text-base shadow-lg shadow-primary/20"

@@ -24,7 +24,7 @@ const GUIDE_SECTIONS = [
         content: [
           'Go to tenant-track.com and click "Start Free Trial"',
           "Sign up with your email and password, or use Google sign-in",
-          "You get a full 30-day free trial — no credit card needed",
+          "You get a full 14-day free trial — no credit card needed",
         ],
       },
       {
@@ -214,7 +214,7 @@ const GUIDE_SECTIONS = [
           "Starter ($29/mo) — For 1–5 units: QR system, vendor dispatch, email alerts, photo uploads",
           "Growth ($59/mo) — For 6–25 units: Everything in Starter + auto-dispatch, scheduling, trust scores, staff assignment",
           "Pro ($99/mo) — For 25+ units: Everything in Growth + analytics, cost tracking, CSV export, dispatch board, bilingual UI, priority support",
-          "All plans include a 30-day free trial — no credit card required",
+          "All plans include a 14-day free trial — no credit card required",
         ],
       },
     ],

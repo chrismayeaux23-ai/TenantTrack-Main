@@ -59,7 +59,7 @@ export function UpgradeGate({
             Upgrade to {planLabel}
             <ArrowRight className="h-4 w-4" />
           </Button>
-          <p className="text-xs text-muted-foreground mt-3">30-day free trial · Cancel anytime</p>
+          <p className="text-xs text-muted-foreground mt-3">14-day free trial · Cancel anytime</p>
         </div>
       </div>
     </div>

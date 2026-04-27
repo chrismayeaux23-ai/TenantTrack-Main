@@ -190,7 +190,7 @@ Optional:
 | Growth | $59/mo | Growing portfolios (6–25 units) |
 | Pro | $99/mo | Professional managers (25+ units) |
 
-All plans include a 30-day free trial. No credit card required to start.
+All plans include a 14-day free trial. No credit card required to start.
 
 ---
 

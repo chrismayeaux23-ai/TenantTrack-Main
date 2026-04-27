@@ -10,7 +10,7 @@ const FAQ_DATA: { keywords: string[]; question: string; answer: string }[] = [
   {
     keywords: ["get started", "start", "sign up", "signup", "create account", "register", "begin", "new"],
     question: "How do I get started?",
-    answer: "Go to tenant-track.com and click 'Start Free Trial'. Sign up with your email or Google account. You'll be guided through adding your first property and vendor — it takes under 5 minutes. You get a full 30-day free trial, no credit card needed.",
+    answer: "Go to tenant-track.com and click 'Start Free Trial'. Sign up with your email or Google account. You'll be guided through adding your first property and vendor — it takes under 5 minutes. You get a full 14-day free trial, no credit card needed.",
   },
   {
     keywords: ["property", "add property", "properties", "new property"],
@@ -65,7 +65,7 @@ const FAQ_DATA: { keywords: string[]; question: string; answer: string }[] = [
   {
     keywords: ["price", "pricing", "plan", "cost", "subscription", "billing", "pay", "upgrade", "trial"],
     question: "What are the pricing plans?",
-    answer: "Starter ($29/mo) for 1-5 units, Growth ($59/mo) for 6-25 units with auto-dispatch and trust scores, and Pro ($99/mo) for 25+ units with analytics, cost tracking, and priority support. All plans include a 30-day free trial — no credit card required. Cancel anytime.",
+    answer: "Starter ($29/mo) for 1-5 units, Growth ($59/mo) for 6-25 units with auto-dispatch and trust scores, and Pro ($99/mo) for 25+ units with analytics, cost tracking, and priority support. All plans include a 14-day free trial — no credit card required. Cancel anytime.",
   },
   {
     keywords: ["staff", "team", "employee", "member", "add staff"],
