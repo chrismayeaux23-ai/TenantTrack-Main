@@ -6,3 +6,99 @@ id = "U3OwjVOVbunWCsbxJTjh1"
 uri = "file://TenantTrack_Quick_Start_Guide.md"
 type = "text"
 title = "TenantTrack Quick Start Guide"
+
+[[outputs]]
+id = "ZwSKEeBh31Ed0JakcWpgZ"
+uri = "file://marketing/reddit-screenshots/ad-ready/01-dashboard-1200x628.png"
+type = "image"
+title = "Ad — Dashboard (1200×628 link image)"
+
+[[outputs]]
+id = "MqWlyQ1GzynvZA4VwBf6t"
+uri = "file://marketing/reddit-screenshots/ad-ready/01-dashboard-1080x1080.png"
+type = "image"
+title = "Ad — Dashboard (1080×1080 square)"
+
+[[outputs]]
+id = "WVUq1PY1SEZCBFk1Zce7J"
+uri = "file://marketing/reddit-screenshots/ad-ready/02-dispatch-1200x628.png"
+type = "image"
+title = "Ad — Auto-dispatch (1200×628 link image)"
+
+[[outputs]]
+id = "cPjPdtQneKe5Dd-FyV3JS"
+uri = "file://marketing/reddit-screenshots/ad-ready/02-dispatch-1080x1080.png"
+type = "image"
+title = "Ad — Auto-dispatch (1080×1080 square)"
+
+[[outputs]]
+id = "0XnkYNXTdxQH2CWVBL8Lo"
+uri = "file://marketing/reddit-screenshots/ad-ready/03-mobile-track-1200x628.png"
+type = "image"
+title = "Ad — Mobile tracking (1200×628 link image)"
+
+[[outputs]]
+id = "xCyHzeGYz5Xvm09qZ0o-y"
+uri = "file://marketing/reddit-screenshots/ad-ready/03-mobile-track-1080x1080.png"
+type = "image"
+title = "Ad — Mobile tracking (1080×1080 square)"
+
+[[outputs]]
+id = "jH0esNykawJPoXOC7rMIC"
+uri = "file://marketing/reddit-screenshots/desktop/01-landing.png"
+type = "image"
+title = "Desktop — Landing page"
+
+[[outputs]]
+id = "s2G7K536ewn76KCkARf87"
+uri = "file://marketing/reddit-screenshots/desktop/02-dashboard.png"
+type = "image"
+title = "Desktop — Dashboard"
+
+[[outputs]]
+id = "lMXUTrdFv1Lw-zM8f5p5K"
+uri = "file://marketing/reddit-screenshots/desktop/03-dispatch.png"
+type = "image"
+title = "Desktop — Dispatch board"
+
+[[outputs]]
+id = "PsO5i9NNE8ITLvXhzsXEV"
+uri = "file://marketing/reddit-screenshots/desktop/04-vendors.png"
+type = "image"
+title = "Desktop — Vendors list"
+
+[[outputs]]
+id = "BXK1OnvI_MCwMibR3tC7V"
+uri = "file://marketing/reddit-screenshots/desktop/05-vendor-detail.png"
+type = "image"
+title = "Desktop — Vendor detail (Janet Park)"
+
+[[outputs]]
+id = "8nRv_3cYscdw0lF5BW0B1"
+uri = "file://marketing/reddit-screenshots/desktop/06-schedule.png"
+type = "image"
+title = "Desktop — Schedule"
+
+[[outputs]]
+id = "cAMlpkD8tzmYgLWo6mBFQ"
+uri = "file://marketing/reddit-screenshots/mobile/07-track-mobile.png"
+type = "image"
+title = "Mobile — Tenant tracking page"
+
+[[outputs]]
+id = "1EFy2AIQdjUy8RzQAd_Ob"
+uri = "file://marketing/reddit-screenshots/mobile/08-track-search-mobile.png"
+type = "image"
+title = "Mobile — Tracking code lookup"
+
+[[outputs]]
+id = "CGMzkL1lKCCZ7iwOFxSuw"
+uri = "file://marketing/reddit-screenshots/mobile/09-vendor-portal-mobile.png"
+type = "image"
+title = "Mobile — Vendor magic-link portal"
+
+[[outputs]]
+id = "ScuEBbjlhYj8u5B5JAt16"
+uri = "file://marketing/reddit-screenshots/README.md"
+type = "text"
+title = "README — file map, copy, brand tokens, repro steps"
