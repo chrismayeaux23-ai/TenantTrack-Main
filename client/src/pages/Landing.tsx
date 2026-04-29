@@ -980,7 +980,7 @@ export default function Landing() {
               Log In
             </Button>
             <Button onClick={() => window.location.href = '/login?signup=1'} className="rounded-full shadow-lg shadow-primary/20 text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-10 whitespace-nowrap" data-testid="button-nav-signup">
-              Try TenantTrack
+              Test it with your next vendor
             </Button>
           </div>
         </div>
@@ -1198,7 +1198,7 @@ export default function Landing() {
               {SLIDES[slide].visual === "pricing" && (
                 <div className={`transition-all duration-200 delay-150 ${animating ? "opacity-0" : "opacity-100"}`}>
                   <button
-                    onClick={() => window.location.href = '/login'}
+                    onClick={() => window.location.href = '/login?signup=1'}
                     className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity"
                     data-testid="button-slideshow-cta"
                   >
