@@ -214,13 +214,13 @@ const SLIDES = [
   },
   {
     section: "Why TenantTrack?",
-    stepLabel: "Real Results",
-    tabLabel: "Real Results",
-    title: "Landlords Who Switch Don't Go Back",
-    description: "Once your vendor network is scored and your dispatch is automated, you stop firefighting and start scaling. TenantTrack pays for itself the first time you avoid a bad contractor repeat.",
+    stepLabel: "What You Stop Dealing With",
+    tabLabel: "The Outcome",
+    title: "Stop firefighting. Start running maintenance.",
+    description: "Once your vendor network is scored and dispatch runs itself, the daily chaos ends. No more chasing texts, scheduling conflicts, or wondering whether a job actually got done.",
     bullets: [
       "Set up in under 5 minutes, no IT help needed",
-      "Tenants love it — scan, report, track",
+      "Tenants report in 60 seconds — no app, no login",
       "Vendor scorecards protect your time and money",
       "14-day free trial, cancel anytime",
     ],
@@ -304,27 +304,6 @@ const FEATURES = [
     icon: CalendarClock,
     title: "Scheduled Maintenance",
     desc: "Set up recurring tasks like HVAC filter changes, smoke detector checks, and fire extinguisher inspections. Never miss preventive maintenance.",
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    quote: "The vendor trust scores changed everything. I used to just call whoever picked up. Now I dispatch the highest-rated plumber in under a minute.",
-    name: "Property Manager",
-    role: "12 units in Portland, OR",
-    stars: 5,
-  },
-  {
-    quote: "I had a contractor no-show twice before TenantTrack flagged his record. That alone saved me from a third bad experience.",
-    name: "Independent Landlord",
-    role: "18 units in Austin, TX",
-    stars: 5,
-  },
-  {
-    quote: "Proof of completion with invoice numbers — my accountant called me a changed man. Everything is just there when I need it.",
-    name: "Real Estate Investor",
-    role: "22 units in Denver, CO",
-    stars: 5,
   },
 ];
 
@@ -874,15 +853,20 @@ function SlideVisual({ type }: { type: string }) {
           </div>
         ))}
       </div>
-      <div className="bg-card border border-border rounded-2xl p-4">
-        <div className="flex gap-1 mb-2">
-          {[1,2,3,4,5].map(i => <Star key={i} className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />)}
-        </div>
-        <p className="text-xs text-foreground leading-relaxed mb-2">"I used to get random texts at 2 AM about leaky faucets. Now tenants scan the QR code and I see everything organized in my dashboard."</p>
-        <div>
-          <p className="text-[10px] font-bold">Property Manager</p>
-          <p className="text-[10px] text-muted-foreground">12 units in Portland, OR</p>
-        </div>
+      <div className="bg-card border border-primary/30 rounded-2xl p-4">
+        <p className="text-[10px] uppercase tracking-wider text-primary font-bold mb-2">Designed to fix</p>
+        <ul className="space-y-1.5">
+          {[
+            "Late-night tenant texts about leaks and broken AC",
+            "No-shows with no record to fall back on",
+            '"Did you ever fix that?" follow-ups you can\'t answer',
+          ].map(line => (
+            <li key={line} className="flex items-start gap-2 text-xs text-foreground leading-relaxed">
+              <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+              <span>{line}</span>
+            </li>
+          ))}
+        </ul>
       </div>
       <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-2">
         <div className="h-7 w-7 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
@@ -996,7 +980,7 @@ export default function Landing() {
               Log In
             </Button>
             <Button onClick={() => window.location.href = '/login?signup=1'} className="rounded-full shadow-lg shadow-primary/20 text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-10 whitespace-nowrap" data-testid="button-nav-signup">
-              Start Free Trial
+              Try TenantTrack
             </Button>
           </div>
         </div>
@@ -1017,19 +1001,19 @@ export default function Landing() {
               14-day free trial &middot; No credit card required
             </div>
             <h1 className="text-5xl md:text-7xl font-display font-extrabold tracking-tight text-foreground leading-[1.1] mb-6">
-              Vendor Dispatch <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-300">Built on Trust.</span>
+              Stop chasing vendors <br className="hidden md:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-300">for maintenance jobs.</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed">
-              Score every contractor. Auto-dispatch the best one. Track the job from assignment to completion. TenantTrack replaces spreadsheets, texts, and guesswork with a real dispatch command center.
+              TenantTrack helps landlords assign maintenance work to the right vendors automatically — and keeps tenants in the loop without the back-and-forth. No more lost messages, no-shows, or "did you ever fix that leak?" texts at midnight.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Button size="lg" className="w-full sm:w-auto rounded-full text-lg shadow-xl shadow-primary/20 gap-2" onClick={() => window.location.href = '/login?signup=1'} data-testid="button-get-started">
-                Start Free Trial
+              <Button size="lg" className="w-full sm:w-auto rounded-full text-base sm:text-lg shadow-xl shadow-primary/20 gap-2" onClick={() => window.location.href = '/login?signup=1'} data-testid="button-get-started">
+                Try it on your next maintenance request
                 <ArrowRight className="h-5 w-5" />
               </Button>
               <Button variant="ghost" size="lg" className="w-full sm:w-auto rounded-full text-lg text-muted-foreground hover:text-foreground" onClick={() => window.location.href = '/guide'} data-testid="button-see-guide">
-                See How It Works
+                See how it works
               </Button>
             </div>
             <div className="flex items-center gap-6 mt-8 text-sm text-muted-foreground">
@@ -1058,6 +1042,54 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="py-20 md:py-24 px-4 md:px-6 max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <Badge variant="outline" className="mb-4 text-sm px-4 py-1">The Problem</Badge>
+          <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-4">
+            Where maintenance actually breaks down
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            It's rarely the repair itself. It's everything around it — the chasing, the texting, the waiting.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="p-8 rounded-3xl bg-red-500/5 border border-red-500/20" data-testid="section-pain">
+            <h3 className="text-xl font-bold mb-5 text-red-400">The pain</h3>
+            <ul className="space-y-4">
+              {[
+                "Tenants text you about a leak. You text three vendors. Two never reply.",
+                "Whoever shows up first gets the job — even if they're the wrong fit.",
+                "You forget who's coming, when, or whether the job got done.",
+                "Tenants ask for updates you don't have.",
+                "Receipts and proof live in random texts and email threads.",
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm md:text-base text-muted-foreground leading-relaxed" data-testid={`item-pain-${i}`}>
+                  <X className="h-5 w-5 text-red-400 mt-0.5 shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="p-8 rounded-3xl bg-primary/5 border border-primary/20" data-testid="section-solution">
+            <h3 className="text-xl font-bold mb-5 text-primary">With TenantTrack</h3>
+            <ul className="space-y-4">
+              {[
+                "Tenants submit requests by QR code or link — no app, no login.",
+                "We match the right vendor automatically based on trust scores and history.",
+                "Vendors accept, decline, or reschedule from a magic link — no portal to learn.",
+                "You see every job's status without asking anyone.",
+                "Tenants get updates automatically. You stop being the middleman.",
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm md:text-base text-muted-foreground leading-relaxed" data-testid={`item-solution-${i}`}>
+                  <Check className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <section className="py-12 border-y border-border bg-card/30">
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
@@ -1078,6 +1110,34 @@ export default function Landing() {
               <p className="text-sm text-muted-foreground mt-1">Request submissions</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="py-20 md:py-24 px-4 md:px-6 max-w-6xl mx-auto" data-testid="section-simple-steps">
+        <div className="text-center mb-12">
+          <Badge variant="outline" className="mb-4 text-sm px-4 py-1">How It Works</Badge>
+          <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-4">
+            From maintenance request to "done" in 4 steps
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Simple enough that nobody needs training. Smart enough to run itself.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {[
+            { n: "1", title: "Tenant submits a request", body: "QR code or shared link. No app, no login, no friction." },
+            { n: "2", title: "We match the right vendor", body: "Auto-dispatch picks the best contractor based on trust score, history, and category." },
+            { n: "3", title: "Vendor accepts via magic link", body: "Accept, decline, or reschedule from a single link. No portal to learn." },
+            { n: "4", title: "Everyone stays in the loop", body: "Tenant, landlord, and vendor all see status updates automatically until the job is closed." },
+          ].map((step, i) => (
+            <div key={i} className="p-6 rounded-2xl bg-card/60 border border-border hover-elevate" data-testid={`step-simple-${i}`}>
+              <div className="h-10 w-10 rounded-full bg-primary/10 text-primary font-display font-bold flex items-center justify-center mb-4">
+                {step.n}
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">{step.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{step.body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -1142,7 +1202,7 @@ export default function Landing() {
                     className="inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 hover:opacity-90 transition-opacity"
                     data-testid="button-slideshow-cta"
                   >
-                    Start Free Trial <ArrowRight className="h-4 w-4" />
+                    Try it on your next maintenance request <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
               )}
@@ -1152,6 +1212,7 @@ export default function Landing() {
                   onClick={() => goTo(slide - 1, "prev")}
                   className="h-10 w-10 rounded-full border border-border bg-card/80 hover:bg-card flex items-center justify-center transition-colors"
                   data-testid="button-slide-prev"
+                  aria-label="Previous slide"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -1171,6 +1232,7 @@ export default function Landing() {
                   onClick={() => goTo(slide + 1, "next")}
                   className="h-10 w-10 rounded-full border border-border bg-card/80 hover:bg-card flex items-center justify-center transition-colors"
                   data-testid="button-slide-next"
+                  aria-label="Next slide"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -1208,27 +1270,6 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-10 px-6 border-y border-border bg-muted/30">
-        <div className="max-w-5xl mx-auto">
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-sm text-muted-foreground">
-            {[
-              "Built for independent landlords",
-              "No enterprise complexity",
-              "Replaces spreadsheets and text chaos",
-              "No app required for tenants",
-              "Secure and reliable",
-            ].map(item => (
-              <div key={item} className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                  <Check className="h-2.5 w-2.5 text-primary" />
-                </div>
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section id="features" className="py-24 px-6 border-y border-border relative overflow-hidden">
         <div className="absolute inset-0 -z-10">
           <img src={bgFeatures1} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25" />
@@ -1259,84 +1300,103 @@ export default function Landing() {
         </div>
       </section>
 
-      <section className="py-24 px-6 max-w-7xl mx-auto relative">
+      <section className="py-24 px-4 md:px-6 max-w-5xl mx-auto relative" data-testid="section-why-different">
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <img src={bgMain1} alt="" className="absolute inset-0 w-full h-full object-cover opacity-15" />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/85 to-background" />
         </div>
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4 text-sm px-4 py-1">For Landlords</Badge>
-          <h2 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4">
-            The Problem We Solve
+        <div className="text-center">
+          <Badge variant="outline" className="mb-4 text-sm px-4 py-1">Why TenantTrack</Badge>
+          <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-6 leading-tight">
+            Most tools track requests.<br className="hidden sm:block" /> This fixes what happens after.
           </h2>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <div className="p-8 rounded-3xl bg-red-500/5 border border-red-500/20">
-            <h3 className="text-xl font-bold mb-4 text-red-400">Without TenantTrack</h3>
-            <ul className="space-y-3">
-              {[
-                "Dispatching contractors by memory or gut feel",
-                "No-shows with no record to reference",
-                "\"Job done\" with no proof, no invoice, no notes",
-                "Vendors ghosting with zero accountability",
-                "No visibility between assigned and completed",
-                "Scheduling conflicts and double-bookings",
-              ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <X className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="p-8 rounded-3xl bg-primary/5 border border-primary/20">
-            <h3 className="text-xl font-bold mb-4 text-primary">With TenantTrack</h3>
-            <ul className="space-y-3">
-              {[
-                "Auto-dispatch engine picks the best vendor for you",
-                "Trust scores with no-show tracking and penalty",
-                "Magic links let vendors accept, decline, or reschedule",
-                "Visual scheduling calendar with conflict detection",
-                "Full job pipeline with activity timeline and timestamps",
-                "Automated email notifications at every stage",
-              ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+            Other property tools log a maintenance ticket and stop there. TenantTrack handles the part that actually matters — getting the right vendor on site, on time, with everyone updated. No more juggling texts, calendars, and 'who said what' threads.
+          </p>
         </div>
       </section>
 
-      <section className="py-24 px-6 border-y border-border relative overflow-hidden">
+      <section className="py-24 px-4 md:px-6 max-w-6xl mx-auto" data-testid="section-example">
+        <div className="text-center mb-12">
+          <Badge variant="outline" className="mb-4 text-sm px-4 py-1">A real example</Badge>
+          <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-4">
+            One leak. Zero chasing.
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Here's what a typical maintenance request looks like with TenantTrack.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          {[
+            { who: "Tenant", action: "Reports a leaking sink in the kitchen via QR code." },
+            { who: "You", action: "Tap 'Auto-dispatch'. The right plumber gets matched in seconds." },
+            { who: "Vendor", action: "Accepts the job from a magic link. Schedules a visit." },
+            { who: "Everyone", action: "Sees status updates as the job moves to 'In Progress' and 'Done'." },
+          ].map((s, i) => (
+            <div key={i} className="relative p-6 rounded-2xl bg-card/60 border border-border" data-testid={`example-step-${i}`}>
+              <p className="text-xs uppercase tracking-wider text-primary font-bold mb-2">Step {i + 1} · {s.who}</p>
+              <p className="text-sm md:text-base text-foreground leading-relaxed">{s.action}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-center text-xl md:text-2xl font-display font-bold text-foreground">
+          No calls. No chasing. <span className="text-primary">No confusion.</span>
+        </p>
+      </section>
+
+      <section className="py-24 px-4 md:px-6 border-y border-border relative overflow-hidden" data-testid="section-who-for">
         <div className="absolute inset-0 -z-10">
           <img src={bgDashboard1} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20" />
           <div className="absolute inset-0 bg-background/75" />
         </div>
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4 text-sm px-4 py-1">Testimonials</Badge>
-            <h2 className="text-4xl md:text-5xl font-display font-extrabold text-foreground mb-4">
-              Landlords Trust TenantTrack
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-4 text-sm px-4 py-1">Who it's for</Badge>
+            <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-4">
+              Built for landlords who actually do the work
             </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              If maintenance lives in your texts and notes app, TenantTrack is for you.
+            </p>
           </div>
-
           <div className="grid md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="p-6 rounded-2xl bg-card border border-border" data-testid={`testimonial-${i}`}>
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: t.stars }).map((_, j) => (
-                    <Star key={j} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                  ))}
-                </div>
-                <p className="text-sm text-foreground leading-relaxed mb-4">"{t.quote}"</p>
-                <div>
-                  <p className="text-sm font-bold">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
-                </div>
+            {[
+              { title: "Independent landlords", body: "Owner-operators with a handful of doors who don't want a six-figure property management platform." },
+              { title: "Small property managers", body: "Teams managing 10–200 units who need real coordination — not another spreadsheet to maintain." },
+              { title: "Anyone managing maintenance without a system", body: "If your workflow is 'text the plumber and hope', TenantTrack replaces it without retraining anyone." },
+            ].map((card, i) => (
+              <div key={i} className="p-6 rounded-2xl bg-card border border-border hover-elevate" data-testid={`who-for-${i}`}>
+                <h3 className="text-lg font-bold text-foreground mb-3">{card.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{card.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24 px-4 md:px-6 max-w-5xl mx-auto" data-testid="section-early-access">
+        <div className="rounded-3xl p-10 md:p-14 border border-primary/20 bg-gradient-to-br from-primary/10 to-orange-500/5">
+          <div className="flex items-center gap-2 mb-5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
+            </span>
+            <span className="text-sm font-semibold text-primary uppercase tracking-wider">Early access</span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-5 leading-tight">
+            Currently onboarding a small group of landlords
+          </h2>
+          <p className="text-lg text-muted-foreground leading-relaxed mb-8 max-w-3xl">
+            We're working closely with our first users to refine TenantTrack against real workflows — not lab-tested scenarios. If you join now, your feedback shapes what we build next, and you'll lock in early-access pricing as we grow.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[
+              { label: "Helped reduce vendor response time", body: "In early tests, auto-dispatch trimmed the wait between request and vendor confirmation from days to minutes." },
+              { label: "Designed to eliminate no-shows and delays", body: "Trust scores penalize vendors who ghost, so the next dispatch goes to someone who shows up." },
+            ].map((m, i) => (
+              <div key={i} className="p-5 rounded-2xl bg-background/40 border border-border" data-testid={`micro-proof-${i}`}>
+                <p className="text-sm font-bold text-primary mb-2">{m.label}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{m.body}</p>
               </div>
             ))}
           </div>
@@ -1509,18 +1569,18 @@ export default function Landing() {
         </div>
         <div className="max-w-4xl mx-auto text-center bg-gradient-to-br from-primary/10 to-orange-500/5 rounded-3xl p-12 md:p-16 border border-primary/20">
           <h2 className="text-3xl md:text-5xl font-display font-extrabold text-foreground mb-4">
-            Stop chasing vendors.<br className="hidden sm:block" /> Start managing maintenance.
+            Test it with your next vendor.<br className="hidden sm:block" /> See the difference today.
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
             Set up your first property in under 5 minutes. No credit card. No IT team. No chaos.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button size="lg" className="rounded-full text-lg shadow-xl shadow-primary/20 gap-2 px-8" onClick={() => window.location.href = '/login?signup=1'} data-testid="button-cta-final">
-              Start Free Trial
+              Try it on your next maintenance request
               <ArrowRight className="h-5 w-5" />
             </Button>
             <Button size="lg" variant="outline" className="rounded-full text-lg border-border" onClick={() => window.location.href = '/guide'} data-testid="button-cta-guide">
-              Read the Guide
+              See how it works with a real job
             </Button>
           </div>
           <p className="text-sm text-muted-foreground mt-4">14-day free trial &middot; No credit card &middot; Cancel anytime</p>
