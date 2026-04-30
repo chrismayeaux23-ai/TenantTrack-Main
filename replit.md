@@ -13,7 +13,7 @@ The application follows a mobile-first design philosophy.
 - **Database**: PostgreSQL, managed with Drizzle ORM.
 - **Authentication**: Supports email/password login and Google OAuth, both managed via Passport sessions. User data includes `passwordHash` and is generated with `crypto.randomUUID()` on signup. Includes email verification on signup (6-digit code via Resend, 15-min expiry) and forgot password flow (secure token link via Resend, 1-hour expiry). Unverified accounts are blocked at signin until verified. DB tables: `password_reset_tokens`, `email_verification_codes`. Users table has `email_verified` boolean.
 - **Storage**: Replit Object Storage is used for tenant photo uploads.
-- **Domain**: tenant-track.com (custom domain), tenant-management-hub.replit.app (Replit domain)
+- **Domain**: tenanttrack.xyz (custom domain), tenant-management-hub.replit.app (Replit domain)
 - **Logo**: TenantTrack circular logo at `@assets/tenanttrack-final-logo.png` (circular badge with TT letters, house, key, clipboard). Wide version at `@assets/tenanttrack-wide-logo.png`.
 - **Background images**: `@assets/I_need_a_navy_blue,_white,_and_grey_background_image_of_geo-me_1774148774611.jpg` (geometric), `@assets/I_need_a_navy_blue,_white,_and_grey_background_image_of_rental_1774148774612.jpg` (buildings), `@assets/Untitled_design_(1)_1774148774613.jpg` (building icon)
 - **UI/UX**:

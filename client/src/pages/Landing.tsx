@@ -1614,9 +1614,9 @@ export default function Landing() {
               <h4 className="font-bold text-sm mb-4">Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="mailto:support@tenant-track.com" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-email">
+                  <a href="mailto:support@tenanttrack.xyz" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-email">
                     <Mail className="h-4 w-4" />
-                    support@tenant-track.com
+                    support@tenanttrack.xyz
                   </a>
                 </li>
                 <li>

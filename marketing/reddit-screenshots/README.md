@@ -39,7 +39,7 @@ marketing/reddit-screenshots/
 
 Each of the top three screenshots was framed onto a branded dark-navy canvas
 (`#060B14` → `#0A1428` gradient) with the TenantTrack wordmark, a headline,
-sub-head, "Try Free" CTA, and `tenant-track.com` domain. Two sizes per shot:
+sub-head, "Try Free" CTA, and `tenanttrack.xyz` domain. Two sizes per shot:
 
 | Concept | 1200 × 628 (Reddit feed / link) | 1080 × 1080 (square) |
 | --- | --- | --- |
@@ -96,4 +96,4 @@ PLAYWRIGHT_BROWSERS_PATH=/tmp/pw-browsers node /tmp/screenshot-tools/capture.mjs
   into a device frame later.
 - The "Try Free →" CTA in the composites is decorative; the actual
   destination URL should be set in the ad placement, pointing to
-  `https://tenant-track.com/?utm_source=reddit&utm_campaign=<slot>`.
+  `https://tenanttrack.xyz/?utm_source=reddit&utm_campaign=<slot>`.

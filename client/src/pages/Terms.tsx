@@ -72,7 +72,7 @@ export default function Terms() {
 
           <section>
             <h2 className="text-xl font-bold text-foreground mb-3">10. Contact</h2>
-            <p className="text-sm leading-relaxed">For questions about these Terms, contact us at support@tenant-track.com or call (503) 380-6482.</p>
+            <p className="text-sm leading-relaxed">For questions about these Terms, contact us at support@tenanttrack.xyz or call (503) 380-6482.</p>
           </section>
         </div>
       </div>

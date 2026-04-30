@@ -493,7 +493,7 @@ export async function registerRoutes(
         expiresAt: new Date(Date.now() + 60 * 60 * 1000),
       });
 
-      const APP_URL = process.env.APP_URL || "https://www.tenant-track.com";
+      const APP_URL = process.env.APP_URL || "https://www.tenanttrack.xyz";
       const resetUrl = `${APP_URL}/reset-password?token=${token}`;
 
       sendPasswordResetEmail({ email: user.email!, resetUrl }).catch(err => console.error("Password reset email error:", err));
