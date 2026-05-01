@@ -316,6 +316,20 @@ export default function Login() {
                     : mode === "signup" ? "Create Account" : "Sign In"
                   }
                 </Button>
+
+                {mode === "signup" && (
+                  <p className="text-xs text-muted-foreground text-center leading-relaxed" data-testid="text-signup-consent">
+                    By creating an account, you agree to our{" "}
+                    <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" data-testid="link-signup-terms">
+                      Terms &amp; Conditions
+                    </a>{" "}
+                    and{" "}
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" data-testid="link-signup-privacy">
+                      Privacy Policy
+                    </a>
+                    .
+                  </p>
+                )}
               </form>
             </>
           )}
