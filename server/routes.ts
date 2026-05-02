@@ -1069,7 +1069,7 @@ export async function registerRoutes(
         const clearStaleCustomer = async (reason: string) => {
           console.log(`Stale Stripe customer ${customerId} for user ${userId} (${reason}), recreating on current account`);
           customerId = null;
-          await db.update(users).set({ stripeSubscriptionId: null }).where(eq(users.id, userId));
+          await db.update(users).set({ stripeCustomerId: null, stripeSubscriptionId: null }).where(eq(users.id, userId));
         };
         try {
           const existing = await stripe.customers.retrieve(customerId);
