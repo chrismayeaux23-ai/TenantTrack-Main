@@ -1064,6 +1064,20 @@ export async function registerRoutes(
       if (!user) return res.status(404).json({ message: "User not found" });
 
       let customerId = user.stripeCustomerId;
+      if (customerId) {
+        try {
+          const existing = await stripe.customers.retrieve(customerId);
+          if ((existing as any).deleted) customerId = null;
+        } catch (e: any) {
+          if (e?.code === 'resource_missing' || e?.statusCode === 404) {
+            console.log(`Stale Stripe customer ${customerId} for user ${userId}, recreating on current account`);
+            customerId = null;
+            await db.update(users).set({ stripeSubscriptionId: null }).where(eq(users.id, userId));
+          } else {
+            throw e;
+          }
+        }
+      }
       if (!customerId) {
         const customer = await stripe.customers.create({
           email: user.email || undefined,
@@ -1103,12 +1117,20 @@ export async function registerRoutes(
       }
 
       const stripe = await getUncachableStripeClient();
-      const session = await stripe.billingPortal.sessions.create({
-        customer: user.stripeCustomerId,
-        return_url: `${req.protocol}://${req.get('host')}/billing`,
-      });
-
-      res.json({ url: session.url });
+      try {
+        const session = await stripe.billingPortal.sessions.create({
+          customer: user.stripeCustomerId,
+          return_url: `${req.protocol}://${req.get('host')}/billing`,
+        });
+        res.json({ url: session.url });
+      } catch (e: any) {
+        if (e?.code === 'resource_missing' || e?.statusCode === 404) {
+          console.log(`Stale Stripe customer ${user.stripeCustomerId} for user ${userId}, clearing`);
+          await db.update(users).set({ stripeCustomerId: null, stripeSubscriptionId: null }).where(eq(users.id, userId));
+          return res.status(409).json({ message: "Your billing account is no longer available. Please choose a plan to continue." });
+        }
+        throw e;
+      }
     } catch (err) {
       console.error("Portal error:", err);
       res.status(500).json({ message: "Failed to create portal session" });

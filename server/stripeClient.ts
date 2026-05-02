@@ -3,6 +3,15 @@ import Stripe from 'stripe';
 let connectionSettings: any;
 
 async function getCredentials() {
+  const envSecret = process.env.STRIPE_LIVE_SECRET_KEY;
+  const envPublishable = process.env.STRIPE_LIVE_PUBLISHABLE_KEY;
+  if (envSecret && envPublishable) {
+    return {
+      publishableKey: envPublishable,
+      secretKey: envSecret,
+    };
+  }
+
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
   const xReplitToken = process.env.REPL_IDENTITY
     ? 'repl ' + process.env.REPL_IDENTITY
