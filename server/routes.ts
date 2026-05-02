@@ -5,6 +5,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import Stripe from "stripe";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { db } from "./db";
 import { users } from "@shared/models/auth";
@@ -1063,16 +1064,21 @@ export async function registerRoutes(
       const [user] = await db.select().from(users).where(eq(users.id, userId));
       if (!user) return res.status(404).json({ message: "User not found" });
 
-      let customerId = user.stripeCustomerId;
+      let customerId: string | null = user.stripeCustomerId;
       if (customerId) {
+        const clearStaleCustomer = async (reason: string) => {
+          console.log(`Stale Stripe customer ${customerId} for user ${userId} (${reason}), recreating on current account`);
+          customerId = null;
+          await db.update(users).set({ stripeSubscriptionId: null }).where(eq(users.id, userId));
+        };
         try {
           const existing = await stripe.customers.retrieve(customerId);
-          if ((existing as any).deleted) customerId = null;
-        } catch (e: any) {
-          if (e?.code === 'resource_missing' || e?.statusCode === 404) {
-            console.log(`Stale Stripe customer ${customerId} for user ${userId}, recreating on current account`);
-            customerId = null;
-            await db.update(users).set({ stripeSubscriptionId: null }).where(eq(users.id, userId));
+          if ('deleted' in existing && existing.deleted) {
+            await clearStaleCustomer('customer deleted');
+          }
+        } catch (e) {
+          if (e instanceof Stripe.errors.StripeInvalidRequestError && e.code === 'resource_missing') {
+            await clearStaleCustomer('resource_missing');
           } else {
             throw e;
           }
@@ -1123,8 +1129,8 @@ export async function registerRoutes(
           return_url: `${req.protocol}://${req.get('host')}/billing`,
         });
         res.json({ url: session.url });
-      } catch (e: any) {
-        if (e?.code === 'resource_missing' || e?.statusCode === 404) {
+      } catch (e) {
+        if (e instanceof Stripe.errors.StripeInvalidRequestError && e.code === 'resource_missing') {
           console.log(`Stale Stripe customer ${user.stripeCustomerId} for user ${userId}, clearing`);
           await db.update(users).set({ stripeCustomerId: null, stripeSubscriptionId: null }).where(eq(users.id, userId));
           return res.status(409).json({ message: "Your billing account is no longer available. Please choose a plan to continue." });
