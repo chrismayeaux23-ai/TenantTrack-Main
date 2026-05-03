@@ -54,6 +54,9 @@ The application follows a mobile-first design philosophy.
 - **Email Service**: Resend-based email notifications for new requests, status updates, and staff assignments.
 - **File Structure**: Organized with clear separation for shared schemas, server-side logic, client-side components, and integration specific files (e.g., `replit_integrations`).
 - **Deployment**: Configured for autoscale deployment with `npm run build` and `node dist/index.cjs` (matches the `start` script in `package.json`).
+- **Outreach landing page** (`/landlords`): Dedicated page tuned for direct-outreach traffic to 10–50 unit landlords. Distinct from the main marketing site — pain-led headline, embedded Loom demo, founder note, single CTA to `/login`. Captures UTM params on mount into `sessionStorage` for downstream analytics. Loom embed driven by `VITE_LOOM_VIDEO_ID` env var (placeholder shown when unset).
+- **Analytics (lightweight)**: PostHog via `posthog-js`. Initialized in `client/src/main.tsx`, identifies users in `client/src/App.tsx` after auth resolves, attaches stored UTMs as person properties. Activated by `VITE_POSTHOG_KEY` (and optional `VITE_POSTHOG_HOST`) — when keys absent, all calls are silent no-ops. Helper module: `client/src/lib/analytics.ts`. Intentionally minimal: pageview + identify only. Full event taxonomy deferred.
+- **Customer Acquisition Playbook**: Operational artifacts for direct-outreach GTM live in `.local/playbook/` — lead-sourcing guide, lead spreadsheet template, Loom demo script, outreach templates (DM/email/forum-reply), white-glove onboarding SOP, tracking-system guide, and daily 30-min checklist. Source of truth for the 90-day path to $1.5–3k MRR.
 
 ## External Dependencies
 - **Stripe**: For subscription management, payments, checkout, and billing portal. Uses `stripe-replit-sync`.

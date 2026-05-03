@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -6,9 +7,11 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { useProperties } from "@/hooks/use-properties";
 import { Loader2 } from "lucide-react";
+import { identifyUser, getCanonicalUtms } from "@/lib/analytics";
 
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
+import LandlordsLP from "@/pages/LandlordsLP";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Properties from "@/pages/Properties";
@@ -97,6 +100,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/landlords" component={LandlordsLP} />
       <Route path="/report/:propertyId" component={TenantReport} />
       <Route path="/track/:code" component={TrackRequest} />
       <Route path="/track" component={TrackRequest} />
@@ -182,11 +186,29 @@ function Router() {
   );
 }
 
+function AnalyticsIdentifier() {
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user) return;
+    const u = user as { id?: string; email?: string; firstName?: string; lastName?: string };
+    if (!u.id) return;
+    const utms = getCanonicalUtms();
+    identifyUser(u.id, {
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      ...utms,
+    });
+  }, [user]);
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
+        <AnalyticsIdentifier />
         <Router />
         <HelpChatbot />
       </TooltipProvider>
