@@ -58,8 +58,8 @@ The application follows a mobile-first design philosophy.
 - **Analytics (PostHog)**: Conversion tracking via `posthog-js`. Helper module: `client/src/lib/analytics.ts` (functions: `initAnalytics`, `identifyUser`, `resetAnalytics`, `trackEvent`, `trackPageview`, UTM helpers). Init in `client/src/main.tsx`. Identify in `client/src/App.tsx` after auth resolves. Logout calls `resetAnalytics()` in `client/src/hooks/use-auth.ts`.
   - **Activation**: requires `VITE_POSTHOG_KEY` (optional `VITE_POSTHOG_HOST`, defaults to `https://us.i.posthog.com`). When key absent, all calls are silent no-ops.
   - **Dev gate**: only initializes in production builds, OR when `VITE_POSTHOG_ENABLE_DEV=true`. Prevents test traffic from polluting funnels.
-  - **PII policy**: only the random user UUID is sent to PostHog. Email, first name, and last name are NOT sent. Person properties are limited to first-touch UTMs (`utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`).
-  - **Pageviews**: `capture_pageview` is disabled in PostHog config; SPA route changes are tracked manually via `RouteAnalytics` component in `App.tsx` watching wouter's `useLocation`. `autocapture`, `capture_pageleave`, and session recording are all OFF.
+  - **PII policy**: the user identifier sent to PostHog is a **SHA-256 hash of the random user UUID** (computed in `analytics.ts → identifyUser`). The raw DB ID never leaves the client. Email, first name, and last name are NOT sent. Person properties are limited to first-touch UTMs (`utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`).
+  - **Pageviews**: `capture_pageview` is disabled in PostHog config; SPA route changes are tracked manually via `RouteAnalytics` component in `App.tsx` watching wouter's `useLocation`. `autocapture` and `capture_pageleave` are OFF. **Session recording is intentionally disabled** (`disable_session_recording: true`) to keep PostHog usage strictly behavioral and avoid recording tenant or repair-photo content. If session recordings are ever enabled, masking rules must be added before shipping.
   - **Conversion events**:
     - `signup_started` — fired on every "Start Free Trial" CTA (`Landing.tsx` nav/hero/final, `LandlordsLP.tsx` email-capture submit, `Login.tsx` signup form submit). Property: `source`.
     - `signup_completed` — fired on successful email verification in `VerifyEmail.tsx`.
@@ -67,7 +67,7 @@ The application follows a mobile-first design philosophy.
     - `onboarding_vendor_added` — fired in `Vendors.tsx` on first vendor creation only.
     - `request_created` — fired in `useCreateRequest` hook (`client/src/hooks/use-requests.ts`) on every maintenance request submission. Properties: `urgency`, `issue_type`, `source` (`tenant_qr` | `landlord`).
     - `trial_upgraded` — fired by `CheckoutSuccessTracker` in `App.tsx` when the URL contains `?checkout=success` (Stripe's `success_url`); the param is then stripped from the URL.
-    - `trial_expired` — DEFERRED. Requires server-side trial-status fields on the user model (not currently present); revisit after subscription-status enrichment.
+    - `trial_expired` — fired in `AnalyticsIdentifier` in `App.tsx` once `useSubscription()` reports `tier === "trial" && trialExpired === true`. Deduped per user-id via `localStorage` key `tt_trial_expired_fired:<userId>` so it fires exactly once per user, ever (subsequent loads are no-ops).
   - **PostHog setup walkthrough (for the user)**:
     1. Create a free PostHog Cloud account at https://posthog.com/signup. Pick the US region (matches the default `VITE_POSTHOG_HOST`).
     2. Create a new Project (e.g. "TenantTrack"). Copy the Project API Key (`phc_...`).
@@ -75,6 +75,7 @@ The application follows a mobile-first design philosophy.
     4. Re-deploy. Analytics is OFF in dev unless you also add `VITE_POSTHOG_ENABLE_DEV=true`.
     5. In PostHog, build the funnel under **Product Analytics → Funnels → New funnel**. Pick the steps in order: `signup_started` → `signup_completed` → `onboarding_property_added` → `onboarding_vendor_added` → `request_created` → `trial_upgraded`. Group by `utm_source` to compare channels.
     6. Traffic by source lives in **Product Analytics → Insights → Trends** — pick event `$pageview`, then break down by person property `utm_source`. Pageviews include the path in the `$pathname` property.
+    7. **Session Recordings**: intentionally OFF. The "Recordings" tab in PostHog will be empty — this is by design. Do not enable recordings without first adding input/element masking; tenant maintenance descriptions and uploaded repair photos must never end up in PostHog.
 - **Customer Acquisition Playbook**: Operational artifacts for direct-outreach GTM live in `playbook/` (version-controlled at the project root) — lead-sourcing guide, lead spreadsheet template, Loom demo script, outreach templates (DM/email/forum-reply), white-glove onboarding SOP, tracking-system guide, and daily 30-min checklist. Source of truth for the 90-day path to $1.5–3k MRR.
 
 ## External Dependencies

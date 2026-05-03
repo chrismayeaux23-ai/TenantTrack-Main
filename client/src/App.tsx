@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { useProperties } from "@/hooks/use-properties";
+import { useSubscription } from "@/hooks/use-subscription";
 import { Loader2 } from "lucide-react";
 import { identifyUser, getCanonicalUtms, trackPageview, trackEvent } from "@/lib/analytics";
 
@@ -188,14 +189,31 @@ function Router() {
 
 function AnalyticsIdentifier() {
   const { user } = useAuth();
+  const { trialExpired, tier } = useSubscription();
   useEffect(() => {
     if (!user) return;
     const u = user as { id?: string };
     if (!u.id) return;
-    // No PII sent to PostHog. Only the random user UUID + first-touch UTMs.
+    // No PII sent to PostHog. Only a SHA-256 hash of the random user UUID
+    // (so the raw DB ID never leaves the client) + first-touch UTMs.
     const utms = getCanonicalUtms();
     identifyUser(u.id, Object.keys(utms).length ? utms : undefined);
   }, [user]);
+
+  // Fire trial_expired exactly once per user, ever — dedupe via localStorage.
+  useEffect(() => {
+    if (!user) return;
+    const u = user as { id?: string };
+    if (!u.id) return;
+    if (tier !== "trial" || !trialExpired) return;
+    try {
+      const key = `tt_trial_expired_fired:${u.id}`;
+      if (localStorage.getItem(key) === "1") return;
+      localStorage.setItem(key, "1");
+      trackEvent("trial_expired");
+    } catch {}
+  }, [user, tier, trialExpired]);
+
   return null;
 }
 

@@ -28,10 +28,25 @@ export function initAnalytics() {
   initialized = true;
 }
 
-export function identifyUser(userId: string, traits?: Record<string, unknown>) {
+/**
+ * Hash a string with SHA-256 and return a hex digest.
+ * Used to obscure the raw user UUID before sending to PostHog so we never
+ * transmit a value that could be used to look someone up in our DB.
+ */
+async function sha256Hex(input: string): Promise<string> {
+  if (typeof crypto === "undefined" || !crypto.subtle) return input;
+  const buf = new TextEncoder().encode(input);
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export async function identifyUser(userId: string, traits?: Record<string, unknown>) {
   if (!isEnabled()) return;
   try {
-    posthog.identify(userId, traits);
+    const hashed = await sha256Hex(userId);
+    posthog.identify(hashed, traits);
   } catch {}
 }
 
