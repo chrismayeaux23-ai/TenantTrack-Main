@@ -1,5 +1,5 @@
-import { useEffect, useId, useState } from "react";
-import { Link } from "wouter";
+import { useEffect, useId, useState, type FormEvent } from "react";
+import { Link, useLocation } from "wouter";
 import {
   ShieldCheck, QrCode, Sparkles, Link2, Check,
   ArrowRight, Star, Mail,
@@ -81,6 +81,50 @@ const ctaPrimaryClass =
   "inline-flex items-center justify-center rounded-2xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md h-14 px-8 text-lg active-elevate";
 const ctaPrimarySmClass =
   "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border-2 border-input bg-transparent hover:bg-accent hover:text-accent-foreground h-9 px-4 text-sm active-elevate";
+
+function EmailCaptureForm({ utms, testIdPrefix }: { utms: Record<string, string>; testIdPrefix: string }) {
+  const [, navigate] = useLocation();
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+
+  const onSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@")) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+    try { sessionStorage.setItem("tt_lead_email", trimmed); } catch {}
+    const params = new URLSearchParams({ signup: "1", email: trimmed, ...utms });
+    navigate(`/login?${params.toString()}`);
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto" data-testid={`form-${testIdPrefix}-capture`}>
+      <label className="sr-only" htmlFor={`email-${testIdPrefix}`}>Email address</label>
+      <input
+        id={`email-${testIdPrefix}`}
+        type="email"
+        required
+        autoComplete="email"
+        inputMode="email"
+        placeholder="your@email.com"
+        value={email}
+        onChange={e => { setEmail(e.target.value); setError(""); }}
+        className="flex-1 h-14 px-4 rounded-2xl bg-card border-2 border-input text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-base"
+        data-testid={`input-${testIdPrefix}-email`}
+      />
+      <button type="submit" className={ctaPrimaryClass} data-testid={`button-${testIdPrefix}-submit`}>
+        Start free trial <ArrowRight className="ml-2 h-5 w-5" />
+      </button>
+      {error && (
+        <div className="sm:absolute sm:translate-y-16 text-xs text-red-400 mt-1 sm:mt-0" role="alert" data-testid={`text-${testIdPrefix}-error`}>
+          {error}
+        </div>
+      )}
+    </form>
+  );
+}
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -168,14 +212,10 @@ export default function LandlordsLP() {
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8" data-testid="text-hero-subhead">
             TenantTrack is a QR-code maintenance system with vendor trust scoring and one-click dispatch — built specifically for self-managing landlords. 14-day free trial. I'll personally set up your first property on a 30-min call.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <Link href={ctaHref} className={ctaPrimaryClass} data-testid="link-hero-cta-primary">
-              Start the 14-day trial <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-            <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="link-hero-how-it-works">
-              or watch the 90-second demo ↓
-            </a>
-          </div>
+          <EmailCaptureForm utms={utms} testIdPrefix="hero" />
+          <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors mt-4 inline-block" data-testid="link-hero-how-it-works">
+            or watch the 90-second demo ↓
+          </a>
           <p className="text-xs text-muted-foreground mt-4" data-testid="text-hero-trust">
             No credit card to start · Cancel anytime · Founder-led setup call included
           </p>
@@ -286,9 +326,7 @@ export default function LandlordsLP() {
               </p>
             </div>
             <div className="mt-6">
-              <Link href={ctaHref} className={ctaPrimaryClass} data-testid="link-founder-cta">
-                Start the 14-day trial <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+              <EmailCaptureForm utms={utms} testIdPrefix="founder" />
             </div>
           </div>
         </div>
@@ -370,9 +408,9 @@ export default function LandlordsLP() {
           <p className="text-muted-foreground text-lg mb-8 max-w-xl mx-auto" data-testid="text-final-cta-subhead">
             14 days free. No card. Personally set up by the founder. If it's not a fit, you walk away with a clean dispatch process either way.
           </p>
-          <Link href={ctaHref} className={`${ctaPrimaryClass} px-10`} data-testid="link-final-cta">
-            Start the 14-day trial <ArrowRight className="ml-2 h-5 w-5" />
-          </Link>
+          <div className="max-w-md mx-auto">
+            <EmailCaptureForm utms={utms} testIdPrefix="final" />
+          </div>
         </div>
       </section>
 

@@ -14,8 +14,8 @@ export function initAnalytics() {
     api_host: POSTHOG_HOST,
     person_profiles: "identified_only",
     capture_pageview: true,
-    capture_pageleave: true,
-    autocapture: true,
+    capture_pageleave: false,
+    autocapture: false,
     disable_session_recording: true,
   });
   initialized = true;

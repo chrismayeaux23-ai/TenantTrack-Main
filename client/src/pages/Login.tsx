@@ -27,7 +27,7 @@ export default function Login() {
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    email: params.get("email") || "",
     password: "",
     confirmPassword: "",
   });
