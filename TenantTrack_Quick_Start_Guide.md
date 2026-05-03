@@ -2,7 +2,7 @@
 
 **Your complete guide to managing property maintenance like a pro.**
 
-Website: [tenant-track.com](https://tenant-track.com)
+Website: [tenanttrack.xyz](https://tenanttrack.xyz)
 
 ---
 
@@ -10,7 +10,7 @@ Website: [tenant-track.com](https://tenant-track.com)
 
 ### 1. Create Your Account
 
-- Go to **tenant-track.com** and click **"Start Free Trial"**
+- Go to **tenanttrack.xyz** and click **"Start Free Trial"**
 - Sign up with your email and password, or use Google sign-in
 - You get a full 14-day free trial — no credit card needed
 
@@ -178,9 +178,9 @@ All plans include a **14-day free trial** — no credit card required. No setup 
 
 ## Need Help?
 
-- **Email:** support@tenant-track.com
+- **Email:** support@tenanttrack.xyz
 - **Phone:** (503) 380-6482
-- **Website:** [tenant-track.com](https://tenant-track.com)
+- **Website:** [tenanttrack.xyz](https://tenanttrack.xyz)
 
 ---
 

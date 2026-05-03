@@ -4,7 +4,7 @@
 
 TenantTrack is a mobile-first SaaS for independent landlords and small property managers who are tired of chasing vendors, losing maintenance requests in text threads, and rebuilding the same paper trail every month. Tenants scan a QR code to report an issue, the platform recommends or auto-assigns the best vendor based on a 0–100 trust score, and vendors respond through a secure magic link — no app, no account, no chaos.
 
-- **Live site:** [tenant-track.com](https://tenant-track.com)
+- **Live site:** [tenanttrack.xyz](https://tenanttrack.xyz)
 - **Replit-hosted:** [tenant-management-hub.replit.app](https://tenant-management-hub.replit.app)
 - **Design language:** dark navy background, neon orange accents, Space Grotesk headings + Inter body, mobile-first, always dark mode.
 - **Demo Login:** Email: tenanttrackapp@gmail.com Pass: Jetta1989$
@@ -214,7 +214,7 @@ TenantTrack is live and used in production. Core dispatch, scheduling, vendor co
 
 - Email: chrismayox@gmail.com
 - Phone: (503) 380-6482
-- Website: [tenant-track.com](https://tenant-track.com)
+- Website: [tenanttrack.xyz](https://tenanttrack.xyz)
 
 ---
 

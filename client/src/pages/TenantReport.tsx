@@ -17,7 +17,7 @@ function PoweredBy() {
   return (
     <div className="mt-6 text-center">
       <a
-        href="https://www.tenant-track.com"
+        href="https://tenanttrack.xyz"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"

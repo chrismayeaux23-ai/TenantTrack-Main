@@ -10,7 +10,7 @@ const FAQ_DATA: { keywords: string[]; question: string; answer: string }[] = [
   {
     keywords: ["get started", "start", "sign up", "signup", "create account", "register", "begin", "new"],
     question: "How do I get started?",
-    answer: "Go to tenant-track.com and click 'Start Free Trial'. Sign up with your email or Google account. You'll be guided through adding your first property and vendor — it takes under 5 minutes. You get a full 14-day free trial, no credit card needed.",
+    answer: "Go to tenanttrack.xyz and click 'Start Free Trial'. Sign up with your email or Google account. You'll be guided through adding your first property and vendor — it takes under 5 minutes. You get a full 14-day free trial, no credit card needed.",
   },
   {
     keywords: ["property", "add property", "properties", "new property"],
@@ -90,7 +90,7 @@ const FAQ_DATA: { keywords: string[]; question: string; answer: string }[] = [
   {
     keywords: ["contact", "support", "help", "phone", "email support"],
     question: "How do I get support?",
-    answer: "You can reach us at support@tenant-track.com or call (503) 380-6482. You can also visit our step-by-step Guide at tenant-track.com/guide for detailed walkthroughs of every feature.",
+    answer: "You can reach us at support@tenanttrack.xyz or call (503) 380-6482. You can also visit our step-by-step Guide at tenanttrack.xyz/guide for detailed walkthroughs of every feature.",
   },
 ];
 
@@ -131,7 +131,7 @@ function findAnswer(input: string): string {
     return bestMatch.answer;
   }
 
-  return "I'm not sure about that one. Try asking about properties, QR codes, dispatching vendors, magic links, trust scores, scheduling, the dispatch board, costs, billing, or recurring tasks. You can also check out our full Guide page at /guide for step-by-step walkthroughs, or email us at support@tenant-track.com.";
+  return "I'm not sure about that one. Try asking about properties, QR codes, dispatching vendors, magic links, trust scores, scheduling, the dispatch board, costs, billing, or recurring tasks. You can also check out our full Guide page at /guide for step-by-step walkthroughs, or email us at support@tenanttrack.xyz.";
 }
 
 export function HelpChatbot() {
