@@ -24,6 +24,31 @@ export function initAnalytics() {
     capture_pageleave: false,
     autocapture: false,
     disable_session_recording: true,
+    // Defense-in-depth: strip query strings + auth-ish fragments from any URL
+    // PostHog auto-attaches ($current_url, $referrer, $pathname, etc.) so a
+    // stray `?email=...` or `?token=...` never lands in the warehouse.
+    sanitize_properties: (props) => {
+      const stripQuery = (u: unknown) => {
+        if (typeof u !== "string") return u;
+        try {
+          const url = new URL(u, window.location.origin);
+          url.search = "";
+          url.hash = "";
+          return url.toString();
+        } catch {
+          const i = u.indexOf("?");
+          return i >= 0 ? u.slice(0, i) : u;
+        }
+      };
+      const out: Record<string, unknown> = { ...props };
+      for (const k of ["$current_url", "$referrer", "$initial_current_url", "$initial_referrer"]) {
+        if (out[k] != null) out[k] = stripQuery(out[k]);
+      }
+      if (typeof out["$pathname"] === "string") {
+        out["$pathname"] = stripQuery(out["$pathname"]);
+      }
+      return out;
+    },
   });
   initialized = true;
 }
@@ -33,19 +58,26 @@ export function initAnalytics() {
  * Used to obscure the raw user UUID before sending to PostHog so we never
  * transmit a value that could be used to look someone up in our DB.
  */
-async function sha256Hex(input: string): Promise<string> {
-  if (typeof crypto === "undefined" || !crypto.subtle) return input;
-  const buf = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(digest))
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+async function sha256Hex(input: string): Promise<string | null> {
+  if (typeof crypto === "undefined" || !crypto.subtle) return null;
+  try {
+    const buf = new TextEncoder().encode(input);
+    const digest = await crypto.subtle.digest("SHA-256", buf);
+    return Array.from(new Uint8Array(digest))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+  } catch {
+    return null;
+  }
 }
 
 export async function identifyUser(userId: string, traits?: Record<string, unknown>) {
   if (!isEnabled()) return;
+  const hashed = await sha256Hex(userId);
+  // Fail closed: if hashing isn't available, skip identify entirely rather
+  // than send the raw DB id. Events stay anonymous in this case.
+  if (!hashed) return;
   try {
-    const hashed = await sha256Hex(userId);
     posthog.identify(hashed, traits);
   } catch {}
 }
@@ -67,7 +99,9 @@ export function trackEvent(name: string, props?: Record<string, unknown>) {
 export function trackPageview(path?: string) {
   if (!isEnabled()) return;
   try {
-    posthog.capture("$pageview", path ? { $pathname: path } : undefined);
+    // Always strip query strings — they may carry email/token/etc.
+    const clean = path ? path.split("?")[0].split("#")[0] : undefined;
+    posthog.capture("$pageview", clean ? { $pathname: clean } : undefined);
   } catch {}
 }
 

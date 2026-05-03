@@ -8,8 +8,23 @@ import bgMain1 from "@assets/main1_1774750600097.jpg";
 
 export default function VerifyEmail() {
   const [, setLocation] = useLocation();
-  const params = new URLSearchParams(window.location.search);
-  const email = params.get("email") || "";
+  // Email is held in sessionStorage (not the URL) so it never ends up in
+  // browser history, referer headers, server logs, or analytics URLs.
+  // Backwards-compat: if a legacy `?email=` link is opened, hydrate
+  // sessionStorage from it and immediately strip the param from the URL.
+  const email = (() => {
+    try {
+      const stored = sessionStorage.getItem("tt_pending_verify_email");
+      if (stored) return stored;
+      const legacy = new URLSearchParams(window.location.search).get("email");
+      if (legacy) {
+        sessionStorage.setItem("tt_pending_verify_email", legacy);
+        window.history.replaceState({}, "", "/verify-email");
+        return legacy;
+      }
+    } catch {}
+    return "";
+  })();
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -82,6 +97,7 @@ export default function VerifyEmail() {
       }
       setSuccess(true);
       trackEvent("signup_completed");
+      try { sessionStorage.removeItem("tt_pending_verify_email"); } catch {}
       setTimeout(() => { window.location.href = "/"; }, 1500);
     } catch {
       setError("Connection failed. Please try again.");

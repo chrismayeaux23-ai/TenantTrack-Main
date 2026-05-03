@@ -101,7 +101,8 @@ export default function Login() {
       const data = await res.json();
       if (!res.ok) {
         if (data.requiresVerification) {
-          window.location.href = `/verify-email?email=${encodeURIComponent(data.email)}`;
+          try { sessionStorage.setItem("tt_pending_verify_email", data.email); } catch {}
+          window.location.href = "/verify-email";
           return;
         }
         setError(data.message || "Something went wrong.");
