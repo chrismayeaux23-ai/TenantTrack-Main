@@ -24,12 +24,16 @@ export default function Login() {
   const [error, setError] = useState(errorMessages[params.get("error") || ""] || "");
   const [forgotSent, setForgotSent] = useState(false);
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: params.get("email") || "",
-    password: "",
-    confirmPassword: "",
+  const [form, setForm] = useState(() => {
+    let leadEmail = "";
+    try { leadEmail = sessionStorage.getItem("tt_lead_email") || ""; } catch {}
+    return {
+      firstName: "",
+      lastName: "",
+      email: leadEmail,
+      password: "",
+      confirmPassword: "",
+    };
   });
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 import { Link, useLocation } from "wouter";
 import {
   ShieldCheck, QrCode, Sparkles, Link2, Check,
-  ArrowRight, Star, Mail,
+  ArrowRight, Mail,
 } from "lucide-react";
 import logoWide from "@assets/tenanttrack-wide-logo.png";
 import { captureUtmsFromUrl, getCanonicalUtms } from "@/lib/analytics";
@@ -31,24 +31,6 @@ const HOW_IT_WORKS = [
     icon: Link2,
     title: "Vendor accepts, finishes, uploads invoice",
     desc: "All without an app or login. The full job — request to invoice — lives on one page. You get your nights and weekends back.",
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    quote: "The vendor trust scores changed everything. I used to call whoever picked up. Now I dispatch the highest-rated plumber in under a minute.",
-    name: "Property Manager",
-    role: "12 units · Portland, OR",
-  },
-  {
-    quote: "I had a contractor no-show twice before TenantTrack flagged his record. That alone saved me from a third bad experience.",
-    name: "Independent Landlord",
-    role: "18 units · Austin, TX",
-  },
-  {
-    quote: "Proof of completion with invoice numbers — my accountant called me a changed man.",
-    name: "Real Estate Investor",
-    role: "22 units · Denver, CO",
   },
 ];
 
@@ -95,7 +77,10 @@ function EmailCaptureForm({ utms, testIdPrefix }: { utms: Record<string, string>
       return;
     }
     try { sessionStorage.setItem("tt_lead_email", trimmed); } catch {}
-    const params = new URLSearchParams({ signup: "1", email: trimmed, ...utms });
+    // Email is intentionally NOT placed in the URL (avoids PII in browser
+    // history, referer headers, server access logs, and analytics URLs).
+    // Login.tsx reads tt_lead_email from sessionStorage to pre-fill.
+    const params = new URLSearchParams({ signup: "1", ...utms });
     navigate(`/login?${params.toString()}`);
   };
 
@@ -177,9 +162,7 @@ export default function LandlordsLP() {
   }, []);
 
   const utms = getCanonicalUtms();
-  const ctaHref = Object.keys(utms).length
-    ? `/login?${new URLSearchParams(utms).toString()}`
-    : "/login";
+  const ctaHref = `/login?${new URLSearchParams({ signup: "1", ...utms }).toString()}`;
 
   const loomEmbed = LOOM_VIDEO_ID
     ? `https://www.loom.com/embed/${LOOM_VIDEO_ID}?hideEmbedTopBar=true`
@@ -328,31 +311,6 @@ export default function LandlordsLP() {
             <div className="mt-6">
               <EmailCaptureForm utms={utms} testIdPrefix="founder" />
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Social proof */}
-      <section className="px-4 py-12 md:py-20">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10 font-heading" data-testid="text-testimonials-headline">
-            Landlords who switched
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t, i) => (
-              <div key={i} className="p-6 rounded-2xl border border-border bg-card" data-testid={`testimonial-${i}`}>
-                <div className="flex gap-1 mb-3" aria-label="5 out of 5 stars">
-                  {Array.from({ length: 5 }).map((_, s) => (
-                    <Star key={s} className="h-4 w-4 fill-primary text-primary" aria-hidden="true" />
-                  ))}
-                </div>
-                <p className="text-sm text-foreground mb-4 leading-relaxed">"{t.quote}"</p>
-                <div className="text-xs">
-                  <div className="font-bold text-foreground">{t.name}</div>
-                  <div className="text-muted-foreground">{t.role}</div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
