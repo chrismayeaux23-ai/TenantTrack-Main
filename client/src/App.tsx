@@ -188,12 +188,17 @@ function Router() {
 }
 
 function AnalyticsIdentifier() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  // Only call useSubscription when authenticated to avoid the
+  // /api/stripe/subscription 401 ping on public pages.
+  return isAuthenticated && user ? <AuthedAnalyticsIdentifier user={user} /> : null;
+}
+
+function AuthedAnalyticsIdentifier({ user }: { user: unknown }) {
   const { trialExpired, tier } = useSubscription();
   useEffect(() => {
-    if (!user) return;
     const u = user as { id?: string };
-    if (!u.id) return;
+    if (!u?.id) return;
     // No PII sent to PostHog. Only a SHA-256 hash of the random user UUID
     // (so the raw DB ID never leaves the client) + first-touch UTMs.
     const utms = getCanonicalUtms();
@@ -202,9 +207,8 @@ function AnalyticsIdentifier() {
 
   // Fire trial_expired exactly once per user, ever — dedupe via localStorage.
   useEffect(() => {
-    if (!user) return;
     const u = user as { id?: string };
-    if (!u.id) return;
+    if (!u?.id) return;
     if (tier !== "trial" || !trialExpired) return;
     try {
       const key = `tt_trial_expired_fired:${u.id}`;

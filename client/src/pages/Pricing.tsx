@@ -5,6 +5,7 @@ import { Loader2, Check, Zap, Building2, Crown, X, ArrowLeft, ArrowRight } from 
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { trackEvent } from "@/lib/analytics";
 import { Link } from "wouter";
 import logoPng from "@assets/tenanttrack-final-logo.png";
 import bgFeatures2 from "@assets/featurespricingsection2_1774750600095.jpg";
@@ -134,6 +135,7 @@ export default function Pricing() {
 
   const handlePlanClick = (tier: string) => {
     if (!isAuthenticated) {
+      trackEvent("signup_started", { source: `pricing_plan_${tier}` });
       window.location.href = "/login?signup=1";
       return;
     }
@@ -169,7 +171,7 @@ export default function Pricing() {
                 <Button variant="ghost" size="sm" onClick={() => window.location.href = "/login"}>
                   Log in
                 </Button>
-                <Button size="sm" className="rounded-full gap-1" onClick={() => window.location.href = "/login?signup=1"}>
+                <Button size="sm" className="rounded-full gap-1" onClick={() => { trackEvent("signup_started", { source: "pricing_nav" }); window.location.href = "/login?signup=1"; }}>
                   Start Free Trial
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
@@ -342,7 +344,10 @@ export default function Pricing() {
             <Button
               size="lg"
               className="rounded-full px-10 gap-2 text-base shadow-lg shadow-primary/20"
-              onClick={() => window.location.href = isAuthenticated ? "/dashboard" : "/login?signup=1"}
+              onClick={() => {
+                if (!isAuthenticated) trackEvent("signup_started", { source: "pricing_footer" });
+                window.location.href = isAuthenticated ? "/dashboard" : "/login?signup=1";
+              }}
               data-testid="button-cta-pricing-bottom"
             >
               {isAuthenticated ? "Go to Dashboard" : "Start Free Trial"}
