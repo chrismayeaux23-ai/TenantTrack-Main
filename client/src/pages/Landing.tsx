@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { trackEvent } from "@/lib/analytics";
+
+const goToSignup = (source: string) => {
+  trackEvent("signup_started", { source });
+  window.location.href = "/login?signup=1";
+};
 import { 
   QrCode, ShieldCheck, Mail, Phone, 
   ArrowRight, Check, DollarSign, CalendarClock, 
@@ -995,7 +1001,7 @@ export default function Landing() {
               <LogIn className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
               Log In
             </Button>
-            <Button onClick={() => window.location.href = '/login?signup=1'} className="rounded-full shadow-lg shadow-primary/20 text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-10 whitespace-nowrap" data-testid="button-nav-signup">
+            <Button onClick={() => goToSignup('landing_nav')} className="rounded-full shadow-lg shadow-primary/20 text-xs sm:text-sm px-3 sm:px-4 h-8 sm:h-10 whitespace-nowrap" data-testid="button-nav-signup">
               Start Free Trial
             </Button>
           </div>
@@ -1024,7 +1030,7 @@ export default function Landing() {
               Score every contractor. Auto-dispatch the best one. Track the job from assignment to completion. TenantTrack replaces spreadsheets, texts, and guesswork with a real dispatch command center.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <Button size="lg" className="w-full sm:w-auto rounded-full text-lg shadow-xl shadow-primary/20 gap-2" onClick={() => window.location.href = '/login?signup=1'} data-testid="button-get-started">
+              <Button size="lg" className="w-full sm:w-auto rounded-full text-lg shadow-xl shadow-primary/20 gap-2" onClick={() => goToSignup('landing_hero')} data-testid="button-get-started">
                 Start Free Trial
                 <ArrowRight className="h-5 w-5" />
               </Button>
@@ -1515,7 +1521,7 @@ export default function Landing() {
             Set up your first property in under 5 minutes. No credit card. No IT team. No chaos.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="rounded-full text-lg shadow-xl shadow-primary/20 gap-2 px-8" onClick={() => window.location.href = '/login?signup=1'} data-testid="button-cta-final">
+            <Button size="lg" className="rounded-full text-lg shadow-xl shadow-primary/20 gap-2 px-8" onClick={() => goToSignup('landing_final_cta')} data-testid="button-cta-final">
               Start Free Trial
               <ArrowRight className="h-5 w-5" />
             </Button>

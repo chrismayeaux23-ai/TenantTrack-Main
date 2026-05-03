@@ -5,7 +5,7 @@ import {
   ArrowRight, Mail,
 } from "lucide-react";
 import logoWide from "@assets/tenanttrack-wide-logo.png";
-import { captureUtmsFromUrl, getCanonicalUtms } from "@/lib/analytics";
+import { captureUtmsFromUrl, getCanonicalUtms, trackEvent } from "@/lib/analytics";
 
 const LOOM_VIDEO_ID = (import.meta.env.VITE_LOOM_VIDEO_ID as string | undefined) || "";
 
@@ -77,6 +77,7 @@ function EmailCaptureForm({ utms, testIdPrefix }: { utms: Record<string, string>
       return;
     }
     try { sessionStorage.setItem("tt_lead_email", trimmed); } catch {}
+    trackEvent("signup_started", { source: `landlords_lp_${testIdPrefix}` });
     // Email is intentionally NOT placed in the URL (avoids PII in browser
     // history, referer headers, server access logs, and analytics URLs).
     // Login.tsx reads tt_lead_email from sessionStorage to pre-fill.

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/Button";
 import { Loader2, CheckCircle, Mail } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 import logoPng from "@assets/tenanttrack-final-logo.png";
 import bgMain1 from "@assets/main1_1774750600097.jpg";
 
@@ -80,6 +81,7 @@ export default function VerifyEmail() {
         return;
       }
       setSuccess(true);
+      trackEvent("signup_completed");
       setTimeout(() => { window.location.href = "/"; }, 1500);
     } catch {
       setError("Connection failed. Please try again.");

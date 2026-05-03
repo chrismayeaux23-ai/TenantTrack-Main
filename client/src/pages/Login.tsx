@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/hooks/use-auth";
+import { trackEvent } from "@/lib/analytics";
 import { Eye, EyeOff, Loader2, ArrowLeft, Mail } from "lucide-react";
 import logoPng from "@assets/tenanttrack-final-logo.png";
 import bgMain1 from "@assets/main1_1774750600097.jpg";
@@ -81,6 +82,9 @@ export default function Login() {
     }
 
     setLoading(true);
+    if (mode === "signup") {
+      trackEvent("signup_started", { source: "login_page" });
+    }
     try {
       const endpoint = mode === "signup" ? "/api/auth/signup" : "/api/auth/signin";
       const body = mode === "signup"

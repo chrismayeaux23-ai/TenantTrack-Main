@@ -2,18 +2,25 @@ import posthog from "posthog-js";
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
 const POSTHOG_HOST = (import.meta.env.VITE_POSTHOG_HOST as string | undefined) || "https://us.i.posthog.com";
+const ENABLE_DEV = import.meta.env.VITE_POSTHOG_ENABLE_DEV === "true";
+const IS_PROD = import.meta.env.PROD === true;
 
 let initialized = false;
+
+function isEnabled(): boolean {
+  return initialized && !!POSTHOG_KEY;
+}
 
 export function initAnalytics() {
   if (initialized) return;
   if (!POSTHOG_KEY) return;
   if (typeof window === "undefined") return;
+  if (!IS_PROD && !ENABLE_DEV) return;
 
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,
     person_profiles: "identified_only",
-    capture_pageview: true,
+    capture_pageview: false,
     capture_pageleave: false,
     autocapture: false,
     disable_session_recording: true,
@@ -22,16 +29,30 @@ export function initAnalytics() {
 }
 
 export function identifyUser(userId: string, traits?: Record<string, unknown>) {
-  if (!initialized || !POSTHOG_KEY) return;
+  if (!isEnabled()) return;
   try {
     posthog.identify(userId, traits);
   } catch {}
 }
 
 export function resetAnalytics() {
-  if (!initialized || !POSTHOG_KEY) return;
+  if (!isEnabled()) return;
   try {
     posthog.reset();
+  } catch {}
+}
+
+export function trackEvent(name: string, props?: Record<string, unknown>) {
+  if (!isEnabled()) return;
+  try {
+    posthog.capture(name, props);
+  } catch {}
+}
+
+export function trackPageview(path?: string) {
+  if (!isEnabled()) return;
+  try {
+    posthog.capture("$pageview", path ? { $pathname: path } : undefined);
   } catch {}
 }
 

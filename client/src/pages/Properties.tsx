@@ -13,6 +13,7 @@ import { useLocation } from "wouter";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { trackEvent } from "@/lib/analytics";
 
 export default function Properties() {
   const { data: properties, isLoading } = useProperties();
@@ -45,8 +46,12 @@ export default function Properties() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const wasFirst = !properties || properties.length === 0;
     createProperty(formData, {
       onSuccess: () => {
+        if (wasFirst) {
+          trackEvent("onboarding_property_added");
+        }
         setIsAddModalOpen(false);
         setFormData({ name: "", address: "" });
         toast({ title: "Success", description: "Property added successfully!" });

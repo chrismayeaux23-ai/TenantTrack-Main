@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/SimpleDialog";
 import { Select } from "@/components/ui/NativeSelect";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/analytics";
 import { useSubscription } from "@/hooks/use-subscription";
 import {
   useVendors, useCreateVendor, useUpdateVendor,
@@ -1258,8 +1259,12 @@ export default function Vendors() {
   const tradeOptions = ["all", ...Array.from(new Set(vendors.map(v => v.tradeCategory))).sort()];
 
   async function handleCreate(form: typeof BLANK_FORM) {
+    const wasFirst = vendors.length === 0;
     try {
       await createVendor.mutateAsync(form as any);
+      if (wasFirst) {
+        trackEvent("onboarding_vendor_added");
+      }
       setShowAddModal(false);
       toast({ title: "Vendor added", description: `${form.name} has been added to your network.` });
     } catch (err: any) {

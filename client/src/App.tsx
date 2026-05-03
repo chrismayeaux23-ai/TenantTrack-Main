@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Switch, Route, Redirect, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -7,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import { useProperties } from "@/hooks/use-properties";
 import { Loader2 } from "lucide-react";
-import { identifyUser, getCanonicalUtms } from "@/lib/analytics";
+import { identifyUser, getCanonicalUtms, trackPageview, trackEvent } from "@/lib/analytics";
 
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
@@ -190,16 +190,38 @@ function AnalyticsIdentifier() {
   const { user } = useAuth();
   useEffect(() => {
     if (!user) return;
-    const u = user as { id?: string; email?: string; firstName?: string; lastName?: string };
+    const u = user as { id?: string };
     if (!u.id) return;
+    // No PII sent to PostHog. Only the random user UUID + first-touch UTMs.
     const utms = getCanonicalUtms();
-    identifyUser(u.id, {
-      email: u.email,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      ...utms,
-    });
+    identifyUser(u.id, Object.keys(utms).length ? utms : undefined);
   }, [user]);
+  return null;
+}
+
+function RouteAnalytics() {
+  const [location] = useLocation();
+  useEffect(() => {
+    trackPageview(location);
+  }, [location]);
+  return null;
+}
+
+function CheckoutSuccessTracker() {
+  const [, setLocation] = useLocation();
+  const fired = useRef(false);
+  useEffect(() => {
+    if (fired.current) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") !== "success") return;
+    fired.current = true;
+    trackEvent("trial_upgraded", { source: "stripe_checkout" });
+    params.delete("checkout");
+    const qs = params.toString();
+    const cleanPath = window.location.pathname + (qs ? `?${qs}` : "");
+    setLocation(cleanPath, { replace: true });
+  }, [setLocation]);
   return null;
 }
 
@@ -209,6 +231,8 @@ function App() {
       <TooltipProvider>
         <Toaster />
         <AnalyticsIdentifier />
+        <RouteAnalytics />
+        <CheckoutSuccessTracker />
         <Router />
         <HelpChatbot />
       </TooltipProvider>

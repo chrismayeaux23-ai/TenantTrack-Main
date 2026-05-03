@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, type MaintenanceRequestInput, type UpdateRequestStatusInput } from "@shared/routes";
+import { trackEvent } from "@/lib/analytics";
 
 export function useRequests() {
   return useQuery({
@@ -28,7 +29,14 @@ export function useCreateRequest() {
       }
       return api.requests.create.responses[201].parse(await res.json());
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.requests.list.path] }),
+    onSuccess: (data) => {
+      trackEvent("request_created", {
+        urgency: data.urgency,
+        issue_type: data.issueType,
+        source: typeof window !== "undefined" && window.location.pathname.startsWith("/report/") ? "tenant_qr" : "landlord",
+      });
+      queryClient.invalidateQueries({ queryKey: [api.requests.list.path] });
+    },
   });
 }
 
