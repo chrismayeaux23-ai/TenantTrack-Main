@@ -23,12 +23,12 @@ export function setupGoogleAuth(app: Express) {
   if (process.env.GOOGLE_CALLBACK_URL) {
     callbackURL = process.env.GOOGLE_CALLBACK_URL;
   } else if (isProduction) {
-    callbackURL = "https://tenanttrack.xyz/api/auth/google/callback";
+    callbackURL = "https://tenant-track.com/api/auth/google/callback";
   } else {
     const devDomain = process.env.REPLIT_DEV_DOMAIN;
     callbackURL = devDomain
       ? `https://${devDomain}/api/auth/google/callback`
-      : "https://tenanttrack.xyz/api/auth/google/callback";
+      : "https://tenant-track.com/api/auth/google/callback";
   }
 
   passport.use(

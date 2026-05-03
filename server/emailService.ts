@@ -16,7 +16,7 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
       if (!apiKey) return null;
       return {
         client: new Resend(apiKey),
-        fromEmail: process.env.EMAIL_FROM || 'TenantTrack Dispatch <dispatch@tenanttrack.xyz>',
+        fromEmail: process.env.EMAIL_FROM || 'TenantTrack Dispatch <dispatch@tenant-track.com>',
       };
     }
 
@@ -34,7 +34,7 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
 
     return {
       client: new Resend(data.settings.api_key),
-      fromEmail: process.env.EMAIL_FROM || 'TenantTrack Dispatch <dispatch@tenanttrack.xyz>',
+      fromEmail: process.env.EMAIL_FROM || 'TenantTrack Dispatch <dispatch@tenant-track.com>',
     };
   } catch (err) {
     console.error('Failed to get Resend client:', err);
@@ -42,7 +42,7 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
   }
 }
 
-const APP_URL = process.env.APP_URL || 'https://www.tenanttrack.xyz';
+const APP_URL = process.env.APP_URL || 'https://www.tenant-track.com';
 
 export async function sendNewRequestEmail(opts: {
   landlordEmail: string;

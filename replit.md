@@ -13,7 +13,7 @@ The application follows a mobile-first design philosophy.
 - **Database**: PostgreSQL, managed with Drizzle ORM.
 - **Authentication**: Supports email/password login and Google OAuth, both managed via Passport sessions. User data includes `passwordHash` and is generated with `crypto.randomUUID()` on signup. Includes email verification on signup (6-digit code via Resend, 15-min expiry) and forgot password flow (secure token link via Resend, 1-hour expiry). Unverified accounts are blocked at signin until verified. DB tables: `password_reset_tokens`, `email_verification_codes`. Users table has `email_verified` boolean.
 - **Storage**: Replit Object Storage is used for tenant photo uploads.
-- **Domain**: tenanttrack.xyz (custom domain), tenant-management-hub.replit.app (Replit domain)
+- **Domain**: tenant-track.com (custom domain), tenant-management-hub.replit.app (Replit domain)
 - **Logo**: TenantTrack circular logo at `@assets/tenanttrack-final-logo.png` (circular badge with TT letters, house, key, clipboard). Wide version at `@assets/tenanttrack-wide-logo.png`.
 - **Background images**: `@assets/I_need_a_navy_blue,_white,_and_grey_background_image_of_geo-me_1774148774611.jpg` (geometric), `@assets/I_need_a_navy_blue,_white,_and_grey_background_image_of_rental_1774148774612.jpg` (buildings), `@assets/Untitled_design_(1)_1774148774613.jpg` (building icon)
 - **UI/UX**:
@@ -50,7 +50,7 @@ The application follows a mobile-first design philosophy.
     - **Automated Communications**: Email notifications via Resend for vendor dispatch, vendor reminders (24h before scheduled job), tenant updates when vendor is scheduled, landlord alerts on vendor accept/decline/complete/en-route/proposed-time, and SLA violation alerts. Request status auto-syncs on vendor assignment and dispatch actions.
     - **SLA Visibility**: Request detail page shows SLA & Dispatch panel with response deadline countdown, dispatch mode, escalation history with suggested vendor reassignment, and notification log.
 - **API Endpoints**: Comprehensive set of RESTful APIs for managing properties, requests, tenants, staff, vendors, costs, recurring tasks, messages, and analytics.
-- **Stripe Integration**: Auto-seeding of subscription products on startup, webhook processing, and customer/subscription management. Live payments run on Stripe account `acct_1T5Ss8PJUEiInvci` (TenantTrack_DB, charges enabled). API keys are read from `STRIPE_LIVE_SECRET_KEY` / `STRIPE_LIVE_PUBLISHABLE_KEY` secrets when present (with the Replit Stripe connector as a fallback). The managed webhook is auto-created on whatever URL `REPLIT_DOMAINS` resolves to at startup, and the signing secret is stored by `stripe-replit-sync` in the local Postgres `stripe` schema.
+- **Stripe Integration**: Auto-seeding of subscription products on startup, webhook processing, and customer/subscription management.
 - **Email Service**: Resend-based email notifications for new requests, status updates, and staff assignments.
 - **File Structure**: Organized with clear separation for shared schemas, server-side logic, client-side components, and integration specific files (e.g., `replit_integrations`).
 - **Deployment**: Configured for autoscale deployment with `npm run build` and `node dist/index.cjs` (matches the `start` script in `package.json`).

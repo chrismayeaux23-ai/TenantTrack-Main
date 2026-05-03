@@ -1,12 +1,13 @@
-# TenantTrack
+# TenantTrack - Reduce vendor no-shows and maintenance delays without chasing anyone
 
 **The smart maintenance platform for landlords.**
 
 TenantTrack is a mobile-first SaaS for independent landlords and small property managers who are tired of chasing vendors, losing maintenance requests in text threads, and rebuilding the same paper trail every month. Tenants scan a QR code to report an issue, the platform recommends or auto-assigns the best vendor based on a 0–100 trust score, and vendors respond through a secure magic link — no app, no account, no chaos.
 
-- **Live site:** [tenanttrack.xyz](https://tenanttrack.xyz)
+- **Live site:** [tenant-track.com](https://tenant-track.com)
 - **Replit-hosted:** [tenant-management-hub.replit.app](https://tenant-management-hub.replit.app)
 - **Design language:** dark navy background, neon orange accents, Space Grotesk headings + Inter body, mobile-first, always dark mode.
+- **Demo Login:** Email: tenanttrackapp@gmail.com Pass: Jetta1989$
 
 ---
 
@@ -19,6 +20,7 @@ Maintenance coordination is the highest-friction, most time-consuming part of pr
 - Scheduling is inconsistent and double-bookings happen.
 - Follow-ups eat hours every week.
 - When a dispute comes up, there's no system of record.
+- No-shows
 
 ## The solution
 
@@ -30,6 +32,14 @@ TenantTrack replaces all of that with a structured, automated workflow:
 4. The vendor accepts, schedules, and completes the job through a secure magic link.
 5. Everyone stays in sync via automated email notifications.
 6. If a vendor doesn't respond in time, the system escalates and suggests the next best vendor automatically.
+
+## The Why
+
+Most tools focus on logging requests.
+The real problem is what happens after—vendor coordination.
+TenantTrack is built specifically to fix that gap.
+
+A tenant reports a leak → landlord assigns vendor → vendor accepts via link → updates status → job completed.
 
 ---
 
@@ -202,9 +212,9 @@ TenantTrack is live and used in production. Core dispatch, scheduling, vendor co
 
 ## Contact
 
-- Email: support@tenanttrack.xyz
+- Email: chrismayox@gmail.com
 - Phone: (503) 380-6482
-- Website: [tenanttrack.xyz](https://tenanttrack.xyz)
+- Website: [tenant-track.com](https://tenant-track.com)
 
 ---
 

@@ -364,7 +364,7 @@ export default function Billing() {
           <div className="mt-4 pt-4 border-t border-border text-center">
             <p className="text-xs text-muted-foreground">
               Questions?{" "}
-              <a href="mailto:support@tenanttrack.xyz" className="text-primary hover:underline">support@tenanttrack.xyz</a>
+              <a href="mailto:support@tenant-track.com" className="text-primary hover:underline">support@tenant-track.com</a>
               {" "} · {" "}
               <a href="/terms" className="text-primary hover:underline">Terms</a>
               {" "} · {" "}

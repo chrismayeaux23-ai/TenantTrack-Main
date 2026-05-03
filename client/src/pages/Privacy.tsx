@@ -92,9 +92,9 @@ export default function Privacy() {
             <h2 className="text-xl font-bold text-foreground mb-3">10. Contact Us</h2>
             <p className="text-sm leading-relaxed">If you have questions about this Privacy Policy or your data, contact us at:</p>
             <div className="mt-3 text-sm space-y-1">
-              <p>Email: support@tenanttrack.xyz</p>
+              <p>Email: support@tenant-track.com</p>
               <p>Phone: (503) 380-6482</p>
-              <p>Website: www.tenanttrack.xyz</p>
+              <p>Website: www.tenant-track.com</p>
             </div>
           </section>
         </div>

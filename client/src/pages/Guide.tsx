@@ -22,7 +22,7 @@ const GUIDE_SECTIONS = [
       {
         title: "1. Create Your Account",
         content: [
-          'Go to tenanttrack.xyz and click "Start Free Trial"',
+          'Go to tenant-track.com and click "Start Free Trial"',
           "Sign up with your email and password, or use Google sign-in",
           "You get a full 14-day free trial — no credit card needed",
         ],
@@ -430,9 +430,9 @@ export default function Guide() {
         <div className="mt-12 text-center space-y-3">
           <p className="text-sm text-muted-foreground font-medium">Still have questions?</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground">
-            <a href="mailto:support@tenanttrack.xyz" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-guide-email">
+            <a href="mailto:support@tenant-track.com" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-guide-email">
               <Mail className="h-4 w-4" />
-              support@tenanttrack.xyz
+              support@tenant-track.com
             </a>
             <a href="tel:5033806482" className="flex items-center gap-2 hover:text-primary transition-colors" data-testid="link-guide-phone">
               <Phone className="h-4 w-4" />
