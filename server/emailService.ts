@@ -1,7 +1,16 @@
 import { Resend } from 'resend';
 
-// Replit Resend connector — fetches API key from connector service
+// Resend client — prefers RESEND_API_KEY env var, falls back to Replit connector
 async function getResendClient(): Promise<{ client: Resend; fromEmail: string } | null> {
+  const fromEmail = process.env.EMAIL_FROM || 'TenantTrack Dispatch <dispatch@tenanttrack.xyz>';
+
+  // Prefer the explicit RESEND_API_KEY secret if present
+  const apiKey = process.env.RESEND_API_KEY;
+  if (apiKey) {
+    return { client: new Resend(apiKey), fromEmail };
+  }
+
+  // Fallback: fetch API key from Replit Resend connector
   try {
     const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
     const xReplitToken = process.env.REPL_IDENTITY
@@ -11,13 +20,8 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
       : null;
 
     if (!hostname || !xReplitToken) {
-      // Fallback to manual API key env var
-      const apiKey = process.env.RESEND_API_KEY;
-      if (!apiKey) return null;
-      return {
-        client: new Resend(apiKey),
-        fromEmail: process.env.EMAIL_FROM || 'TenantTrack Dispatch <dispatch@tenanttrack.xyz>',
-      };
+      console.error('Resend not configured: no RESEND_API_KEY and no Replit connector available');
+      return null;
     }
 
     const data = await fetch(
@@ -30,12 +34,12 @@ async function getResendClient(): Promise<{ client: Resend; fromEmail: string } 
       }
     ).then(res => res.json()).then((d: any) => d.items?.[0]);
 
-    if (!data?.settings?.api_key) return null;
+    if (!data?.settings?.api_key) {
+      console.error('Resend connector returned no api_key — set RESEND_API_KEY secret instead');
+      return null;
+    }
 
-    return {
-      client: new Resend(data.settings.api_key),
-      fromEmail: process.env.EMAIL_FROM || 'TenantTrack Dispatch <dispatch@tenanttrack.xyz>',
-    };
+    return { client: new Resend(data.settings.api_key), fromEmail };
   } catch (err) {
     console.error('Failed to get Resend client:', err);
     return null;
